@@ -235,8 +235,8 @@ static void PancakeConfigurationDestroyValue(PancakeConfigurationGroup *parent, 
 					config_setting_t *groupChildSetting;
 
 					// Call hook if available
-					if(setting->listGroup->hook && !setting->listGroup->hook(PANCAKE_CONFIGURATION_DTOR, childSetting, NULL)) {
-						PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Failed to parse configuration: Hook failed for %s in %s on line %i", configSetting->name, childSetting->file, childSetting->line);
+					if(setting->listGroup->hook) {
+						setting->listGroup->hook(PANCAKE_CONFIGURATION_DTOR, childSetting, NULL);
 					}
 
 					for(i = 0, groupChildSetting = config_setting_get_elem(childSetting, i);
