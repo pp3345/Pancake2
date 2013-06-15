@@ -421,7 +421,7 @@ PANCAKE_API inline void PancakeConfigurationActivateScope(PancakeConfigurationSc
 PANCAKE_API inline void PancakeConfigurationUnscope() {
 	PancakeConfigurationScopeValue *value;
 
-	// Reset configuration by setting by values from root scope
+	// Reset configuration by setting values from root scope
 	DL_FOREACH(rootScope->values, value) {
 		PancakeAssert(value->setting->valuePtr != NULL);
 
