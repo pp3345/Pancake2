@@ -27,6 +27,7 @@ typedef UByte (*PancakeConfigurationHook)(UByte step, config_setting_t *setting,
 typedef struct _PancakeConfigurationSetting {
 	String name;
 	PancakeConfigurationHook hook;
+	PancakeConfigurationGroup *listGroup;
 	void *valuePtr;
 	config_value_t defaultValue;
 	UInt8 valueSize;
@@ -43,6 +44,8 @@ typedef struct _PancakeConfigurationGroup {
 	PancakeConfigurationGroup *children;
 	PancakeConfigurationHook hook;
 
+	UByte isCopy;
+
 	UT_hash_handle hh;
 } PancakeConfigurationGroup;
 
@@ -56,6 +59,7 @@ typedef struct _PancakeConfigurationScopeValue {
 
 typedef struct _PancakeConfigurationScope {
 	PancakeConfigurationScopeValue *values;
+	void *data;
 	UByte isRootScope;
 } PancakeConfigurationScope;
 
@@ -71,6 +75,8 @@ extern PancakeConfigurationStructure *PancakeConfiguration;
 PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationAddGroup(PancakeConfigurationGroup *parent, String name, PancakeConfigurationHook hook);
 PANCAKE_API PancakeConfigurationSetting *PancakeConfigurationAddSetting(PancakeConfigurationGroup *group, String name, UByte type, void *valuePtr, UInt8 valueSize, config_value_t defaultValue, PancakeConfigurationHook hook);
 PANCAKE_API void PancakeConfigurationAddGroupToGroup(PancakeConfigurationGroup *parent, PancakeConfigurationGroup *child);
+PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationListGroup(PancakeConfigurationSetting *setting, PancakeConfigurationHook hook);
+PANCAKE_API void PancakeConfigurationAddGroupByName(PancakeConfigurationGroup *parent, String child);
 
 /* Configuration scoping API */
 PANCAKE_API PancakeConfigurationScope *PancakeConfigurationAddScope();

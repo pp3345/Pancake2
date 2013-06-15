@@ -20,7 +20,7 @@ static UByte PancakeConfigurationCheckValue(PancakeConfigurationScope *scope, Pa
 			config_setting_t *setting;
 
 			if(configSetting->name != NULL) {
-				HASH_FIND(hh, parent ? parent : PancakeConfiguration->groups, configSetting->name, strlen(configSetting->name), group);
+				HASH_FIND(hh, parent ? parent->children : PancakeConfiguration->groups, configSetting->name, strlen(configSetting->name), group);
 
 				// Fail if group does not exist
 				if(group == NULL) {
@@ -35,7 +35,7 @@ static UByte PancakeConfigurationCheckValue(PancakeConfigurationScope *scope, Pa
 				}
 			}
 
-			// Iterate through setting in group
+			// Iterate through settings in group
 			for(i = 0, setting = config_setting_get_elem(configSetting, i);
 				setting != NULL;
 				i++, setting = config_setting_get_elem(configSetting, i)) {
@@ -46,7 +46,7 @@ static UByte PancakeConfigurationCheckValue(PancakeConfigurationScope *scope, Pa
 		} break;
 		default: {
 			PancakeConfigurationSetting *setting;
-			PancakeConfigurationScopeValue *scopedValue = PancakeAllocate(sizeof(PancakeConfigurationScopeValue));
+			PancakeConfigurationScopeValue *scopedValue;
 
 			HASH_FIND(hh, parent ? parent->settings : PancakeConfiguration->settings, configSetting->name, strlen(configSetting->name), setting);
 
@@ -68,14 +68,49 @@ static UByte PancakeConfigurationCheckValue(PancakeConfigurationScope *scope, Pa
 				return 0;
 			}
 
-			// Add value to scope
-			scopedValue->setting = setting;
-			scopedValue->value = configSetting->value;
+			// Iterate through list
+			if(configSetting->type == CONFIG_TYPE_LIST && setting->listGroup) {
+				UInt16 i;
+				config_setting_t *childSetting;
 
-			DL_APPEND(scope->values, scopedValue);
+				for(i = 0, childSetting = config_setting_get_elem(configSetting, i);
+					childSetting != NULL;
+					i++, childSetting = config_setting_get_elem(configSetting, i)) {
+					config_setting_t *groupChildSetting;
 
-			if(!scope->isRootScope) {
-				setting->haveScopedValue = 1;
+					// Issue error when value is not a group
+					if(childSetting->type != CONFIG_TYPE_GROUP) {
+						PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Failed to parse configuration: Bad value for %s in %s on line %i", configSetting->name, childSetting->file, childSetting->line);
+						return 0;
+					}
+
+					// Call hook if available
+					if(setting->listGroup->hook && !setting->listGroup->hook(PANCAKE_CONFIGURATION_INIT, childSetting, &scope)) {
+						PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Failed to parse configuration: Hook failed for %s in %s on line %i", configSetting->name, childSetting->file, childSetting->line);
+						return 0;
+					}
+
+					for(i = 0, groupChildSetting = config_setting_get_elem(childSetting, i);
+						groupChildSetting != NULL;
+						i++, groupChildSetting = config_setting_get_elem(childSetting, i)) {
+						if(!PancakeConfigurationCheckValue(scope, setting->listGroup, groupChildSetting)) {
+							return 0;
+						}
+					}
+				}
+			}
+
+			if(setting->valuePtr != NULL) {
+				// Add value to scope
+				scopedValue = PancakeAllocate(sizeof(PancakeConfigurationScopeValue));
+				scopedValue->setting = setting;
+				scopedValue->value = configSetting->value;
+
+				DL_APPEND(scope->values, scopedValue);
+
+				if(!scope->isRootScope) {
+					setting->haveScopedValue = 1;
+				}
 			}
 
 			setting->haveValue = 1;
@@ -93,7 +128,7 @@ static void PancakeConfigurationLoadGroupDefaultValues(PancakeConfigurationGroup
 	for(setting = parent ? parent->settings : PancakeConfiguration->settings;
 		setting != NULL;
 		setting = setting->hh.next) {
-		if(!setting->haveValue) {
+		if(!setting->haveValue && setting->valuePtr != NULL) {
 			PancakeConfigurationScopeValue *value = PancakeAllocate(sizeof(PancakeConfigurationScopeValue*));
 
 			value->setting = setting;
@@ -164,7 +199,7 @@ static void PancakeConfigurationDestroyValue(PancakeConfigurationGroup *parent, 
 			config_setting_t *setting;
 
 			if(configSetting->name != NULL) {
-				HASH_FIND(hh, parent ? parent : PancakeConfiguration->groups, configSetting->name, strlen(configSetting->name), group);
+				HASH_FIND(hh, parent ? parent->children : PancakeConfiguration->groups, configSetting->name, strlen(configSetting->name), group);
 
 				// Call destruction hook if available
 				if(group->hook) {
@@ -188,6 +223,29 @@ static void PancakeConfigurationDestroyValue(PancakeConfigurationGroup *parent, 
 			if(setting->hook) {
 				setting->hook(PANCAKE_CONFIGURATION_DTOR, configSetting, NULL);
 			}
+
+			// Destroy list group
+			if(setting->type == CONFIG_TYPE_LIST && setting->listGroup) {
+				UInt16 i;
+				config_setting_t *childSetting;
+
+				for(i = 0, childSetting = config_setting_get_elem(configSetting, i);
+						childSetting != NULL;
+					i++, childSetting = config_setting_get_elem(configSetting, i)) {
+					config_setting_t *groupChildSetting;
+
+					// Call hook if available
+					if(setting->listGroup->hook && !setting->listGroup->hook(PANCAKE_CONFIGURATION_DTOR, childSetting, NULL)) {
+						PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Failed to parse configuration: Hook failed for %s in %s on line %i", configSetting->name, childSetting->file, childSetting->line);
+					}
+
+					for(i = 0, groupChildSetting = config_setting_get_elem(childSetting, i);
+						groupChildSetting != NULL;
+						i++, groupChildSetting = config_setting_get_elem(childSetting, i)) {
+						PancakeConfigurationDestroyValue(setting->listGroup, groupChildSetting);
+					}
+				}
+			}
 		} break;
 	}
 }
@@ -197,7 +255,34 @@ void PancakeConfigurationUnload() {
 
 	config_destroy(PancakeConfiguration->wrapper);
 	PancakeConfigurationDestroyScope(rootScope);
-	PancakeFree(rootScope);
+}
+
+static void PancakeConfigurationDestroyGroup(PancakeConfigurationGroup *group) {
+	PancakeConfigurationSetting *setting, *tmp;
+	PancakeConfigurationGroup *child, *tmp2;
+
+	if(group->isCopy) {
+		return;
+	}
+
+	HASH_ITER(hh, group->settings, setting, tmp) {
+		HASH_DEL(group->settings, setting);
+
+		if(setting->listGroup) {
+			PancakeConfigurationDestroyGroup(setting->listGroup);
+			PancakeFree(setting->listGroup);
+		}
+
+		PancakeFree(setting);
+	}
+
+	HASH_ITER(hh, group->children, child, tmp2) {
+		HASH_DEL(group->children, child);
+
+		PancakeConfigurationDestroyGroup(child);
+
+		PancakeFree(child);
+	}
 }
 
 void PancakeConfigurationDestroy() {
@@ -205,10 +290,7 @@ void PancakeConfigurationDestroy() {
 	PancakeConfigurationSetting *setting, *tmp2;
 
 	HASH_ITER(hh, PancakeConfiguration->groups, group, tmp) {
-		HASH_ITER(hh, group->settings, setting, tmp2) {
-			HASH_DEL(group->settings, setting);
-			PancakeFree(setting);
-		}
+		PancakeConfigurationDestroyGroup(group);
 
 		HASH_DEL(PancakeConfiguration->groups, group);
 		PancakeFree(group);
@@ -216,6 +298,12 @@ void PancakeConfigurationDestroy() {
 
 	HASH_ITER(hh, PancakeConfiguration->settings, setting, tmp2) {
 		HASH_DEL(PancakeConfiguration->settings, setting);
+
+		if(setting->listGroup) {
+			PancakeConfigurationDestroyGroup(setting->listGroup);
+			PancakeFree(setting->listGroup);
+		}
+
 		PancakeFree(setting);
 	}
 
@@ -230,6 +318,7 @@ PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationAddGroup(PancakeConfi
 	group->settings = NULL;
 	group->children = NULL;
 	group->hook = hook;
+	group->isCopy = 0;
 
 	if(parent == NULL) {
 		HASH_ADD_KEYPTR(hh, PancakeConfiguration->groups, name.value, name.length, group);
@@ -241,7 +330,34 @@ PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationAddGroup(PancakeConfi
 }
 
 PANCAKE_API void PancakeConfigurationAddGroupToGroup(PancakeConfigurationGroup *parent, PancakeConfigurationGroup *child) {
-	HASH_ADD_KEYPTR(hh, parent->children, child->name.value, child->name.length, child);
+	// We must copy the group in order to have it in two groups
+	PancakeConfigurationGroup *copy = PancakeConfigurationAddGroup(parent, child->name, child->hook);
+	copy->children = child->children;
+	copy->settings = child->settings;
+	copy->isCopy = 1;
+}
+
+static PancakeConfigurationGroup *PancakeConfigurationSearchForGroup(PancakeConfigurationGroup *group, String child) {
+	for(group = group ? group->children : PancakeConfiguration->groups; group != NULL; group = group->hh.next) {
+		if((child.length == group->name.length && !strcmp(child.value, group->name.value))
+		|| (group = PancakeConfigurationSearchForGroup(group, child))) {
+			return group;
+		}
+	}
+
+	return NULL;
+}
+
+PANCAKE_API void PancakeConfigurationAddGroupByName(PancakeConfigurationGroup *parent, String child) {
+	PancakeConfigurationGroup *group = PancakeConfigurationSearchForGroup(NULL, child);
+
+	if(group) {
+		// We must copy the group in order to have it in two groups
+		PancakeConfigurationGroup *copy = PancakeConfigurationAddGroup(parent, child, group->hook);
+		copy->children = group->children;
+		copy->settings = group->settings;
+		copy->isCopy = 1;
+	}
 }
 
 PANCAKE_API PancakeConfigurationSetting *PancakeConfigurationAddSetting(PancakeConfigurationGroup *group, String name, UByte type, void *valuePtr, UInt8 valueSize, config_value_t defaultValue, PancakeConfigurationHook hook) {
@@ -255,6 +371,7 @@ PANCAKE_API PancakeConfigurationSetting *PancakeConfigurationAddSetting(PancakeC
 	setting->defaultValue = defaultValue;
 	setting->haveScopedValue = 0;
 	setting->haveValue = 0;
+	setting->listGroup = NULL;
 
 	if(group == NULL) {
 		HASH_ADD_KEYPTR(hh, PancakeConfiguration->settings, name.value, name.length, setting);
@@ -265,12 +382,27 @@ PANCAKE_API PancakeConfigurationSetting *PancakeConfigurationAddSetting(PancakeC
 	return setting;
 }
 
+PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationListGroup(PancakeConfigurationSetting *setting, PancakeConfigurationHook hook) {
+	PancakeConfigurationGroup *group = PancakeAllocate(sizeof(PancakeConfigurationGroup));
+
+	group->name = (String) {};
+	group->settings = NULL;
+	group->children = NULL;
+	group->hook = hook;
+	group->isCopy = 0;
+
+	setting->listGroup = group;
+
+	return group;
+}
+
 /* Configuration scope functions */
 
 PANCAKE_API PancakeConfigurationScope *PancakeConfigurationAddScope() {
 	PancakeConfigurationScope *scope = PancakeAllocate(sizeof(PancakeConfigurationScope));
 
 	scope->values = NULL;
+	scope->isRootScope = 0;
 
 	return scope;
 }
@@ -305,6 +437,8 @@ PANCAKE_API void PancakeConfigurationDestroyScope(PancakeConfigurationScope *sco
 		DL_DELETE(scope->values, value);
 		PancakeFree(value);
 	}
+
+	PancakeFree(scope);
 }
 
 /* Built-in configuration hooks */
