@@ -60,6 +60,34 @@ PANCAKE_API void *_PancakeAllocate(Native size, Byte *file, Int32 line) {
 	return ptr;
 }
 
+PANCAKE_API void *_PancakeReallocate(void *ptr, Native size, Byte *file, Int32 line) {
+	PancakeAllocatedMemory *mem;
+	void *newPtr;
+
+	if(ptr == NULL) {
+		return _PancakeAllocate(size, file, line);
+	}
+
+	if(size == 0) {
+		_PancakeFree(ptr, file, line);
+		return NULL;
+	}
+
+	HASH_FIND(hh, allocated, &ptr, sizeof(void*), mem);
+	_PancakeAssert(mem != NULL, "Trying to reallocate invalid pointer", file, line);
+
+	newPtr = realloc(ptr, size);
+	_PancakeAssert(newPtr != NULL, "Out of memory", file, line);
+
+	mem->ptr = newPtr;
+	mem->size = size;
+
+	HASH_DEL(allocated, mem);
+	HASH_ADD(hh, allocated, ptr, sizeof(void*), mem);
+
+	return newPtr;
+}
+
 PANCAKE_API void _PancakeFree(void *ptr, Byte *file, Int32 line) {
 	PancakeAllocatedMemory *mem;
 

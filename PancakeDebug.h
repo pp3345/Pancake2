@@ -17,6 +17,7 @@ PANCAKE_API void _PancakeAssert(Native result, Byte *condition, Byte *file, Int3
 
 PANCAKE_API void *_PancakeAllocate(Native size, Byte *file, Int32 line);
 PANCAKE_API void _PancakeFree(void *ptr, Byte *file, Int32 line);
+PANCAKE_API void *_PancakeReallocate(void *ptr, Native size, Byte *file, Int32 line);
 PANCAKE_API Byte *_PancakeDuplicateString(Byte *string, Byte *file, Int32 line);
 PANCAKE_API Byte *_PancakeDuplicateStringLength(Byte *string, Int32 length, Byte *file, Int32 line);
 PANCAKE_API void PancakeDumpHeap();
@@ -35,6 +36,7 @@ typedef struct _PancakeAllocatedMemory {
 #	define PancakeDuplicateStringLength(string, length) _PancakeDuplicateStringLength(string, length, __FILE__, __LINE__)
 #	define PancakeDuplicateString(string) _PancakeDuplicateString(string, __FILE__, __LINE__)
 #	define PancakeFree(ptr) _PancakeFree(ptr, __FILE__, __LINE__)
+#	define PancakeReallocate(ptr, size) _PancakeReallocate(ptr, size, __FILE__, __LINE__)
 #	define PancakeDebug
 #else
 #	define PancakeAssert
@@ -43,6 +45,7 @@ typedef struct _PancakeAllocatedMemory {
 #	define PancakeDuplicateStringLength strndup
 #	define PancakeDuplicateString strdup
 #	define PancakeFree free
+#	define PancakeReallocate realloc
 #	define PancakeDebug if(0)
 #endif
 
