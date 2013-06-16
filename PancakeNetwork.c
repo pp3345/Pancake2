@@ -3,6 +3,70 @@
 #include "PancakeLogger.h"
 
 static PancakeServerArchitecture *architectures = NULL;
+static PancakeSocket **listenSockets = NULL;
+static UInt16 numListenSockets = 0;
+
+UByte PancakeNetworkActivate() {
+	UInt16 i;
+
+	if(!numListenSockets) {
+		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "No network interfaces configured");
+		return 0;
+	}
+
+	for(i = 0; i < numListenSockets; i++) {
+		PancakeSocket *sock = listenSockets[i];
+
+		// Start listening on socket
+		if(listen(sock->fd, (Int32) sock->backlog) == -1) {
+			Byte *name = PancakeNetworkGetInterfaceName(sock->localAddress);
+
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't listen on %s: %s", name, strerror(errno));
+
+			PancakeFree(name);
+			return 0;
+		}
+
+		// Add socket to read socket list
+		PancakeNetworkAddReadSocket(sock);
+	}
+
+	PancakeFree(listenSockets);
+
+	return 1;
+}
+
+PANCAKE_API Byte *PancakeNetworkGetInterfaceName(struct sockaddr *addr) {
+	Byte *name;
+
+	switch(addr->sa_family) {
+		case AF_INET: {
+			Byte textAddress[INET_ADDRSTRLEN + 1];
+
+			inet_ntop(AF_INET, &((struct sockaddr_in*) addr)->sin_addr, textAddress, INET_ADDRSTRLEN);
+
+			// IPv4:<address>:<port>
+			name = PancakeAllocate(sizeof("IPv4::12345") + INET_ADDRSTRLEN);
+			sprintf(name, "IPv4:%s:%i", textAddress, (Int32) ((struct sockaddr_in*) addr)->sin_port);
+		} break;
+		case AF_INET6: {
+			Byte textAddress[INET6_ADDRSTRLEN + 1];
+
+			inet_ntop(AF_INET6, &((struct sockaddr_in6*) addr)->sin6_addr, textAddress, INET6_ADDRSTRLEN);
+
+			// IPv6:[<address>]:<port>
+			name = PancakeAllocate(sizeof("IPv6:[]:12345") + INET_ADDRSTRLEN);
+			sprintf(name, "IPv6:[%s]:%i", textAddress, (Int32) ((struct sockaddr_in6*) addr)->sin6_port);
+		} break;
+		case AF_UNIX: {
+			// UNIX:<address>
+			name = PancakeAllocate(sizeof("UNIX:") + sizeof(((struct sockaddr_un*) addr)->sun_path));
+			sprintf(name, "UNIX:%s", ((struct sockaddr_un*) addr)->sun_path);
+		} break;
+	}
+
+	return name;
+}
 
 PANCAKE_API void PancakeRegisterServerArchitecture(PancakeServerArchitecture *arch) {
 	HASH_ADD_KEYPTR(hh, architectures, arch->name.value, arch->name.length, arch);
@@ -26,6 +90,8 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 			socket->onRemoteHangup = NULL;
 			socket->readBuffer = NULL;
 			socket->writeBuffer = NULL;
+			socket->backlog = 0;
+			socket->flags = 0;
 
 			socket->localAddress->sa_family = 0;
 			memset(socket->localAddress->sa_data, 0, sizeof(socket->localAddress->sa_data));
@@ -102,6 +168,11 @@ static UByte PancakeNetworkInterfaceTryBind(PancakeSocket *socket) {
 		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't bind to socket: %s", strerror(errno));
 		return 0;
 	}
+
+	// Add socket for later activation
+	numListenSockets++;
+	listenSockets = PancakeReallocate(listenSockets, numListenSockets * sizeof(PancakeSocket*));
+	listenSockets[numListenSockets - 1] = socket;
 
 	return 1;
 }

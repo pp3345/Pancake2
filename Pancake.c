@@ -105,6 +105,16 @@ Int32 main(Int32 argc, Byte **argv) {
 		i++;
 	}
 
+	// Initialize server architecture
+	if(PancakeMainConfiguration.serverArchitecture->initialize) {
+		PancakeMainConfiguration.serverArchitecture->initialize();
+	}
+
+	// Activate sockets
+	if(!PancakeNetworkActivate()) {
+		exit(3);
+	}
+
 	// Unload configuration and free memory
 	PancakeConfigurationUnload();
 	PancakeConfigurationDestroy();
