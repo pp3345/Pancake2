@@ -201,10 +201,6 @@ static void PancakeConfigurationDestroyValue(PancakeConfigurationGroup *parent, 
 			if(configSetting->name != NULL) {
 				HASH_FIND(hh, parent ? parent->children : PancakeConfiguration->groups, configSetting->name, strlen(configSetting->name), group);
 
-				// Call destruction hook if available
-				if(group->hook) {
-					group->hook(PANCAKE_CONFIGURATION_DTOR, configSetting, NULL);
-				}
 			}
 
 			// Iterate through settings in group
@@ -213,16 +209,16 @@ static void PancakeConfigurationDestroyValue(PancakeConfigurationGroup *parent, 
 				i++, setting = config_setting_get_elem(configSetting, i)) {
 				PancakeConfigurationDestroyValue(group, setting);
 			}
+
+			// Call destruction hook if available
+			if(group && group->hook) {
+				group->hook(PANCAKE_CONFIGURATION_DTOR, configSetting, NULL);
+			}
 		} break;
 		default: {
 			PancakeConfigurationSetting *setting;
 
 			HASH_FIND(hh, parent ? parent->settings : PancakeConfiguration->settings, configSetting->name, strlen(configSetting->name), setting);
-
-			// Call destruction hook if available
-			if(setting->hook) {
-				setting->hook(PANCAKE_CONFIGURATION_DTOR, configSetting, NULL);
-			}
 
 			// Destroy list group
 			if(setting->type == CONFIG_TYPE_LIST && setting->listGroup) {
@@ -234,17 +230,22 @@ static void PancakeConfigurationDestroyValue(PancakeConfigurationGroup *parent, 
 					i++, childSetting = config_setting_get_elem(configSetting, i)) {
 					config_setting_t *groupChildSetting;
 
-					// Call hook if available
-					if(setting->listGroup->hook) {
-						setting->listGroup->hook(PANCAKE_CONFIGURATION_DTOR, childSetting, NULL);
-					}
-
 					for(i = 0, groupChildSetting = config_setting_get_elem(childSetting, i);
 						groupChildSetting != NULL;
 						i++, groupChildSetting = config_setting_get_elem(childSetting, i)) {
 						PancakeConfigurationDestroyValue(setting->listGroup, groupChildSetting);
 					}
+
+					// Call hook if available
+					if(setting->listGroup->hook) {
+						setting->listGroup->hook(PANCAKE_CONFIGURATION_DTOR, childSetting, NULL);
+					}
 				}
+			}
+
+			// Call destruction hook if available
+			if(setting->hook) {
+				setting->hook(PANCAKE_CONFIGURATION_DTOR, configSetting, NULL);
 			}
 		} break;
 	}
