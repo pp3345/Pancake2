@@ -1,4 +1,5 @@
 #include "PancakeNetwork.h"
+#include "PancakeConfiguration.h"
 #include "PancakeLogger.h"
 
 static PancakeServerArchitecture *architectures = NULL;
@@ -9,6 +10,231 @@ PANCAKE_API void PancakeRegisterServerArchitecture(PancakeServerArchitecture *ar
 
 void PancakeNetworkUnload() {
 	HASH_CLEAR(hh, architectures);
+}
+
+PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	switch(step) {
+		case PANCAKE_CONFIGURATION_INIT: {
+			PancakeSocket *socket = PancakeAllocate(sizeof(PancakeSocket));
+
+			socket->data = NULL;
+			socket->fd = -1;
+			socket->localAddress = PancakeAllocate(sizeof(struct sockaddr));
+			socket->remoteAddress = NULL;
+			socket->onRead = NULL;
+			socket->onWrite = NULL;
+			socket->onRemoteHangup = NULL;
+			socket->readBuffer = NULL;
+			socket->writeBuffer = NULL;
+
+			socket->localAddress->sa_family = 0;
+			memset(socket->localAddress->sa_data, 0, sizeof(socket->localAddress->sa_data));
+
+			setting->hook = (void*) socket;
+		} break;
+		case PANCAKE_CONFIGURATION_DTOR: {
+			PancakeSocket *socket = (PancakeSocket*) setting->hook;
+
+			PancakeFree(socket->localAddress);
+			PancakeFree(socket);
+
+			// Make library happy
+			setting->hook = NULL;
+		} break;
+	}
+
+	return 1;
+}
+
+static UByte PancakeNetworkInterfaceNetworkConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	if(step == PANCAKE_CONFIGURATION_INIT) {
+		PancakeSocket *sock = (PancakeSocket*) setting->parent->hook;
+
+		// Check family
+		if(!strcmp(setting->value.sval, "ip4")) {
+			struct sockaddr_in *addr = (struct sockaddr_in*) sock->localAddress;
+
+			sock->localAddress->sa_family = AF_INET;
+			addr->sin_family = AF_INET;
+		} else if(!strcmp(setting->value.sval, "ip6")) {
+			struct sockaddr_in6 *addr = (struct sockaddr_in6*) sock->localAddress;
+
+			sock->localAddress->sa_family = AF_INET6;
+			addr->sin6_family = AF_INET6;
+		} else if(!strcmp(setting->value.sval, "unix")) {
+			struct sockaddr_un *addr = (struct sockaddr_un*) sock->localAddress;
+
+			sock->localAddress->sa_family = AF_UNIX;
+			addr->sun_family = AF_UNIX;
+		} else {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Invalid network family %s", setting->value.sval);
+			return 0;
+		}
+
+		sock->fd = socket(sock->localAddress->sa_family, SOCK_STREAM, sock->localAddress->sa_family == AF_UNIX ? 0 : SOL_TCP);
+
+		if(sock->fd == -1) {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't create socket: %s", strerror(errno));
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static UByte PancakeNetworkInterfaceTryBind(PancakeSocket *socket) {
+	int retval;
+
+	// Try binding to interface
+	switch(socket->localAddress->sa_family) {
+		case AF_INET:
+			retval = bind(socket->fd, (struct sockaddr_in*) socket->localAddress, sizeof(struct sockaddr_in));
+			break;
+		case AF_INET6:
+			retval = bind(socket->fd, (struct sockaddr_in6*) socket->localAddress, sizeof(struct sockaddr_in6));
+			break;
+		case AF_UNIX:
+			retval = bind(socket->fd, (struct sockaddr_un*) socket->localAddress, SUN_LEN((struct sockaddr_un*) socket->localAddress));
+			break;
+	}
+
+	if(retval == -1) {
+		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't bind to socket: %s", strerror(errno));
+		return 0;
+	}
+
+	return 1;
+}
+
+static UByte PancakeNetworkInterfaceAddressConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	PancakeSocket *socket;
+
+	switch(step) {
+		case PANCAKE_CONFIGURATION_INIT: {
+			socket = (PancakeSocket*) setting->parent->hook;
+
+			if(!socket->localAddress->sa_family) {
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Network family must be set before address");
+				return 0;
+			}
+
+			switch(socket->localAddress->sa_family) {
+				case AF_INET: {
+					struct sockaddr_in *addr = (struct sockaddr_in*) socket->localAddress;
+					int retval = inet_pton(AF_INET, setting->value.sval, &addr->sin_addr);
+
+					switch(retval) {
+						case -1:
+							PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Network address can not be parsed: %s", strerror(errno));
+							return 0;
+						case 0:
+							PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Invalid IPv4 address: %s", setting->value.sval);
+							return 0;
+					}
+
+					// Try binding now if address data is complete
+					if(addr->sin_port && !PancakeNetworkInterfaceTryBind(socket)) {
+						return 0;
+					}
+				} break;
+				case AF_INET6: {
+					struct sockaddr_in6 *addr = (struct sockaddr_in6*) socket->localAddress;
+					int retval = inet_pton(AF_INET6, setting->value.sval, &addr->sin6_addr);
+
+					switch(retval) {
+						case -1:
+							PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Network address can not be parsed: %s", strerror(errno));
+							return 0;
+						case 0:
+							PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Invalid IPv6 address: %s", setting->value.sval);
+							return 0;
+					}
+
+					// Try binding now if address data is complete
+					if(addr->sin6_port && !PancakeNetworkInterfaceTryBind(socket)) {
+						return 0;
+					}
+				} break;
+				case AF_UNIX: {
+					struct sockaddr_un *addr = (struct sockaddr_un*) socket->localAddress;
+
+					if(strlen(setting->value.sval) > sizeof(addr->sun_path) - 1) {
+						PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "UNIX path %s is longer than the allowed limit of %i characters", setting->value.sval, sizeof(addr->sun_path) - 1);
+						return 0;
+					}
+
+					memcpy(addr->sun_path, setting->value.sval, strlen(setting->value.sval) + 1);
+
+					if(!PancakeNetworkInterfaceTryBind(socket)) {
+						return 0;
+					}
+				} break;
+			}
+		} break;
+	}
+
+	return 1;
+}
+
+static UByte PancakeNetworkInterfacePortConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	PancakeSocket *socket;
+
+	switch(step) {
+		case PANCAKE_CONFIGURATION_INIT: {
+			socket = (PancakeSocket*) setting->parent->hook;
+
+			if(!socket->localAddress->sa_family) {
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Network family must be set before port");
+				return 0;
+			}
+
+			// TCP supports only ports from 1 - 65535
+			if(setting->value.ival < 1 || setting->value.ival > 65535) {
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Value out of range");
+				return 0;
+			}
+
+			switch(socket->localAddress->sa_family) {
+				case AF_INET: {
+					struct sockaddr_in *addr = (struct sockaddr_in*) socket->localAddress;
+
+					addr->sin_port = setting->value.ival;
+
+					if(addr->sin_addr.s_addr && !PancakeNetworkInterfaceTryBind(socket)) {
+						return 0;
+					}
+				} break;
+				case AF_INET6: {
+					struct sockaddr_in6 *addr = (struct sockaddr_in6*) socket->localAddress;
+
+					addr->sin6_port = setting->value.ival;
+
+					if(addr->sin6_addr.s6_addr && !PancakeNetworkInterfaceTryBind(socket)) {
+						return 0;
+					}
+				} break;
+				case AF_UNIX: {
+					PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't set port on UNIX sockets");
+					return 0;
+				} break;
+			}
+		} break;
+	}
+
+	return 1;
+}
+
+PANCAKE_API PancakeConfigurationSetting *PancakeNetworkRegisterListenInterfaceGroup(PancakeConfigurationGroup *parent, PancakeConfigurationHook hook) {
+	PancakeConfigurationSetting *setting;
+	PancakeConfigurationGroup *group;
+
+	setting = PancakeConfigurationAddSetting(parent, (String) {"Interfaces", sizeof("Interfaces") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, NULL);
+	group = PancakeConfigurationListGroup(setting, hook);
+	PancakeConfigurationAddSetting(group, (String) {"Network", sizeof("Network") - 1}, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) "", PancakeNetworkInterfaceNetworkConfiguration);
+	PancakeConfigurationAddSetting(group, (String) {"Address", sizeof("Address") - 1}, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) "", PancakeNetworkInterfaceAddressConfiguration);
+	PancakeConfigurationAddSetting(group, (String) {"Port", sizeof("Port") - 1}, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeNetworkInterfacePortConfiguration);
+
+	return setting;
 }
 
 UByte PancakeConfigurationServerArchitecture(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
