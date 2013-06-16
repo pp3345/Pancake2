@@ -77,6 +77,7 @@ static UByte PancakeConfigurationCheckValue(PancakeConfigurationScope *scope, Pa
 					childSetting != NULL;
 					i++, childSetting = config_setting_get_elem(configSetting, i)) {
 					config_setting_t *groupChildSetting;
+					UInt16 i2;
 
 					// Issue error when value is not a group
 					if(childSetting->type != CONFIG_TYPE_GROUP) {
@@ -90,9 +91,9 @@ static UByte PancakeConfigurationCheckValue(PancakeConfigurationScope *scope, Pa
 						return 0;
 					}
 
-					for(i = 0, groupChildSetting = config_setting_get_elem(childSetting, i);
+					for(i2 = 0, groupChildSetting = config_setting_get_elem(childSetting, i2);
 						groupChildSetting != NULL;
-						i++, groupChildSetting = config_setting_get_elem(childSetting, i)) {
+						i2++, groupChildSetting = config_setting_get_elem(childSetting, i2)) {
 						if(!PancakeConfigurationCheckValue(scope, setting->listGroup, groupChildSetting)) {
 							return 0;
 						}
@@ -200,7 +201,6 @@ static void PancakeConfigurationDestroyValue(PancakeConfigurationGroup *parent, 
 
 			if(configSetting->name != NULL) {
 				HASH_FIND(hh, parent ? parent->children : PancakeConfiguration->groups, configSetting->name, strlen(configSetting->name), group);
-
 			}
 
 			// Iterate through settings in group
@@ -226,13 +226,14 @@ static void PancakeConfigurationDestroyValue(PancakeConfigurationGroup *parent, 
 				config_setting_t *childSetting;
 
 				for(i = 0, childSetting = config_setting_get_elem(configSetting, i);
-						childSetting != NULL;
+					childSetting != NULL;
 					i++, childSetting = config_setting_get_elem(configSetting, i)) {
 					config_setting_t *groupChildSetting;
+					UInt16 i2;
 
-					for(i = 0, groupChildSetting = config_setting_get_elem(childSetting, i);
+					for(i2 = 0, groupChildSetting = config_setting_get_elem(childSetting, i2);
 						groupChildSetting != NULL;
-						i++, groupChildSetting = config_setting_get_elem(childSetting, i)) {
+						i2++, groupChildSetting = config_setting_get_elem(childSetting, i2)) {
 						PancakeConfigurationDestroyValue(setting->listGroup, groupChildSetting);
 					}
 
