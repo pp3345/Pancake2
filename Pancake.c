@@ -93,6 +93,18 @@ Int32 main(Int32 argc, Byte **argv) {
 		exit(3);
 	}
 
+	// Run configuration module hooks
+	i = 0;
+
+	while((module = PancakeModules[i])) {
+		if(module->configurationLoaded && !module->configurationLoaded()) {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Configuration check of module %s failed", module->name);
+			exit(2);
+		}
+
+		i++;
+	}
+
 	// Unload configuration and free memory
 	PancakeConfigurationUnload();
 	PancakeConfigurationDestroy();

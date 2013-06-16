@@ -8,6 +8,7 @@ PancakeModule PancakeLinuxPoll = {
 		"LinuxPoll",
 		PancakeLinuxPollInitialize,
 		NULL,
+		NULL,
 		0
 };
 

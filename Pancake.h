@@ -10,6 +10,7 @@
 
 /* System includes */
 #include <stdlib.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -18,6 +19,13 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+
+#include <arpa/inet.h>
 
 /* uthash library */
 #include <uthash.h>
@@ -81,6 +89,7 @@ typedef struct _PancakeWorker {
 typedef struct _PancakeModule {
 	UByte *name;
 	PancakeModuleInitializeFunction init;
+	PancakeModuleInitializeFunction configurationLoaded;
 	PancakeModuleInitializeFunction shutdown;
 
 	UByte intialized;
