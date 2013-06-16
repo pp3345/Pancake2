@@ -101,6 +101,10 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 		case PANCAKE_CONFIGURATION_DTOR: {
 			PancakeSocket *socket = (PancakeSocket*) setting->hook;
 
+			if(socket->fd != -1) {
+				close(socket->fd);
+			}
+
 			PancakeFree(socket->localAddress);
 			PancakeFree(socket);
 
