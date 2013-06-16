@@ -6,10 +6,12 @@
 
 #ifdef PANCAKE_LINUX_POLL
 
-extern PancakeModule PancakeLinuxPoll;
+#include <sys/epoll.h>
 
-UByte PancakeLinuxPollInitialize();
-void PancakeLinuxPollWait();
+#define PANCAKE_LINUX_POLL_FD 1 << 10
+
+extern PancakeModule PancakeLinuxPoll;
+extern Int32 PancakeLinuxPollFD;
 
 #endif
 #endif
