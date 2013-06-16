@@ -403,6 +403,7 @@ PANCAKE_API PancakeConfigurationScope *PancakeConfigurationAddScope() {
 
 	scope->values = NULL;
 	scope->isRootScope = 0;
+	scope->data = NULL;
 
 	return scope;
 }
