@@ -57,7 +57,7 @@ static UByte PancakeLinuxPollServerInitialize() {
 }
 
 static inline void PancakeLinuxPollAddReadSocket(PancakeSocket *socket) {
-	if(socket->flags & PANCAKE_LINUX_POLL_FD) {
+	if(socket->flags & EPOLLRDHUP) {
 		if(!(socket->flags & EPOLLIN)) {
 			struct epoll_event event;
 
@@ -70,7 +70,7 @@ static inline void PancakeLinuxPollAddReadSocket(PancakeSocket *socket) {
 	} else {
 		struct epoll_event event;
 
-		socket->flags |= EPOLLIN;
+		socket->flags |= EPOLLIN | EPOLLRDHUP;
 		event.events = EPOLLIN | EPOLLRDHUP;
 		event.data.ptr = (void*) socket;
 
@@ -79,7 +79,7 @@ static inline void PancakeLinuxPollAddReadSocket(PancakeSocket *socket) {
 }
 
 static inline void PancakeLinuxPollAddWriteSocket(PancakeSocket *socket) {
-	if(socket->flags & PANCAKE_LINUX_POLL_FD) {
+	if(socket->flags & EPOLLRDHUP) {
 		if(!(socket->flags & EPOLLOUT)) {
 			struct epoll_event event;
 
@@ -92,7 +92,7 @@ static inline void PancakeLinuxPollAddWriteSocket(PancakeSocket *socket) {
 	} else {
 		struct epoll_event event;
 
-		socket->flags |= EPOLLOUT | PANCAKE_LINUX_POLL_FD;
+		socket->flags |= EPOLLOUT | EPOLLRDHUP;
 		event.events = EPOLLOUT | EPOLLRDHUP;
 		event.data.ptr = (void*) socket;
 
@@ -101,7 +101,7 @@ static inline void PancakeLinuxPollAddWriteSocket(PancakeSocket *socket) {
 }
 
 static inline void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket) {
-	if(socket->flags & PANCAKE_LINUX_POLL_FD) {
+	if(socket->flags & EPOLLRDHUP) {
 		if((socket->flags & (EPOLLOUT | EPOLLIN)) != (EPOLLOUT | EPOLLIN)) {
 			struct epoll_event event;
 
@@ -114,7 +114,7 @@ static inline void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket) {
 	} else {
 		struct epoll_event event;
 
-		socket->flags |= EPOLLOUT | EPOLLIN | PANCAKE_LINUX_POLL_FD;
+		socket->flags |= EPOLLOUT | EPOLLIN | EPOLLRDHUP;
 		event.events = EPOLLOUT | EPOLLIN | EPOLLRDHUP;
 		event.data.ptr = (void*) socket;
 
