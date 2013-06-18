@@ -13,7 +13,7 @@ typedef void (*PancakeSocketHandler)(PancakeSocket *socket);
 
 typedef struct _PancakeSocket {
 	Int32 fd;
-	UByte flags;
+	UInt16 flags;
 	UInt16 backlog;
 	PancakeNetworkEventHandler onRead;
 	PancakeNetworkEventHandler onWrite;
