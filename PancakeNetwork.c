@@ -169,7 +169,11 @@ static UByte PancakeNetworkInterfaceTryBind(PancakeSocket *socket) {
 	}
 
 	if(retval == -1) {
-		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't bind to socket: %s", strerror(errno));
+		Byte *name = PancakeNetworkGetInterfaceName(socket->localAddress);
+
+		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't bind to interface %s: %s", name, strerror(errno));
+		PancakeFree(name);
+
 		return 0;
 	}
 
