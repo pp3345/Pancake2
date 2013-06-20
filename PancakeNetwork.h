@@ -53,6 +53,8 @@ PANCAKE_API PancakeConfigurationSetting *PancakeNetworkRegisterListenInterfaceGr
 PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
 PANCAKE_API Byte *PancakeNetworkGetInterfaceName(struct sockaddr *addr);
 
+PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *sock);
+
 #define PancakeNetworkAddReadSocket(socket) (PancakeMainConfiguration.serverArchitecture->addReadSocket(socket))
 #define PancakeNetworkAddWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->addWriteSocket(socket))
 #define PancakeNetworkAddReadWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->addReadWriteSocket(socket))

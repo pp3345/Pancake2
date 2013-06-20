@@ -352,3 +352,37 @@ UByte PancakeConfigurationServerArchitecture(UByte step, config_setting_t *setti
 
 	return 1;
 }
+
+PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *sock) {
+	Int32 fd, addrLen = sizeof(struct sockaddr);
+	struct sockaddr addr;
+	PancakeSocket *client;
+#ifndef HAVE_ACCEPT4
+	Int32 flags;
+#endif
+
+#ifdef HAVE_ACCEPT4
+	// Accelerated version for Linux
+	fd = accept4(sock->fd, &addr, &addrLen, SOCK_NONBLOCK);
+#else
+	fd = accept(sock->fd, &addr, &addrLen);
+#endif
+
+	if(fd == -1) {
+		return NULL;
+	}
+
+#ifndef HAVE_ACCEPT4
+	flags = fcntl(fd, F_GETFL);
+	flags |= O_NONBLOCK;
+	fcntl(fd, F_SETFL, flags);
+#endif
+
+	client = PancakeAllocate(sizeof(PancakeSocket));
+	client->fd = fd;
+	client->localAddress = sock->localAddress;
+	client->remoteAddress = addr;
+	client->flags = 0;
+
+	return client;
+}
