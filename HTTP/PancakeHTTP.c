@@ -16,6 +16,9 @@ PancakeHTTPVirtualHostIndex *PancakeHTTPVirtualHosts = NULL;
 PancakeHTTPVirtualHost *PancakeHTTPDefaultVirtualHost = NULL;
 PancakeHTTPConfigurationStructure PancakeHTTPConfiguration;
 
+/* Forward declarations */
+static void PancakeHTTPInitializeConnection(PancakeSocket *sock);
+
 static UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeHTTPVirtualHost *vhost;
 
@@ -124,6 +127,10 @@ static UByte PancakeHTTPDocumentRootConfiguration(UByte step, config_setting_t *
 
 static UByte PancakeHTTPNetworkInterfaceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(PancakeNetworkInterfaceConfiguration(step, setting, scope)) {
+		PancakeSocket *sock = (PancakeSocket*) setting->hook;
+
+		sock->onRead = PancakeHTTPInitializeConnection;
+
 		return 1;
 	}
 
@@ -148,6 +155,14 @@ UByte PancakeHTTPInitialize() {
 	PancakeConfigurationAddGroupByName(group, (String) {"Logging", sizeof("Logging") - 1});
 
 	return 1;
+}
+
+static void PancakeHTTPInitializeConnection(PancakeSocket *sock) {
+	PancakeSocket *client = PancakeNetworkAcceptConnection(sock);
+
+	if(client == NULL) {
+		return;
+	}
 }
 
 #endif
