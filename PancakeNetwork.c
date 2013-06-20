@@ -84,7 +84,6 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 			socket->data = NULL;
 			socket->fd = -1;
 			socket->localAddress = PancakeAllocate(sizeof(struct sockaddr));
-			socket->remoteAddress = NULL;
 			socket->onRead = NULL;
 			socket->onWrite = NULL;
 			socket->onRemoteHangup = NULL;

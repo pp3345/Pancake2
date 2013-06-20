@@ -22,7 +22,7 @@ typedef struct _PancakeSocket {
 	String *writeBuffer;
 
 	struct sockaddr *localAddress;
-	struct sockaddr *remoteAddress;
+	struct sockaddr remoteAddress;
 
 	void *data;
 } PancakeSocket;
