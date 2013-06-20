@@ -21,8 +21,8 @@ typedef struct _PancakeSocket {
 	String *readBuffer;
 	String *writeBuffer;
 
-	struct sockaddr localAddress;
-	struct sockaddr remoteAddress;
+	struct sockaddr *localAddress;
+	struct sockaddr *remoteAddress;
 
 	void *data;
 } PancakeSocket;
