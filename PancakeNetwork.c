@@ -55,7 +55,7 @@ PANCAKE_API Byte *PancakeNetworkGetInterfaceName(struct sockaddr *addr) {
 			inet_ntop(AF_INET6, &((struct sockaddr_in6*) addr)->sin6_addr, textAddress, INET6_ADDRSTRLEN);
 
 			// IPv6:[<address>]:<port>
-			name = PancakeAllocate(sizeof("IPv6:[]:12345") + INET_ADDRSTRLEN);
+			name = PancakeAllocate(sizeof("IPv6:[]:12345") + INET6_ADDRSTRLEN);
 			sprintf(name, "IPv6:[%s]:%i", textAddress, (Int32) ((struct sockaddr_in6*) addr)->sin6_port);
 		} break;
 		case AF_UNIX: {
