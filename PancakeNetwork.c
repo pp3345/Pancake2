@@ -19,7 +19,7 @@ UByte PancakeNetworkActivate() {
 
 		// Start listening on socket
 		if(listen(sock->fd, (Int32) sock->backlog) == -1) {
-			Byte *name = PancakeNetworkGetInterfaceName(sock->localAddress);
+			Byte *name = PancakeNetworkGetInterfaceName(&sock->localAddress);
 
 			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't listen on %s: %s", name, strerror(errno));
 
@@ -83,8 +83,6 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 
 			socket->data = NULL;
 			socket->fd = -1;
-			socket->localAddress = PancakeAllocate(sizeof(struct sockaddr));
-			socket->remoteAddress = NULL;
 			socket->onRead = NULL;
 			socket->onWrite = NULL;
 			socket->onRemoteHangup = NULL;
@@ -93,8 +91,8 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 			socket->backlog = 1;
 			socket->flags = 0;
 
-			socket->localAddress->sa_family = 0;
-			memset(socket->localAddress->sa_data, 0, sizeof(socket->localAddress->sa_data));
+			socket->localAddress.sa_family = 0;
+			memset(socket->localAddress.sa_data, 0, sizeof(socket->localAddress.sa_data));
 
 			setting->hook = (void*) socket;
 		} break;
@@ -105,7 +103,6 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 				close(socket->fd);
 			}
 
-			PancakeFree(socket->localAddress);
 			PancakeFree(socket);
 
 			// Make library happy
@@ -122,26 +119,17 @@ static UByte PancakeNetworkInterfaceNetworkConfiguration(UByte step, config_sett
 
 		// Check family
 		if(!strcmp(setting->value.sval, "ip4")) {
-			struct sockaddr_in *addr = (struct sockaddr_in*) sock->localAddress;
-
-			sock->localAddress->sa_family = AF_INET;
-			addr->sin_family = AF_INET;
+			sock->localAddress.sa_family = AF_INET;
 		} else if(!strcmp(setting->value.sval, "ip6")) {
-			struct sockaddr_in6 *addr = (struct sockaddr_in6*) sock->localAddress;
-
-			sock->localAddress->sa_family = AF_INET6;
-			addr->sin6_family = AF_INET6;
+			sock->localAddress.sa_family = AF_INET6;
 		} else if(!strcmp(setting->value.sval, "unix")) {
-			struct sockaddr_un *addr = (struct sockaddr_un*) sock->localAddress;
-
-			sock->localAddress->sa_family = AF_UNIX;
-			addr->sun_family = AF_UNIX;
+			sock->localAddress.sa_family = AF_UNIX;
 		} else {
 			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Invalid network family %s", setting->value.sval);
 			return 0;
 		}
 
-		sock->fd = socket(sock->localAddress->sa_family, SOCK_STREAM, sock->localAddress->sa_family == AF_UNIX ? 0 : SOL_TCP);
+		sock->fd = socket(sock->localAddress.sa_family, SOCK_STREAM, sock->localAddress.sa_family == AF_UNIX ? 0 : SOL_TCP);
 
 		if(sock->fd == -1) {
 			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't create socket: %s", strerror(errno));
@@ -156,20 +144,20 @@ static UByte PancakeNetworkInterfaceTryBind(PancakeSocket *socket) {
 	int retval;
 
 	// Try binding to interface
-	switch(socket->localAddress->sa_family) {
+	switch(socket->localAddress.sa_family) {
 		case AF_INET:
-			retval = bind(socket->fd, (struct sockaddr_in*) socket->localAddress, sizeof(struct sockaddr_in));
+			retval = bind(socket->fd, &socket->localAddress, sizeof(struct sockaddr_in));
 			break;
 		case AF_INET6:
-			retval = bind(socket->fd, (struct sockaddr_in6*) socket->localAddress, sizeof(struct sockaddr_in6));
+			retval = bind(socket->fd, &socket->localAddress, sizeof(struct sockaddr_in6));
 			break;
 		case AF_UNIX:
-			retval = bind(socket->fd, (struct sockaddr_un*) socket->localAddress, SUN_LEN((struct sockaddr_un*) socket->localAddress));
+			retval = bind(socket->fd, &socket->localAddress, SUN_LEN((struct sockaddr_un*) &socket->localAddress));
 			break;
 	}
 
 	if(retval == -1) {
-		Byte *name = PancakeNetworkGetInterfaceName(socket->localAddress);
+		Byte *name = PancakeNetworkGetInterfaceName(&socket->localAddress);
 
 		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't bind to interface %s: %s", name, strerror(errno));
 		PancakeFree(name);
@@ -190,16 +178,18 @@ static UByte PancakeNetworkInterfaceAddressConfiguration(UByte step, config_sett
 
 	switch(step) {
 		case PANCAKE_CONFIGURATION_INIT: {
+			struct sockaddr *localAddressPtr = &socket->localAddress;
+
 			socket = (PancakeSocket*) setting->parent->hook;
 
-			if(!socket->localAddress->sa_family) {
+			if(!socket->localAddress.sa_family) {
 				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Network family must be set before address");
 				return 0;
 			}
 
-			switch(socket->localAddress->sa_family) {
+			switch(socket->localAddress.sa_family) {
 				case AF_INET: {
-					struct sockaddr_in *addr = (struct sockaddr_in*) socket->localAddress;
+					struct sockaddr_in *addr = (struct sockaddr_in*) localAddressPtr;
 					int retval = inet_pton(AF_INET, setting->value.sval, &addr->sin_addr);
 
 					switch(retval) {
@@ -217,7 +207,7 @@ static UByte PancakeNetworkInterfaceAddressConfiguration(UByte step, config_sett
 					}
 				} break;
 				case AF_INET6: {
-					struct sockaddr_in6 *addr = (struct sockaddr_in6*) socket->localAddress;
+					struct sockaddr_in6 *addr = (struct sockaddr_in6*) localAddressPtr;
 					int retval = inet_pton(AF_INET6, setting->value.sval, &addr->sin6_addr);
 
 					switch(retval) {
@@ -235,7 +225,7 @@ static UByte PancakeNetworkInterfaceAddressConfiguration(UByte step, config_sett
 					}
 				} break;
 				case AF_UNIX: {
-					struct sockaddr_un *addr = (struct sockaddr_un*) socket->localAddress;
+					struct sockaddr_un *addr = (struct sockaddr_un*) localAddressPtr;
 
 					if(strlen(setting->value.sval) > sizeof(addr->sun_path) - 1) {
 						PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "UNIX path %s is longer than the allowed limit of %i characters", setting->value.sval, sizeof(addr->sun_path) - 1);
@@ -260,9 +250,11 @@ static UByte PancakeNetworkInterfacePortConfiguration(UByte step, config_setting
 
 	switch(step) {
 		case PANCAKE_CONFIGURATION_INIT: {
+			struct sockaddr *localAddressPtr = &socket->localAddress;
+
 			socket = (PancakeSocket*) setting->parent->hook;
 
-			if(!socket->localAddress->sa_family) {
+			if(!socket->localAddress.sa_family) {
 				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Network family must be set before port");
 				return 0;
 			}
@@ -273,9 +265,9 @@ static UByte PancakeNetworkInterfacePortConfiguration(UByte step, config_setting
 				return 0;
 			}
 
-			switch(socket->localAddress->sa_family) {
+			switch(socket->localAddress.sa_family) {
 				case AF_INET: {
-					struct sockaddr_in *addr = (struct sockaddr_in*) socket->localAddress;
+					struct sockaddr_in *addr = (struct sockaddr_in*) localAddressPtr;
 
 					addr->sin_port = htons(setting->value.ival);
 
@@ -284,7 +276,7 @@ static UByte PancakeNetworkInterfacePortConfiguration(UByte step, config_setting
 					}
 				} break;
 				case AF_INET6: {
-					struct sockaddr_in6 *addr = (struct sockaddr_in6*) socket->localAddress;
+					struct sockaddr_in6 *addr = (struct sockaddr_in6*) localAddressPtr;
 
 					addr->sin6_port = htons(setting->value.ival);
 
