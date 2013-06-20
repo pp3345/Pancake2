@@ -123,6 +123,32 @@ static inline void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket) {
 }
 
 static void PancakeLinuxPollWait() {
+	while(1) {
+		struct epoll_event events[32];
+		Int32 numEvents, i;
+
+		if((numEvents = epoll_wait(PancakeLinuxPollFD, events, 32, -1)) == -1) {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "epoll_wait failed: %s", strerror(errno));
+			return;
+		}
+
+		for(i = 0; i < numEvents; i++) {
+			PancakeSocket *sock = (PancakeSocket*) events[i].data.ptr;
+
+			switch(events[i].events) {
+				case EPOLLIN:
+					sock->onRead(sock);
+					break;
+				case EPOLLOUT:
+					sock->onWrite(sock);
+					break;
+				case EPOLLHUP:
+				case EPOLLRDHUP:
+					sock->onRemoteHangup(sock);
+					break;
+			}
+		}
+	}
 }
 
 #endif
