@@ -36,6 +36,8 @@ typedef struct _PancakeAllocatedMemory {
 	UT_hash_handle hh;
 } PancakeAllocatedMemory;
 
+#	define static
+
 #	define PancakeAssert(condition) _PancakeAssert(condition, #condition, __FILE__, __LINE__)
 #	define PancakeAllocate(size) _PancakeAllocate(size, __FILE__, __LINE__)
 #	define PancakeDuplicateStringLength(string, length) _PancakeDuplicateStringLength(string, length, __FILE__, __LINE__)
