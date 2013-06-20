@@ -43,6 +43,7 @@ AC_CHECK_HEADER([valgrind/valgrind.h], [AC_DEFINE([HAVE_VALGRIND_H], [], [Have v
 AC_CHECK_HEADER([ucontext.h], [AC_DEFINE([HAVE_UCONTEXT_H], [], [Have ucontext.h])])
 AC_CHECK_FUNC([sigaction], [AC_DEFINE([HAVE_SIGACTION], [], [Have sigaction()])])
 AC_CHECK_FUNC([vasprintf], [],  [AC_ERROR([vasprintf is not available on your system])])
+AC_CHECK_FUNC([accept4], [AC_DEFINE([HAVE_ACCEPT4], [], [Have accept4()])])
 
 if test -f "PancakeModules.c"; then
 	rm PancakeModules.c
