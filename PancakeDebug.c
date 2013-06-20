@@ -12,6 +12,42 @@
 
 static PancakeAllocatedMemory *allocated = NULL;
 
+#ifdef HAVE_PANCAKE_SIGSEGV
+void PancakeDebugHandleSegfault(Int32 signum, siginfo_t *info, void *context) {
+	ucontext_t *ucontext = (ucontext_t*) context;
+	void *array[50], *caller;
+	Native size, i;
+	Byte **strings;
+
+#ifdef PANCAKE_64
+	caller = (void*) ucontext->uc_mcontext.gregs[REG_RIP];
+#else
+	caller = (void*) ucontext->uc_mcontext.gregs[REG_EIP];
+#endif
+
+	printf("Segmentation fault at %p (called by %p)\n", info->si_addr, caller);
+	printf("Backtrace:\n");
+
+	size = backtrace(array, 50);
+
+	array[1] = caller;
+	strings = backtrace_symbols(array, size);
+
+	if(strings == NULL) {
+		exit(1);
+	}
+
+	for(i = 0; i < size; i++) {
+		printf("#%li %s\n", size - i, strings[i]);
+	}
+
+	free(strings);
+	printf("in worker %s\n", PancakeCurrentWorker.name.value);
+
+	exit(1);
+}
+#endif
+
 PANCAKE_API void _PancakeAssert(Native result, Byte *condition, Byte *file, Int32 line) {
 	if(!result) {
 		printf("Assertion failed: %s in file %s on line %i\n", condition, file, line);

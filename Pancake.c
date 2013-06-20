@@ -16,6 +16,24 @@ Int32 main(Int32 argc, Byte **argv) {
 	UByte haveDeferred = 0;
 	PancakeModule *module;
 
+	// Initialize segfault handling
+#if defined(HAVE_SIGACTION) && defined(HAVE_PANCAKE_SIGSEGV)
+	PancakeDebug {
+#ifdef HAVE_VALGRIND_H
+		if(!RUNNING_ON_VALGRIND) {
+#endif
+			struct sigaction action;
+
+			action.sa_sigaction = PancakeDebugHandleSegfault;
+			action.sa_flags = SA_RESTART | SA_SIGINFO;
+
+			sigaction(SIGSEGV, &action, NULL);
+#ifdef HAVE_VALGRIND_H
+		}
+#endif
+	}
+#endif
+
 	// Initialize global variables
 	PancakeCurrentWorker.name.value = "Master";
 	PancakeCurrentWorker.name.length = sizeof("Master") - 1;

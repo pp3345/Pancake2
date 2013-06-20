@@ -39,6 +39,9 @@ AC_CHECK_HEADER([uthash.h], [], [AC_ERROR([uthash.h not found])])
 AC_CHECK_HEADER([utlist.h], [], [AC_ERROR([utlist.h not found])])
 AC_CHECK_HEADER([execinfo.h], [AC_DEFINE([HAVE_EXECINFO_H], [], [Have execinfo.h])])
 AC_CHECK_HEADER([errno.h],  [], [AC_ERROR([errno.h not found])])
+AC_CHECK_HEADER([valgrind/valgrind.h], [AC_DEFINE([HAVE_VALGRIND_H], [], [Have valgrind/valgrind.h])])
+AC_CHECK_HEADER([ucontext.h], [AC_DEFINE([HAVE_UCONTEXT_H], [], [Have ucontext.h])])
+AC_CHECK_FUNC([sigaction], [AC_DEFINE([HAVE_SIGACTION], [], [Have sigaction()])])
 AC_CHECK_FUNC([vasprintf], [],  [AC_ERROR([vasprintf is not available on your system])])
 
 if test -f "PancakeModules.c"; then

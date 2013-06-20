@@ -7,6 +7,7 @@
 #endif
 
 #define _GNU_SOURCE
+#define __USE_GNU
 
 /* System includes */
 #include <stdlib.h>
@@ -16,6 +17,11 @@
 #include <string.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <signal.h>
+
+#ifdef HAVE_UCONTEXT_H
+#	include <ucontext.h>
+#endif
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -26,6 +32,11 @@
 #include <netinet/tcp.h>
 
 #include <arpa/inet.h>
+
+/* Valgrind */
+#ifdef HAVE_VALGRIND_H
+#	include <valgrind/valgrind.h>
+#endif
 
 /* uthash library */
 #include <uthash.h>
@@ -55,9 +66,11 @@ typedef unsigned long UNative;
 #	else
 #		error "Unknown size of long"
 #	endif
+#	define PANCAKE_64
 #else
 typedef int Native;
 typedef unsigned int UNative;
+#	define PANCAKE_32
 #endif
 
 typedef char Byte;
