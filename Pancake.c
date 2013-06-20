@@ -115,6 +115,53 @@ Int32 main(Int32 argc, Byte **argv) {
 		exit(3);
 	}
 
+	// Run workers
+	if(PancakeMainConfiguration.workers > 0) {
+		// Multithreaded mode
+		UInt16 i;
+
+		PancakeDebug {
+			PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Multithreaded mode enabled with %i workers", PancakeMainConfiguration.workers);
+		}
+
+		for(i = 1; i <= PancakeMainConfiguration.workers; i++) {
+			pid_t pid = fork();
+
+			if(pid == -1) {
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't fork: %s", strerror(errno));
+				exit(3);
+			} else if(pid) {
+				// Master
+			} else {
+				// Worker
+				PancakeCurrentWorker.name.value = PancakeAllocate(sizeof("Worker #65535"));
+				PancakeCurrentWorker.name.length = sprintf(PancakeCurrentWorker.name.value, "Worker #%i", i);
+
+				PancakeDebug {
+					PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "PID: %i", getpid());
+				}
+
+				// Run server
+				PancakeMainConfiguration.serverArchitecture->runServer();
+
+				PancakeFree(PancakeCurrentWorker.name.value);
+				goto shutdown;
+			}
+		}
+
+		while(1) {
+			sleep(1);
+		}
+	} else {
+		// Singlethreaded mode
+
+		PancakeDebug {
+			PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Singlethreaded mode enabled");
+		}
+	}
+
+	shutdown:
+
 	// Unload configuration and free memory
 	PancakeConfigurationUnload();
 	PancakeConfigurationDestroy();
