@@ -90,7 +90,7 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 			socket->onRemoteHangup = NULL;
 			socket->readBuffer = NULL;
 			socket->writeBuffer = NULL;
-			socket->backlog = 0;
+			socket->backlog = 1;
 			socket->flags = 0;
 
 			socket->localAddress->sa_family = 0;
@@ -299,6 +299,16 @@ static UByte PancakeNetworkInterfacePortConfiguration(UByte step, config_setting
 	return 1;
 }
 
+static UByte PancakeNetworkInterfaceBacklogConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	if(step == PANCAKE_CONFIGURATION_INIT) {
+		PancakeSocket *sock = (PancakeSocket*) setting->parent->hook;
+
+		sock->backlog = setting->value.ival;
+	}
+
+	return 1;
+}
+
 PANCAKE_API PancakeConfigurationSetting *PancakeNetworkRegisterListenInterfaceGroup(PancakeConfigurationGroup *parent, PancakeConfigurationHook hook) {
 	PancakeConfigurationSetting *setting;
 	PancakeConfigurationGroup *group;
@@ -308,6 +318,7 @@ PANCAKE_API PancakeConfigurationSetting *PancakeNetworkRegisterListenInterfaceGr
 	PancakeConfigurationAddSetting(group, (String) {"Network", sizeof("Network") - 1}, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) "", PancakeNetworkInterfaceNetworkConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"Address", sizeof("Address") - 1}, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) "", PancakeNetworkInterfaceAddressConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"Port", sizeof("Port") - 1}, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeNetworkInterfacePortConfiguration);
+	PancakeConfigurationAddSetting(group, (String) {"Backlog", sizeof("Backlog") - 1}, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeNetworkInterfaceBacklogConfiguration);
 
 	return setting;
 }
