@@ -273,7 +273,7 @@ static UByte PancakeNetworkInterfacePortConfiguration(UByte step, config_setting
 				case AF_INET: {
 					struct sockaddr_in *addr = (struct sockaddr_in*) socket->localAddress;
 
-					addr->sin_port = setting->value.ival;
+					addr->sin_port = htons(setting->value.ival);
 
 					if(addr->sin_addr.s_addr && !PancakeNetworkInterfaceTryBind(socket)) {
 						return 0;
@@ -282,7 +282,7 @@ static UByte PancakeNetworkInterfacePortConfiguration(UByte step, config_setting
 				case AF_INET6: {
 					struct sockaddr_in6 *addr = (struct sockaddr_in6*) socket->localAddress;
 
-					addr->sin6_port = setting->value.ival;
+					addr->sin6_port = htons(setting->value.ival);
 
 					if(addr->sin6_addr.s6_addr && !PancakeNetworkInterfaceTryBind(socket)) {
 						return 0;
