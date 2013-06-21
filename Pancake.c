@@ -228,6 +228,9 @@ Int32 main(Int32 argc, Byte **argv) {
 		PancakeDebug {
 			PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Singlethreaded mode enabled");
 		}
+
+		// Run server
+		PancakeMainConfiguration.serverArchitecture->runServer();
 	}
 
 	shutdown:
