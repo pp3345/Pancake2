@@ -15,6 +15,8 @@ static inline void PancakeLinuxPollAddReadSocket(PancakeSocket *socket);
 static inline void PancakeLinuxPollAddWriteSocket(PancakeSocket *socket);
 static inline void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket);
 
+static inline void PancakeLinuxPollRemoveSocket(PancakeSocket *socket);
+
 PancakeModule PancakeLinuxPoll = {
 		"LinuxPoll",
 		PancakeLinuxPollInitialize,
@@ -32,6 +34,8 @@ PancakeServerArchitecture PancakeLinuxPollServer = {
 		PancakeLinuxPollAddReadSocket,
 		PancakeLinuxPollAddWriteSocket,
 		PancakeLinuxPollAddReadWriteSocket,
+
+		PancakeLinuxPollRemoveSocket,
 
 		PancakeLinuxPollServerInitialize,
 
@@ -119,6 +123,12 @@ static inline void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket) {
 		event.data.ptr = (void*) socket;
 
 		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_ADD, socket->fd, &event);
+	}
+}
+
+static inline void PancakeLinuxPollRemoveSocket(PancakeSocket *socket) {
+	if(socket->flags & EPOLLRDHUP) {
+		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_DEL, socket->fd, NULL);
 	}
 }
 
