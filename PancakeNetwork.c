@@ -87,8 +87,6 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 			socket->onRead = NULL;
 			socket->onWrite = NULL;
 			socket->onRemoteHangup = NULL;
-			socket->readBuffer = NULL;
-			socket->writeBuffer = NULL;
 			socket->backlog = 1;
 			socket->flags = 0;
 

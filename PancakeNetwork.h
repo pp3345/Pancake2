@@ -19,8 +19,8 @@ typedef struct _PancakeSocket {
 	PancakeNetworkEventHandler onRead;
 	PancakeNetworkEventHandler onWrite;
 	PancakeNetworkEventHandler onRemoteHangup;
-	String *readBuffer;
-	String *writeBuffer;
+	String readBuffer;
+	String writeBuffer;
 
 	struct sockaddr *localAddress;
 	struct sockaddr remoteAddress;
