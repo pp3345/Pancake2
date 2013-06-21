@@ -9,6 +9,7 @@ Int32 PancakeLinuxPollFD = -1;
 
 /* Forward declarations */
 static UByte PancakeLinuxPollInitialize();
+static UByte PancakeLinuxPollShutdown();
 static UByte PancakeLinuxPollServerInitialize();
 static void PancakeLinuxPollWait();
 static inline void PancakeLinuxPollAddReadSocket(PancakeSocket *socket);
@@ -21,7 +22,7 @@ PancakeModule PancakeLinuxPoll = {
 		"LinuxPoll",
 		PancakeLinuxPollInitialize,
 		NULL,
-		NULL,
+		PancakeLinuxPollShutdown,
 		0
 };
 
@@ -44,6 +45,14 @@ PancakeServerArchitecture PancakeLinuxPollServer = {
 
 static UByte PancakeLinuxPollInitialize() {
 	PancakeRegisterServerArchitecture(&PancakeLinuxPollServer);
+
+	return 1;
+}
+
+static UByte PancakeLinuxPollShutdown() {
+	if(PancakeLinuxPollFD != -1) {
+		close(PancakeLinuxPollFD);
+	}
 
 	return 1;
 }
