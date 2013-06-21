@@ -78,7 +78,7 @@ PANCAKE_API void _PancakeAssert(Native result, Byte *condition, Byte *file, Int3
 }
 
 PANCAKE_API void *_PancakeAllocate(Native size, Byte *file, Int32 line) {
-	void *ptr = malloc(size);
+	void *ptr = malloc(size + 1);
 	PancakeAllocatedMemory *mem;
 
 	_PancakeAssert(ptr != NULL, "Out of memory", file, line);
@@ -90,6 +90,9 @@ PANCAKE_API void *_PancakeAllocate(Native size, Byte *file, Int32 line) {
 	mem->line = line;
 	mem->ptr = ptr;
 	mem->size = size;
+
+	// Set overflow detection byte
+	((UByte*) ptr)[size] = 0xff;
 
 	HASH_ADD(hh, allocated, ptr, sizeof(void*), mem);
 
@@ -112,8 +115,14 @@ PANCAKE_API void *_PancakeReallocate(void *ptr, Native size, Byte *file, Int32 l
 	HASH_FIND(hh, allocated, &ptr, sizeof(void*), mem);
 	_PancakeAssert(mem != NULL, "Trying to reallocate invalid pointer", file, line);
 
-	newPtr = realloc(ptr, size);
+	// Check for memory overflow
+	_PancakeAssert(((UByte*) ptr)[mem->size] == 0xff, "Overflow detected in memory allocated", mem->file, mem->line);
+
+	newPtr = realloc(ptr, size + 1);
 	_PancakeAssert(newPtr != NULL, "Out of memory", file, line);
+
+	// Set overflow detection byte
+	((UByte*) ptr)[size] = 0xff;
 
 	mem->ptr = newPtr;
 	mem->size = size;
@@ -132,6 +141,9 @@ PANCAKE_API void _PancakeFree(void *ptr, Byte *file, Int32 line) {
 	HASH_FIND(hh, allocated, &ptr, sizeof(void*), mem);
 	_PancakeAssert(mem != NULL, "Trying to free invalid pointer", file, line);
 
+	// Check for memory overflow
+	_PancakeAssert(((UByte*) ptr)[mem->size] == 0xff, "Overflow detected in memory allocated", mem->file, mem->line);
+
 	free(ptr);
 	HASH_DEL(allocated, mem);
 	free(mem);
@@ -140,11 +152,16 @@ PANCAKE_API void _PancakeFree(void *ptr, Byte *file, Int32 line) {
 PANCAKE_API Byte *_PancakeDuplicateString(Byte *string, Byte *file, Int32 line) {
 	Byte *ptr;
 	PancakeAllocatedMemory *mem;
+	UInt32 size;
 
 	_PancakeAssert(string != NULL, "Trying to duplicate NULL pointer", file, line);
 
-	ptr = strdup(string);
+	size = strlen(string);
+
+	ptr = malloc(size + 2);
 	_PancakeAssert(ptr != NULL, "Out of memory", file, line);
+
+	memcpy(ptr, string, size + 1);
 
 	mem = malloc(sizeof(PancakeAllocatedMemory));
 	_PancakeAssert(mem != NULL, "Out of memory", file, line);
@@ -152,7 +169,10 @@ PANCAKE_API Byte *_PancakeDuplicateString(Byte *string, Byte *file, Int32 line) 
 	mem->file = file;
 	mem->line = line;
 	mem->ptr = ptr;
-	mem->size = strlen(string) + 1;
+	mem->size = size + 1;
+
+	// Set overflow detection byte
+	ptr[size + 2] = 0xff;
 
 	HASH_ADD(hh, allocated, ptr, sizeof(void*), mem);
 
@@ -165,8 +185,10 @@ PANCAKE_API Byte *_PancakeDuplicateStringLength(Byte *string, Int32 length, Byte
 
 	_PancakeAssert(string != NULL, "Trying to duplicate NULL pointer", file, line);
 
-	ptr = strndup(string, length);
+	ptr = malloc(length + 2);
 	_PancakeAssert(ptr != NULL, "Out of memory", file, line);
+
+	memcpy(ptr, string, length + 1);
 
 	mem = malloc(sizeof(PancakeAllocatedMemory));
 	_PancakeAssert(mem != NULL, "Out of memory", file, line);
@@ -175,6 +197,9 @@ PANCAKE_API Byte *_PancakeDuplicateStringLength(Byte *string, Int32 length, Byte
 	mem->line = line;
 	mem->ptr = ptr;
 	mem->size = length + 1;
+
+	// Set overflow detection byte
+	ptr[length + 2] = 0xff;
 
 	HASH_ADD(hh, allocated, ptr, sizeof(void*), mem);
 
