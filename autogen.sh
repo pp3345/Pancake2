@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PANCAKE_SOURCES="Pancake.c PancakeLogger.c PancakeDateTime.c PancakeDebug.c PancakeConfiguration.c PancakeNetwork.c PancakeModules.c"
+PANCAKE_SOURCES="Pancake.c PancakeLogger.c PancakeDateTime.c PancakeDebug.c PancakeConfiguration.c PancakeNetwork.c PancakeModules.c PancakeWorkers.c"
 
 for dir in */;
 do

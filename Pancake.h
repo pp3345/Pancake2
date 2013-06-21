@@ -94,11 +94,8 @@ typedef struct _String {
 typedef UByte (*PancakeModuleInitializeFunction)();
 typedef void (*PancakeWorkerEntryFunction)();
 
-typedef struct _PancakeWorker {
-	String name;
-	PancakeWorkerEntryFunction run;
-	Int32 pid;
-} PancakeWorker;
+/* Forward decalarations */
+typedef struct _PancakeServerArchitecture PancakeServerArchitecture;
 
 typedef struct _PancakeModule {
 	UByte *name;
@@ -108,8 +105,6 @@ typedef struct _PancakeModule {
 
 	UByte intialized;
 } PancakeModule;
-
-#include "PancakeNetwork.h"
 
 typedef struct _PancakeMainConfigurationStructure {
 	/* Logging */
@@ -127,9 +122,10 @@ typedef struct _PancakeMainConfigurationStructure {
 	PancakeServerArchitecture *serverArchitecture;
 } PancakeMainConfigurationStructure;
 
-extern PancakeWorker PancakeCurrentWorker;
 extern PancakeModule *PancakeModules[];
 extern PancakeMainConfigurationStructure PancakeMainConfiguration;
+
+extern UByte PancakeDoShutdown;
 
 /* Pancake version constant */
 #define PANCAKE_VERSION "2.0"

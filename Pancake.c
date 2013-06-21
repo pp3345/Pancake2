@@ -2,12 +2,16 @@
 #include "Pancake.h"
 #include "PancakeLogger.h"
 #include "PancakeConfiguration.h"
+#include "PancakeWorkers.h"
 
-PancakeWorker PancakeCurrentWorker;
+PancakeWorker *PancakeCurrentWorker;
+PancakeWorker **PancakeWorkerRegistry;
 PancakeMainConfigurationStructure PancakeMainConfiguration;
+UByte PancakeDoShutdown = 0;
 
-/* Forward declaration */
+/* Forward declarations */
 UByte PancakeConfigurationServerArchitecture(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
+static void PancakeSignalHandler(Int32 type, siginfo_t *info, void *context);
 
 /* Here we go. */
 Int32 main(Int32 argc, Byte **argv) {
@@ -15,6 +19,9 @@ Int32 main(Int32 argc, Byte **argv) {
 	UInt32 i = 0;
 	UByte haveDeferred = 0;
 	PancakeModule *module;
+	PancakeWorker worker;
+	struct sigaction signalAction;
+	sigset_t signalSet;
 
 	// Initialize segfault handling
 #if defined(HAVE_SIGACTION) && defined(HAVE_PANCAKE_SIGSEGV)
@@ -35,8 +42,11 @@ Int32 main(Int32 argc, Byte **argv) {
 #endif
 
 	// Initialize global variables
-	PancakeCurrentWorker.name.value = "Master";
-	PancakeCurrentWorker.name.length = sizeof("Master") - 1;
+	worker.name.value = "Master";
+	worker.name.length = sizeof("Master") - 1;
+	worker.pid = getpid();
+	worker.isMaster = 1;
+	PancakeCurrentWorker = &worker;
 
 	// Tell the user we are loading
 	PancakeLogger(PANCAKE_LOGGER_SYSTEM,
@@ -133,42 +143,84 @@ Int32 main(Int32 argc, Byte **argv) {
 		exit(3);
 	}
 
+	// Initialize signal handling
+	sigemptyset(&signalSet);
+	sigaddset(&signalSet, SIGCHLD);
+	sigaddset(&signalSet, SIGINT);
+	sigaddset(&signalSet, SIGTERM);
+	signalAction.sa_sigaction = PancakeSignalHandler;
+	signalAction.sa_mask = signalSet;
+	signalAction.sa_flags = SA_SIGINFO;
+
+	sigaction(SIGCHLD, &signalAction, NULL);
+	sigaction(SIGINT, &signalAction, NULL);
+	sigaction(SIGTERM, &signalAction, NULL);
+
 	// Run workers
 	if(PancakeMainConfiguration.workers > 0) {
 		// Multithreaded mode
 		UInt16 i;
 
+		// Allocate worker registry
+		PancakeWorkerRegistry = PancakeAllocate(PancakeMainConfiguration.workers * sizeof(PancakeWorker*));
+
 		PancakeDebug {
 			PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Multithreaded mode enabled with %i workers", PancakeMainConfiguration.workers);
 		}
 
+		// Run workers
 		for(i = 1; i <= PancakeMainConfiguration.workers; i++) {
-			pid_t pid = fork();
+			PancakeWorker *worker = PancakeAllocate(sizeof(PancakeWorker));
 
-			if(pid == -1) {
-				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't fork: %s", strerror(errno));
-				exit(3);
-			} else if(pid) {
-				// Master
-			} else {
-				// Worker
-				PancakeCurrentWorker.name.value = PancakeAllocate(sizeof("Worker #65535"));
-				PancakeCurrentWorker.name.length = sprintf(PancakeCurrentWorker.name.value, "Worker #%i", i);
+			worker->name.value = PancakeAllocate(sizeof("Worker #65535"));
+			worker->name.length = sprintf(worker->name.value, "Worker #%i", i);
+			worker->run = PancakeMainConfiguration.serverArchitecture->runServer;
+			worker->isMaster = 0;
 
-				PancakeDebug {
-					PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "PID: %i", getpid());
-				}
+			switch(PancakeRunWorker(worker)) {
+				case 0:
+					// Fork failed
+					PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Unable to run worker");
+					exit(1);
+				case 1: {
+					// Child started successfully
+					UInt16 i2;
 
-				// Run server
-				PancakeMainConfiguration.serverArchitecture->runServer();
+					// Add worker to registry
+					PancakeWorkerRegistry[i - 1] = worker;
 
-				PancakeFree(PancakeCurrentWorker.name.value);
-				goto shutdown;
+					// Sleep forever after all workers are started
+					if(i == PancakeMainConfiguration.workers) {
+						do {
+							sleep(3600);
+						} while(!PancakeDoShutdown);
+
+						// Destroy worker registry
+						for(i2 = 0; i2 < PancakeMainConfiguration.workers; i2++) {
+							PancakeWorker *worker = PancakeWorkerRegistry[i2];
+
+							PancakeFree(worker->name.value);
+							PancakeFree(worker);
+						}
+
+						PancakeFree(PancakeWorkerRegistry);
+					}
+				} break;
+				case 2: {
+					// Child process shutdown
+					UInt16 i2;
+
+					// Destroy allocated workers
+					for(i2 = 0; i2 < i - 1; i2++) {
+						PancakeWorker *worker = PancakeWorkerRegistry[i2];
+
+						PancakeFree(worker->name.value);
+						PancakeFree(worker);
+					}
+
+					PancakeFree(PancakeWorkerRegistry);
+				} goto shutdown;
 			}
-		}
-
-		while(1) {
-			sleep(1);
 		}
 	} else {
 		// Singlethreaded mode
@@ -180,6 +232,11 @@ Int32 main(Int32 argc, Byte **argv) {
 
 	shutdown:
 
+	// Shutdown
+	if(PancakeCurrentWorker->isMaster) {
+		PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Stopping...");
+	}
+
 	// Unload configuration and free memory
 	PancakeConfigurationUnload();
 	PancakeConfigurationDestroy();
@@ -187,8 +244,42 @@ Int32 main(Int32 argc, Byte **argv) {
 	// Unload server architectures
 	PancakeNetworkUnload();
 
+	// Free worker
+	if(!PancakeCurrentWorker->isMaster) {
+		PancakeFree(PancakeCurrentWorker->name.value);
+		PancakeFree(PancakeCurrentWorker);
+	}
+
 	// Show memory leaks
 	PancakeDumpHeap();
 
 	return 0;
+}
+
+static void PancakeSignalHandler(Int32 type, siginfo_t *info, void *context) {
+	switch(type) {
+		case SIGINT:
+		case SIGTERM:
+			PancakeDoShutdown = 1;
+
+			if(PancakeCurrentWorker->isMaster) {
+				UInt16 i;
+
+				for(i = 0; i < PancakeMainConfiguration.workers; i++) {
+					PancakeWorker *worker = PancakeWorkerRegistry[i];
+
+					write(worker->masterSocket, PANCAKE_WORKER_GRACEFUL_SHUTDOWN, sizeof(PANCAKE_WORKER_GRACEFUL_SHUTDOWN));
+				}
+			}
+			break;
+		case SIGCHLD:
+			if(PancakeDoShutdown) {
+				return;
+			}
+
+			PancakeDoShutdown = 1;
+
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Worker crashed");
+			break;
+	}
 }
