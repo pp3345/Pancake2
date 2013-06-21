@@ -247,6 +247,16 @@ Int32 main(Int32 argc, Byte **argv) {
 	// Unload server architectures
 	PancakeNetworkUnload();
 
+	// Call module shutdown hooks
+	i = 0;
+	while(module = PancakeModules[i]) {
+		if(module->shutdown) {
+			module->shutdown();
+		}
+
+		i++;
+	}
+
 	// Free worker
 	if(!PancakeCurrentWorker->isMaster) {
 		PancakeFree(PancakeCurrentWorker->name.value);
