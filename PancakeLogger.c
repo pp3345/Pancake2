@@ -1,6 +1,7 @@
 
 #include "PancakeLogger.h"
 #include "PancakeDateTime.h"
+#include "PancakeWorkers.h"
 
 /*
  * Pancake Logging API
@@ -18,13 +19,13 @@ PANCAKE_API void PancakeLogger(UByte type, UByte flags, String *text) {
 	date = PancakeFormatDateTime(time(NULL));
 
 	/* 5 = []__\n */
-	output.length = PancakeCurrentWorker.name.length + date.length + text->length + (type == PANCAKE_LOGGER_ERROR ? sizeof("Error:") + 5 : 5);
+	output.length = PancakeCurrentWorker->name.length + date.length + text->length + (type == PANCAKE_LOGGER_ERROR ? sizeof("Error:") + 5 : 5);
 	output.value = PancakeAllocate(output.length);
 
 	/* Build output string */
 	offset = type == PANCAKE_LOGGER_ERROR
-					? sprintf(output.value, "%s [%s] Error: ", date.value, PancakeCurrentWorker.name.value)
-					: sprintf(output.value, "%s [%s] ", date.value, PancakeCurrentWorker.name.value);
+					? sprintf(output.value, "%s [%s] Error: ", date.value, PancakeCurrentWorker->name.value)
+					: sprintf(output.value, "%s [%s] ", date.value, PancakeCurrentWorker->name.value);
 
 	/* text might contain NULL bytes */
 	memcpy(output.value + offset, text->value, text->length);
