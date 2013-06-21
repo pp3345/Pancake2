@@ -422,3 +422,19 @@ PANCAKE_API inline Byte PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength
 
 	return length;
 }
+
+PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock) {
+	// Remove socket from list
+	PancakeNetworkRemoveSocket(sock);
+
+	// Close underlying file descriptor
+	close(sock->fd);
+
+	// Free read buffer
+	if(sock->readBuffer.size) {
+		PancakeFree(sock->readBuffer.value);
+	}
+
+	// Free socket
+	PancakeFree(sock);
+}

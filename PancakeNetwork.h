@@ -64,6 +64,7 @@ PANCAKE_API Byte *PancakeNetworkGetInterfaceName(struct sockaddr *addr);
 
 PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *sock);
 PANCAKE_API inline Byte PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength);
+PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock);
 
 #define PancakeNetworkAddReadSocket(socket) (PancakeMainConfiguration.serverArchitecture->addReadSocket(socket))
 #define PancakeNetworkAddWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->addWriteSocket(socket))
