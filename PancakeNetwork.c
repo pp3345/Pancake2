@@ -393,7 +393,7 @@ PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *
 	return client;
 }
 
-PANCAKE_API inline UByte PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength) {
+PANCAKE_API inline Byte PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength) {
 	UByte buf[maxLength];
 	UInt32 length;
 
