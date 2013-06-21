@@ -5,6 +5,7 @@
 typedef struct _PancakeServerArchitecture PancakeServerArchitecture;
 
 #include "Pancake.h"
+#include "PancakeConfiguration.h"
 
 typedef struct _PancakeSocket PancakeSocket;
 
