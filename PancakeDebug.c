@@ -1,5 +1,6 @@
 
 #include "PancakeDebug.h"
+#include "PancakeWorkers.h"
 
 #ifdef PANCAKE_DEBUG
 
@@ -42,7 +43,7 @@ void PancakeDebugHandleSegfault(Int32 signum, siginfo_t *info, void *context) {
 	}
 
 	free(strings);
-	printf("in worker %s\n", PancakeCurrentWorker.name.value);
+	printf("in worker %s\n", PancakeCurrentWorker->name.value);
 
 	exit(1);
 }
@@ -122,7 +123,7 @@ PANCAKE_API void *_PancakeReallocate(void *ptr, Native size, Byte *file, Int32 l
 	_PancakeAssert(newPtr != NULL, "Out of memory", file, line);
 
 	// Set overflow detection byte
-	((UByte*) ptr)[size] = 0xff;
+	((UByte*) newPtr)[size] = 0xff;
 
 	mem->ptr = newPtr;
 	mem->size = size;
@@ -209,14 +210,15 @@ PANCAKE_API Byte *_PancakeDuplicateStringLength(Byte *string, Int32 length, Byte
 PANCAKE_API void PancakeDumpHeap() {
 	PancakeAllocatedMemory *mem;
 	UNative total = 0;
+	pid_t pid = getpid();
 
 	for(mem = allocated; mem != NULL; mem = mem->hh.next) {
-		printf("[%#lx] %u bytes allocated in %s on line %i\n", (UNative) mem->ptr, mem->size, mem->file, mem->line);
+		printf("[%i] [%#lx] %u bytes allocated in %s on line %i\n", pid, (UNative) mem->ptr, mem->size, mem->file, mem->line);
 		total += mem->size;
 	}
 
 	if(total) {
-		printf("%lu bytes total allocated\n", total);
+		printf("[%i] %lu bytes total allocated\n", pid, total);
 	}
 }
 #endif
