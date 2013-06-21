@@ -388,6 +388,37 @@ PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *
 	client->localAddress = sock->localAddress;
 	client->remoteAddress = addr;
 	client->flags = 0;
+	client->readBuffer.size = 0;
 
 	return client;
+}
+
+PANCAKE_API inline UByte PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength) {
+	UByte buf[maxLength];
+	UInt32 length;
+
+	length = read(sock->fd, buf, maxLength);
+
+	if(length == -1) {
+#if EAGAIN != EWOULDBLOCK // On some systems these values differ
+		if(errno == EAGAIN || errno == EWOULDBLOCK)
+#else
+		if(errno == EAGAIN)
+#endif
+		{
+			return 0;
+		}
+
+		sock->onRemoteHangup(sock);
+		return -1;
+	}
+
+	if(sock->readBuffer.size < sock->readBuffer.length + length) {
+		sock->readBuffer.size += length + 64;
+		sock->readBuffer.value = PancakeReallocate(sock->readBuffer.value, sock->readBuffer.size);
+	}
+
+	memcpy(sock->readBuffer.value + sock->readBuffer.length, buf, length);
+
+	return length;
 }
