@@ -1,6 +1,7 @@
 #include "PancakeHTTP.h"
 #include "PancakeConfiguration.h"
 #include "PancakeLogger.h"
+#include "PancakeNetwork.h"
 
 #ifdef PANCAKE_HTTP
 
@@ -126,7 +127,7 @@ static UByte PancakeHTTPDocumentRootConfiguration(UByte step, config_setting_t *
 }
 
 static UByte PancakeHTTPNetworkInterfaceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
-	if(PancakeNetworkInterfaceConfiguration(step, setting, scope)) {
+	if(PancakeNetworkInterfaceConfiguration(step, setting, scope) && step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeSocket *sock = (PancakeSocket*) setting->hook;
 
 		sock->onRead = PancakeHTTPInitializeConnection;
