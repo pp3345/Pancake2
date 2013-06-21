@@ -43,6 +43,8 @@ typedef struct _PancakeServerArchitecture {
 	PancakeSocketHandler addWriteSocket;
 	PancakeSocketHandler addReadWriteSocket;
 
+	PancakeSocketHandler removeSocket;
+
 	PancakeModuleInitializeFunction initialize;
 
 	UT_hash_handle hh;
@@ -66,6 +68,8 @@ PANCAKE_API inline Byte PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength
 #define PancakeNetworkAddReadSocket(socket) (PancakeMainConfiguration.serverArchitecture->addReadSocket(socket))
 #define PancakeNetworkAddWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->addWriteSocket(socket))
 #define PancakeNetworkAddReadWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->addReadWriteSocket(socket))
+
+#define PancakeNetworkRemoveSocket(socket) (PancakeMainConfiguration.serverArchitecture->removeSocket(socket))
 
 UByte PancakeNetworkActivate();
 
