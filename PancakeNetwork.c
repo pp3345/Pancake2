@@ -389,6 +389,7 @@ PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *
 	client->remoteAddress = addr;
 	client->flags = 0;
 	client->readBuffer.size = 0;
+	client->readBuffer.length = 0;
 	client->readBuffer.value = NULL;
 
 	return client;
