@@ -128,6 +128,14 @@ static void PancakeLinuxPollWait() {
 		Int32 numEvents, i;
 
 		if((numEvents = epoll_wait(PancakeLinuxPollFD, events, 32, -1)) == -1) {
+			if(PancakeDoShutdown) {
+				return;
+			}
+
+			if(errno == EINTR) {
+				continue;
+			}
+
 			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "epoll_wait failed: %s", strerror(errno));
 			return;
 		}
@@ -147,6 +155,10 @@ static void PancakeLinuxPollWait() {
 					sock->onRemoteHangup(sock);
 					break;
 			}
+		}
+
+		if(PancakeDoShutdown) {
+			return;
 		}
 	}
 }
