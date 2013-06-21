@@ -420,6 +420,8 @@ PANCAKE_API inline Byte PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength
 
 	memcpy(sock->readBuffer.value + sock->readBuffer.length, buf, length);
 
+	sock->readBuffer.length += length;
+
 	return length;
 }
 
