@@ -162,17 +162,17 @@ static void PancakeLinuxPollWait() {
 		for(i = 0; i < numEvents; i++) {
 			PancakeSocket *sock = (PancakeSocket*) events[i].data.ptr;
 
-			switch(events[i].events) {
-				case EPOLLIN:
-					sock->onRead(sock);
-					break;
-				case EPOLLOUT:
-					sock->onWrite(sock);
-					break;
-				case EPOLLHUP:
-				case EPOLLRDHUP:
-					sock->onRemoteHangup(sock);
-					break;
+			if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP) {
+				sock->onRemoteHangup(sock);
+				continue;
+			}
+
+			if(events[i].events & EPOLLIN) {
+				sock->onRead(sock);
+			}
+
+			if(events[i].events & EPOLLOUT) {
+				sock->onWrite(sock);
 			}
 		}
 
