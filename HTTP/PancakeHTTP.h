@@ -7,6 +7,9 @@
 
 #ifdef PANCAKE_HTTP
 
+/* Forward declarations */
+typedef struct _PancakeHTTPHeader PancakeHTTPHeader;
+
 typedef struct _PancakeHTTPVirtualHost {
 	PancakeConfigurationScope *configurationScope;
 } PancakeHTTPVirtualHost;
@@ -20,6 +23,32 @@ typedef struct _PancakeHTTPVirtualHostIndex {
 typedef struct _PancakeHTTPConfigurationStructure {
 	String *documentRoot;
 } PancakeHTTPConfigurationStructure;
+
+typedef struct _PancakeHTTPRequest {
+	String requestAddress;
+	String host;
+	String path;
+
+	PancakeHTTPVirtualHost *vHost;
+	PancakeHTTPHeader *headers;
+
+	UByte method;
+	UByte HTTPVersion;
+} PancakeHTTPRequest;
+
+typedef struct _PancakeHTTPHeader {
+	String name;
+	String value;
+
+	PancakeHTTPHeader *prev;
+	PancakeHTTPHeader *next;
+} PancakeHTTPHeader;
+
+#define PANCAKE_HTTP_GET 1
+#define PANCAKE_HTTP_POST 2
+
+#define PANCAKE_HTTP_10 1
+#define PANCAKE_HTTP_11 2
 
 extern PancakeModule PancakeHTTP;
 extern PancakeHTTPVirtualHostIndex *PancakeHTTPVirtualHosts;

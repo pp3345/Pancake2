@@ -19,6 +19,8 @@ PancakeHTTPConfigurationStructure PancakeHTTPConfiguration;
 
 /* Forward declarations */
 static void PancakeHTTPInitializeConnection(PancakeSocket *sock);
+static void PancakeHTTPReadHeaderData(PancakeSocket *sock);
+static void PancakeHTTPOnRemoteHangup(PancakeSocket *sock);
 
 static UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeHTTPVirtualHost *vhost;
@@ -160,10 +162,260 @@ UByte PancakeHTTPInitialize() {
 
 static void PancakeHTTPInitializeConnection(PancakeSocket *sock) {
 	PancakeSocket *client = PancakeNetworkAcceptConnection(sock);
+	PancakeHTTPRequest *request;
 
 	if(client == NULL) {
 		return;
 	}
+
+	request = PancakeAllocate(sizeof(PancakeHTTPRequest));
+	request->method = 0;
+	request->headers = NULL;
+	request->requestAddress.value = NULL;
+	request->host.value = NULL;
+	request->path.value = NULL;
+
+	client->onRead = PancakeHTTPReadHeaderData;
+	client->onRemoteHangup = PancakeHTTPOnRemoteHangup;
+	client->data = (void*) request;
+
+	PancakeNetworkAddReadSocket(client);
 }
 
+static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
+	// Read data from socket
+	if(PancakeNetworkRead(sock, 1536) == -1) {
+		return;
+	}
+
+	// Parse HTTP
+	if(sock->readBuffer.length >= 5) {
+		PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+		UByte *offset, *headerEnd, *ptr, *ptr2, *ptr3;
+
+		if(!request->method) {
+			if(sock->readBuffer.value[0] == 'G') {
+				if(sock->readBuffer.value[1] != 'E'
+				|| sock->readBuffer.value[2] != 'T'
+				|| sock->readBuffer.value[3] != ' ') {
+					PancakeHTTPOnRemoteHangup(sock);
+					return;
+				}
+
+				request->method = PANCAKE_HTTP_GET;
+			} else if(sock->readBuffer.value[0] == 'P') {
+				if(sock->readBuffer.value[1] != 'O'
+				|| sock->readBuffer.value[2] != 'S'
+				|| sock->readBuffer.value[3] != 'T'
+				|| sock->readBuffer.value[4] != ' ') {
+					PancakeHTTPOnRemoteHangup(sock);
+					return;
+				}
+
+				request->method = PANCAKE_HTTP_POST;
+			} else {
+				// Probably non-HTTP data, disconnect the client
+				PancakeHTTPOnRemoteHangup(sock);
+				return;
+			}
+		}
+
+		if(sock->readBuffer.length >= 10240) {
+			// Header too large
+			PancakeHTTPOnRemoteHangup(sock);
+			return;
+		}
+
+		if(request->method == PANCAKE_HTTP_POST) {
+			// Lookup end of header data since the end of the buffer is not necessarily \r\n\r\n
+		} else if(sock->readBuffer.value[sock->readBuffer.length - 1] == '\n'
+			&& sock->readBuffer.value[sock->readBuffer.length - 2] == '\r'
+			&& sock->readBuffer.value[sock->readBuffer.length - 3] == '\n'
+			&& sock->readBuffer.value[sock->readBuffer.length - 4] == '\r') {
+			offset = sock->readBuffer.value + 4; // 4 = "GET "
+			headerEnd = sock->readBuffer.value + sock->readBuffer.length - 4;
+		} else {
+			return;
+		}
+
+		// Lookup end of request URI
+		ptr = memchr(offset, ' ', headerEnd - offset);
+		if(!ptr || ptr == offset) {
+			// Malformed header
+			PancakeHTTPOnRemoteHangup(sock);
+			return;
+		}
+
+		// Copy request URI
+		request->requestAddress.length = ptr - offset;
+		request->requestAddress.value = PancakeAllocate(request->requestAddress.length);
+		memcpy(request->requestAddress.value, ptr, request->requestAddress.length);
+
+		// Resolve request URI
+		if(*offset != '/') {
+			if(headerEnd > offset + sizeof("http://") - 1 && memcmp(offset, "http://", sizeof("http://") - 1) == 0) {
+				// http://abc.net[/aaa]
+				offset += sizeof("http://") - 1;
+				request->host.value = offset;
+
+				if(ptr2 = memchr(offset, '/', ptr - offset)) {
+					// http://abc.net/aaa
+					request->host.length = ptr2 - offset;
+					request->path.value = ptr2;
+					request->path.length = ptr - ptr2;
+				} else {
+					// http://abc.net
+					request->host.length = ptr - offset;
+				}
+			} else {
+				// aaa
+				// offset - 1 MUST be a space, therefore we can simply overwrite it
+				*(offset - 1) = '/';
+				request->path.value = offset - 1;
+				request->path.length = ptr - offset + 1;
+			}
+		} else {
+			// /aaa
+			request->path.value = offset;
+			request->path.length = ptr - offset;
+		}
+
+		offset = ptr + 1;
+
+		// Fetch HTTP version
+		if(offset + sizeof("HTTP/1.1") - 1 > headerEnd || memcmp(offset, "HTTP/1.", sizeof("HTTP/1.") - 1) != 0) {
+			// Malformed header
+			PancakeHTTPOnRemoteHangup(sock);
+			return;
+		}
+
+		offset += sizeof("HTTP/1.") - 1;
+
+		if(*offset == '1') {
+			// HTTP/1.1
+			request->HTTPVersion = PANCAKE_HTTP_11;
+		} else if(*offset == '0') {
+			// HTTP/1.0
+			request->HTTPVersion = PANCAKE_HTTP_10;
+		} else {
+			// Unknown HTTP version
+			PancakeHTTPOnRemoteHangup(sock);
+			return;
+		}
+
+		offset++;
+
+		if(offset == headerEnd) {
+			// We have already finished parsing the header
+			goto headersParsed;
+		}
+
+		offset += 2;
+
+		// Parse header lines
+		while(1) {
+			PancakeHTTPHeader *header;
+
+			// memchr() can't fail since we have a \r\n\r\n at the end of the header for sure
+			ptr = memchr(offset, '\r', headerEnd - offset + 1);
+			if(*(ptr + 1) != '\n') {
+				// Malformed header
+				PancakeHTTPOnRemoteHangup(sock);
+				return;
+			}
+
+			ptr2 = memchr(offset, ':', ptr - offset);
+
+			if(!ptr2 || ptr2 == offset) {
+				// Malformed header
+				PancakeHTTPOnRemoteHangup(sock);
+				return;
+			}
+
+			// Make header name lowercase
+			ptr3 = offset;
+			while(ptr3 != ptr2) {
+				*ptr3 = tolower(*ptr3);
+				ptr3++;
+			}
+
+			// Get pointer to value
+			ptr3 = ptr2 + 1;
+			if(ptr3 == headerEnd) {
+				// Malformed header
+				PancakeHTTPOnRemoteHangup(sock);
+				return;
+			}
+
+			// RFC 2616 section 4.2 states that the colon may be followed by any amount of spaces
+			while(isspace(*ptr3)) {
+				ptr3++;
+			}
+
+			// ptr2 - offset == length of header name
+			switch(ptr2 - offset) {
+				case 4:
+					if(!memcmp(offset, "host", 4)) {
+						request->host.value = ptr3;
+						request->host.length = ptr - ptr3;
+					}
+					break;
+			}
+
+			header = PancakeAllocate(sizeof(PancakeHTTPHeader));
+			header->name.value = offset;
+			header->name.length = ptr2 - offset;
+			header->value.value = ptr3;
+			header->value.length = ptr - ptr3;
+
+			// Add header to list
+			DL_APPEND(request->headers, header);
+
+			if(ptr == headerEnd) {
+				// Finished parsing headers
+				break;
+			}
+
+			offset = ptr + 2;
+		}
+
+		headersParsed:
+
+		// Fetch virtual host
+		if(!request->host.value) {
+			request->vHost = PancakeHTTPDefaultVirtualHost;
+		} else {
+			PancakeHTTPVirtualHostIndex *index;
+
+			HASH_FIND(hh, PancakeHTTPVirtualHosts, request->host.value, request->host.length, index);
+
+			if(index == NULL) {
+				request->vHost = PancakeHTTPDefaultVirtualHost;
+			} else {
+				request->vHost = index->vHost;
+			}
+		}
+	}
+}
+
+static inline void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request) {
+	PancakeHTTPHeader *header, *tmp;
+
+	if(request->requestAddress.value) {
+		PancakeFree(request->requestAddress.value);
+	}
+
+	DL_FOREACH_SAFE(request->headers, header, tmp) {
+		PancakeFree(header);
+	}
+}
+
+static inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	PancakeHTTPCleanRequestData(request);
+
+	PancakeFree(sock->data);
+	PancakeNetworkClose(sock);
+}
 #endif

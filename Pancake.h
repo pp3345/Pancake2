@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #ifdef HAVE_UCONTEXT_H
 #	include <ucontext.h>
