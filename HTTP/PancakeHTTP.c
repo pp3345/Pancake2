@@ -364,7 +364,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 			header->value.length = ptr - ptr3;
 
 			// Add header to list
-			DL_APPEND(request->headers, header);
+			LL_APPEND(request->headers, header);
 
 			if(ptr == headerEnd) {
 				// Finished parsing headers
@@ -400,7 +400,7 @@ static inline void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request) {
 		PancakeFree(request->requestAddress.value);
 	}
 
-	DL_FOREACH_SAFE(request->headers, header, tmp) {
+	LL_FOREACH_SAFE(request->headers, header, tmp) {
 		PancakeFree(header);
 	}
 }

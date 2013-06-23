@@ -40,7 +40,6 @@ typedef struct _PancakeHTTPHeader {
 	String name;
 	String value;
 
-	PancakeHTTPHeader *prev;
 	PancakeHTTPHeader *next;
 } PancakeHTTPHeader;
 
