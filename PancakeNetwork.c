@@ -116,6 +116,7 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 static UByte PancakeNetworkInterfaceNetworkConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeSocket *sock = (PancakeSocket*) setting->parent->hook;
+		Int32 value = 1;
 
 		// Check family
 		if(!strcmp(setting->value.sval, "ip4")) {
@@ -144,6 +145,9 @@ static UByte PancakeNetworkInterfaceNetworkConfiguration(UByte step, config_sett
 			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't create socket: %s", strerror(errno));
 			return 0;
 		}
+
+		// Set SO_REUSEADDR
+		setsockopt(sock->fd, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(Int32));
 	}
 
 	return 1;
