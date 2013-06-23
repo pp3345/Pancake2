@@ -341,14 +341,9 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 
 			// Get pointer to value
 			ptr3 = ptr2 + 1;
-			if(ptr3 == headerEnd) {
-				// Malformed header
-				PancakeHTTPOnRemoteHangup(sock);
-				return;
-			}
 
 			// RFC 2616 section 4.2 states that the colon may be followed by any amount of spaces
-			while(isspace(*ptr3)) {
+			while(isspace(*ptr3) && ptr3 < ptr) {
 				ptr3++;
 			}
 
