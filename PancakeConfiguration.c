@@ -444,6 +444,31 @@ PANCAKE_API void PancakeConfigurationDestroyScope(PancakeConfigurationScope *sco
 	PancakeFree(scope);
 }
 
+PANCAKE_API inline void PancakeConfigurationInitializeScopeGroup(PancakeConfigurationScopeGroup *group) {
+	group->scopes = NULL;
+	group->numScopes = 0;
+}
+
+PANCAKE_API inline void PancakeConfigurationScopeGroupAddScope(PancakeConfigurationScopeGroup *group, PancakeConfigurationScope *scope) {
+	group->numScopes++;
+	group->scopes = PancakeReallocate(group->scopes, sizeof(PancakeConfigurationScope*) * group->numScopes);
+	group->scopes[group->numScopes - 1] = scope;
+}
+
+PANCAKE_API inline void PancakeConfigurationActivateScopeGroup(PancakeConfigurationScopeGroup *group) {
+	UInt16 i;
+
+	for(i = 0; i < group->numScopes; i++) {
+		PancakeConfigurationActivateScope(group->scopes[i]);
+	}
+}
+
+PANCAKE_API inline void PancakeConfigurationDestroyScopeGroup(PancakeConfigurationScopeGroup *group) {
+	if(group->scopes) {
+		PancakeFree(group->scopes);
+	}
+}
+
 /* Built-in configuration hooks */
 
 UByte PancakeConfigurationFile(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {

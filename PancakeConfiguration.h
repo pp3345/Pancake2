@@ -63,6 +63,11 @@ typedef struct _PancakeConfigurationScope {
 	UByte isRootScope;
 } PancakeConfigurationScope;
 
+typedef struct _PancakeConfigurationScopeGroup {
+	PancakeConfigurationScope **scopes;
+	UInt16 numScopes;
+} PancakeConfigurationScopeGroup;
+
 typedef struct _PancakeConfigurationStructure {
 	config_t *wrapper;
 	PancakeConfigurationGroup *groups;
@@ -83,6 +88,11 @@ PANCAKE_API PancakeConfigurationScope *PancakeConfigurationAddScope();
 PANCAKE_API inline void PancakeConfigurationActivateScope(PancakeConfigurationScope *scope);
 PANCAKE_API inline void PancakeConfigurationUnscope();
 PANCAKE_API void PancakeConfigurationDestroyScope(PancakeConfigurationScope *scope);
+
+PANCAKE_API inline void PancakeConfigurationInitializeScopeGroup(PancakeConfigurationScopeGroup *group);
+PANCAKE_API inline void PancakeConfigurationScopeGroupAddScope(PancakeConfigurationScopeGroup *group, PancakeConfigurationScope *scope);
+PANCAKE_API inline void PancakeConfigurationActivateScopeGroup(PancakeConfigurationScopeGroup *group);
+PANCAKE_API inline void PancakeConfigurationDestroyScopeGroup(PancakeConfigurationScopeGroup *group);
 
 /* Configuration Hooks */
 UByte PancakeConfigurationFile(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
