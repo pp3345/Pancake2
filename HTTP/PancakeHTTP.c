@@ -320,6 +320,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 
 				// memchr() can't fail since we have a \r\n\r\n at the end of the header for sure
 				ptr = memchr(offset, '\r', headerEnd - offset + 1);
+				PancakeAssert(ptr != NULL);
 				if(*(ptr + 1) != '\n') {
 					// Malformed header
 					PancakeHTTPOnRemoteHangup(sock);
