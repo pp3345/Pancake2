@@ -81,6 +81,7 @@ PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationAddGroup(PancakeConfi
 PANCAKE_API PancakeConfigurationSetting *PancakeConfigurationAddSetting(PancakeConfigurationGroup *group, String name, UByte type, void *valuePtr, UInt8 valueSize, config_value_t defaultValue, PancakeConfigurationHook hook);
 PANCAKE_API void PancakeConfigurationAddGroupToGroup(PancakeConfigurationGroup *parent, PancakeConfigurationGroup *child);
 PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationListGroup(PancakeConfigurationSetting *setting, PancakeConfigurationHook hook);
+PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationLookupGroup(PancakeConfigurationGroup *parent, String name);
 PANCAKE_API void PancakeConfigurationAddGroupByName(PancakeConfigurationGroup *parent, String child);
 
 /* Configuration scoping API */

@@ -339,11 +339,11 @@ PANCAKE_API void PancakeConfigurationAddGroupToGroup(PancakeConfigurationGroup *
 	copy->isCopy = 1;
 }
 
-static PancakeConfigurationGroup *PancakeConfigurationSearchForGroup(PancakeConfigurationGroup *group, String child) {
-	for(group = group ? group->children : PancakeConfiguration->groups; group != NULL; group = group->hh.next) {
-		if((child.length == group->name.length && !strcmp(child.value, group->name.value))
-		|| (group = PancakeConfigurationSearchForGroup(group, child))) {
-			return group;
+PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationLookupGroup(PancakeConfigurationGroup *parent, String name) {
+	for(parent = parent ? parent->children : PancakeConfiguration->groups; parent != NULL; parent = parent->hh.next) {
+		if((name.length == parent->name.length && !strcmp(name.value, parent->name.value))
+		|| (parent = PancakeConfigurationLookupGroup(parent, name))) {
+			return parent;
 		}
 	}
 
@@ -351,7 +351,7 @@ static PancakeConfigurationGroup *PancakeConfigurationSearchForGroup(PancakeConf
 }
 
 PANCAKE_API void PancakeConfigurationAddGroupByName(PancakeConfigurationGroup *parent, String child) {
-	PancakeConfigurationGroup *group = PancakeConfigurationSearchForGroup(NULL, child);
+	PancakeConfigurationGroup *group = PancakeConfigurationLookupGroup(NULL, child);
 
 	if(group) {
 		// We must copy the group in order to have it in two groups
