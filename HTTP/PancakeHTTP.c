@@ -310,6 +310,12 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 			goto headersParsed;
 		}
 
+		if(*offset != '\r' || *(offset + 1) != '\n') {
+			// Malformed header
+			PancakeHTTPOnRemoteHangup(sock);
+			return;
+		}
+
 		offset += 2;
 
 		// Parse header lines
