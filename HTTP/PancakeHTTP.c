@@ -141,7 +141,7 @@ static UByte PancakeHTTPNetworkInterfaceConfiguration(UByte step, config_setting
 }
 
 UByte PancakeHTTPInitialize() {
-	PancakeConfigurationGroup *group;
+	PancakeConfigurationGroup *group, *child;
 	PancakeConfigurationSetting *setting;
 
 	group = PancakeConfigurationAddGroup(NULL, (String) {"HTTP", sizeof("HTTP") - 1}, NULL);
@@ -155,7 +155,8 @@ UByte PancakeHTTPInitialize() {
 	PancakeConfigurationAddSetting(group, (String) {"ContentServeBackends", sizeof("ContentServeBackends") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, NULL);
 	PancakeConfigurationAddSetting(group, (String) {"OutputFilters", sizeof("OutputFilters") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, NULL);
 
-	PancakeConfigurationAddGroupByName(group, (String) {"Logging", sizeof("Logging") - 1});
+	child = PancakeConfigurationLookupGroup(NULL, (String) {"Logging", sizeof("Logging") - 1});
+	PancakeConfigurationAddGroupToGroup(group, child);
 
 	return 1;
 }
