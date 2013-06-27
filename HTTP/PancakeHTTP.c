@@ -305,82 +305,77 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 
 		offset++;
 
-		if(offset == headerEnd) {
-			// We have already finished parsing the header
-			goto headersParsed;
-		}
-
-		if(*offset != '\r' || *(offset + 1) != '\n') {
-			// Malformed header
-			PancakeHTTPOnRemoteHangup(sock);
-			return;
-		}
-
-		offset += 2;
-
-		// Parse header lines
-		while(1) {
-			PancakeHTTPHeader *header;
-
-			// memchr() can't fail since we have a \r\n\r\n at the end of the header for sure
-			ptr = memchr(offset, '\r', headerEnd - offset + 1);
-			if(*(ptr + 1) != '\n') {
+		if(offset != headerEnd) {
+			if(*offset != '\r' || *(offset + 1) != '\n') {
 				// Malformed header
 				PancakeHTTPOnRemoteHangup(sock);
 				return;
 			}
 
-			ptr2 = memchr(offset, ':', ptr - offset);
+			offset += 2;
 
-			if(!ptr2 || ptr2 == offset) {
-				// Malformed header
-				PancakeHTTPOnRemoteHangup(sock);
-				return;
-			}
+			// Parse header lines
+			while(1) {
+				PancakeHTTPHeader *header;
 
-			// Make header name lowercase
-			ptr3 = offset;
-			while(ptr3 != ptr2) {
-				*ptr3 = tolower(*ptr3);
-				ptr3++;
-			}
+				// memchr() can't fail since we have a \r\n\r\n at the end of the header for sure
+				ptr = memchr(offset, '\r', headerEnd - offset + 1);
+				if(*(ptr + 1) != '\n') {
+					// Malformed header
+					PancakeHTTPOnRemoteHangup(sock);
+					return;
+				}
 
-			// Get pointer to value
-			ptr3 = ptr2 + 1;
+				ptr2 = memchr(offset, ':', ptr - offset);
 
-			// RFC 2616 section 4.2 states that the colon may be followed by any amount of spaces
-			while(isspace(*ptr3) && ptr3 < ptr) {
-				ptr3++;
-			}
+				if(!ptr2 || ptr2 == offset) {
+					// Malformed header
+					PancakeHTTPOnRemoteHangup(sock);
+					return;
+				}
 
-			// ptr2 - offset == length of header name
-			switch(ptr2 - offset) {
-				case 4:
-					if(!memcmp(offset, "host", 4)) {
-						request->host.value = ptr3;
-						request->host.length = ptr - ptr3;
-					}
+				// Make header name lowercase
+				ptr3 = offset;
+				while(ptr3 != ptr2) {
+					*ptr3 = tolower(*ptr3);
+					ptr3++;
+				}
+
+				// Get pointer to value
+				ptr3 = ptr2 + 1;
+
+				// RFC 2616 section 4.2 states that the colon may be followed by any amount of spaces
+				while(isspace(*ptr3) && ptr3 < ptr) {
+					ptr3++;
+				}
+
+				// ptr2 - offset == length of header name
+				switch(ptr2 - offset) {
+					case 4:
+						if(!memcmp(offset, "host", 4)) {
+							request->host.value = ptr3;
+							request->host.length = ptr - ptr3;
+						}
+						break;
+				}
+
+				header = PancakeAllocate(sizeof(PancakeHTTPHeader));
+				header->name.value = offset;
+				header->name.length = ptr2 - offset;
+				header->value.value = ptr3;
+				header->value.length = ptr - ptr3;
+
+				// Add header to list
+				LL_APPEND(request->headers, header);
+
+				if(ptr == headerEnd) {
+					// Finished parsing headers
 					break;
+				}
+
+				offset = ptr + 2;
 			}
-
-			header = PancakeAllocate(sizeof(PancakeHTTPHeader));
-			header->name.value = offset;
-			header->name.length = ptr2 - offset;
-			header->value.value = ptr3;
-			header->value.length = ptr - ptr3;
-
-			// Add header to list
-			LL_APPEND(request->headers, header);
-
-			if(ptr == headerEnd) {
-				// Finished parsing headers
-				break;
-			}
-
-			offset = ptr + 2;
 		}
-
-		headersParsed:
 
 		// Fetch virtual host
 		if(!request->host.value) {
