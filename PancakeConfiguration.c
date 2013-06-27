@@ -350,18 +350,6 @@ PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationLookupGroup(PancakeCo
 	return NULL;
 }
 
-PANCAKE_API void PancakeConfigurationAddGroupByName(PancakeConfigurationGroup *parent, String child) {
-	PancakeConfigurationGroup *group = PancakeConfigurationLookupGroup(NULL, child);
-
-	if(group) {
-		// We must copy the group in order to have it in two groups
-		PancakeConfigurationGroup *copy = PancakeConfigurationAddGroup(parent, child, group->hook);
-		copy->children = group->children;
-		copy->settings = group->settings;
-		copy->isCopy = 1;
-	}
-}
-
 PANCAKE_API PancakeConfigurationSetting *PancakeConfigurationAddSetting(PancakeConfigurationGroup *group, String name, UByte type, void *valuePtr, UInt8 valueSize, config_value_t defaultValue, PancakeConfigurationHook hook) {
 	PancakeConfigurationSetting *setting = PancakeAllocate(sizeof(PancakeConfigurationSetting));
 
