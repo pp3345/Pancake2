@@ -163,6 +163,7 @@ Int32 main(Int32 argc, Byte **argv) {
 
 		// Allocate worker registry
 		PancakeWorkerRegistry = PancakeAllocate(PancakeMainConfiguration.workers * sizeof(PancakeWorker*));
+		memset(PancakeWorkerRegistry, '\0', PancakeMainConfiguration.workers * sizeof(PancakeWorker*));
 
 		PancakeDebug {
 			PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Multithreaded mode enabled with %i workers", PancakeMainConfiguration.workers);
@@ -184,7 +185,6 @@ Int32 main(Int32 argc, Byte **argv) {
 					exit(1);
 				case 1: {
 					// Child started successfully
-					UInt16 i2;
 
 					// Add worker to registry
 					PancakeWorkerRegistry[i - 1] = worker;
@@ -194,32 +194,11 @@ Int32 main(Int32 argc, Byte **argv) {
 						do {
 							sleep(3600);
 						} while(!PancakeDoShutdown);
-
-						// Destroy worker registry
-						for(i2 = 0; i2 < PancakeMainConfiguration.workers; i2++) {
-							PancakeWorker *worker = PancakeWorkerRegistry[i2];
-
-							PancakeFree(worker->name.value);
-							PancakeFree(worker);
-						}
-
-						PancakeFree(PancakeWorkerRegistry);
 					}
 				} break;
 				case 2: {
-					// Child process shutdown
-					UInt16 i2;
-
-					// Destroy allocated workers
-					for(i2 = 0; i2 < i - 1; i2++) {
-						PancakeWorker *worker = PancakeWorkerRegistry[i2];
-
-						PancakeFree(worker->name.value);
-						PancakeFree(worker);
-					}
-
-					PancakeFree(PancakeWorkerRegistry);
-				} goto shutdown;
+					goto shutdown;
+				}
 			}
 		}
 	} else {
@@ -237,8 +216,30 @@ Int32 main(Int32 argc, Byte **argv) {
 
 	// Shutdown
 	if(PancakeCurrentWorker->isMaster) {
+		UInt16 i;
+
 		PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Stopping...");
+
+		for(i = 0; i < PancakeMainConfiguration.workers; i++) {
+			PancakeWorker *worker = PancakeWorkerRegistry[i];
+
+			write(worker->masterSocket, PANCAKE_WORKER_GRACEFUL_SHUTDOWN, sizeof(PANCAKE_WORKER_GRACEFUL_SHUTDOWN));
+		}
 	}
+
+	// Destroy worker registry
+	for(i = 0; i < PancakeMainConfiguration.workers; i++) {
+		PancakeWorker *worker = PancakeWorkerRegistry[i];
+
+		if(worker == NULL) {
+			continue;
+		}
+
+		PancakeFree(worker->name.value);
+		PancakeFree(worker);
+	}
+
+	PancakeFree(PancakeWorkerRegistry);
 
 	// Unload configuration and free memory
 	PancakeConfigurationUnload();
@@ -274,16 +275,6 @@ static void PancakeSignalHandler(Int32 type, siginfo_t *info, void *context) {
 		case SIGINT:
 		case SIGTERM:
 			PancakeDoShutdown = 1;
-
-			if(PancakeCurrentWorker->isMaster) {
-				UInt16 i;
-
-				for(i = 0; i < PancakeMainConfiguration.workers; i++) {
-					PancakeWorker *worker = PancakeWorkerRegistry[i];
-
-					write(worker->masterSocket, PANCAKE_WORKER_GRACEFUL_SHUTDOWN, sizeof(PANCAKE_WORKER_GRACEFUL_SHUTDOWN));
-				}
-			}
 			break;
 		case SIGCHLD:
 			if(PancakeDoShutdown) {
