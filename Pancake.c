@@ -228,18 +228,20 @@ Int32 main(Int32 argc, Byte **argv) {
 	}
 
 	// Destroy worker registry
-	for(i = 0; i < PancakeMainConfiguration.workers; i++) {
-		PancakeWorker *worker = PancakeWorkerRegistry[i];
+	if(PancakeMainConfiguration.workers > 0) {
+		for(i = 0; i < PancakeMainConfiguration.workers; i++) {
+			PancakeWorker *worker = PancakeWorkerRegistry[i];
 
-		if(worker == NULL) {
-			continue;
+			if(worker == NULL) {
+				continue;
+			}
+
+			PancakeFree(worker->name.value);
+			PancakeFree(worker);
 		}
 
-		PancakeFree(worker->name.value);
-		PancakeFree(worker);
+		PancakeFree(PancakeWorkerRegistry);
 	}
-
-	PancakeFree(PancakeWorkerRegistry);
 
 	// Unload configuration and free memory
 	PancakeConfigurationUnload();
