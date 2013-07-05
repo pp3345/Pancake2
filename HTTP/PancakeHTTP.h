@@ -4,14 +4,29 @@
 
 #include "Pancake.h"
 #include "PancakeConfiguration.h"
+#include "PancakeNetwork.h"
+#include "MIME/PancakeMIME.h"
 
 #ifdef PANCAKE_HTTP
 
 /* Forward declarations */
 typedef struct _PancakeHTTPHeader PancakeHTTPHeader;
+typedef struct _PancakeHTTPContentServeBackend PancakeHTTPContentServeBackend;
+
+typedef UByte (*PancakeHTTPContentServeHandler)(PancakeSocket *sock);
+
+typedef struct _PancakeHTTPContentServeBackend {
+	UByte *name;
+	PancakeHTTPContentServeHandler handler;
+
+	PancakeHTTPContentServeBackend *next;
+} PancakeHTTPContentServeBackend;
 
 typedef struct _PancakeHTTPVirtualHost {
 	PancakeConfigurationScope *configurationScope;
+	PancakeHTTPContentServeHandler *contentBackends;
+
+	UInt16 numContentBackends;
 } PancakeHTTPVirtualHost;
 
 typedef struct _PancakeHTTPVirtualHostIndex {
@@ -32,8 +47,19 @@ typedef struct _PancakeHTTPRequest {
 	PancakeHTTPVirtualHost *vHost;
 	PancakeHTTPHeader *headers;
 
+	PancakeConfigurationScopeGroup scopeGroup;
+
+	struct stat fileStat;
+
+	UInt32 contentLength;
+	UInt16 answerCode;
+	PancakeMIMEType *answerType;
+	void *contentServeData;
+
 	UByte method;
 	UByte HTTPVersion;
+	UByte statDone;
+	UByte chunkedTransfer;
 } PancakeHTTPRequest;
 
 typedef struct _PancakeHTTPHeader {
@@ -55,6 +81,10 @@ extern PancakeHTTPVirtualHost *PancakeHTTPDefaultVirtualHost;
 extern PancakeHTTPConfigurationStructure PancakeHTTPConfiguration;
 
 UByte PancakeHTTPInitialize();
+
+PANCAKE_API void PancakeHTTPRegisterContentServeBackend(PancakeHTTPContentServeBackend *backend);
+PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock);
+PANCAKE_API void PancakeHTTPOnRemoteHangup(PancakeSocket *sock);
 
 #endif
 #endif
