@@ -5,6 +5,9 @@
  * Pancake date and time formatting API
  */
 
+static UByte *RFC1123Days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+static UByte *RFC1123Months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
 PANCAKE_API String PancakeFormatDate(Native time) {
 	struct tm *timeStruct = gmtime(&time);
 	String formatted;
@@ -27,4 +30,12 @@ PANCAKE_API String PancakeFormatDateTime(Native time) {
 	formatted.length = strftime(formatted.value, sizeof("1970-01-01 01:00:00"), "%Y-%m-%d %H:%M:%S", timeStruct);
 
 	return formatted;
+}
+
+PANCAKE_API void PancakeRFC1123Date(Native time, UByte *buf) {
+	struct tm *now = gmtime(&time);
+
+	strftime(buf, 30, "___, %d ___ %Y %H:%M:%S GMT", now);
+	memcpy(buf, RFC1123Days[now->tm_wday], 3);
+	memcpy(buf + 8, RFC1123Months[now->tm_mon], 3);
 }
