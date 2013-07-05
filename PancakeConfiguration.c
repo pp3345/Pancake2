@@ -56,6 +56,11 @@ static UByte PancakeConfigurationCheckValue(PancakeConfigurationScope *scope, Pa
 				return 0;
 			}
 
+			// Resolve copy of setting
+			if(setting->type == CONFIG_TYPE_COPY) {
+				setting = ((PancakeConfigurationSettingCopy*) setting)->setting;
+			}
+
 			// Check setting type
 			if(setting->type != configSetting->type && configSetting->type != CONFIG_TYPE_ANY) {
 				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Failed to parse configuration: Bad value for %s in %s on line %i", configSetting->name, configSetting->file, configSetting->line);
@@ -129,6 +134,11 @@ static void PancakeConfigurationLoadGroupDefaultValues(PancakeConfigurationGroup
 	for(setting = parent ? parent->settings : PancakeConfiguration->settings;
 		setting != NULL;
 		setting = setting->hh.next) {
+		// Ignore copies
+		if(setting->type == CONFIG_TYPE_COPY) {
+			continue;
+		}
+
 		if(!setting->haveValue && setting->valuePtr != NULL) {
 			PancakeConfigurationScopeValue *value = PancakeAllocate(sizeof(PancakeConfigurationScopeValue*));
 
@@ -220,6 +230,11 @@ static void PancakeConfigurationDestroyValue(PancakeConfigurationGroup *parent, 
 
 			HASH_FIND(hh, parent ? parent->settings : PancakeConfiguration->settings, configSetting->name, strlen(configSetting->name), setting);
 
+			// Resolve copy of setting
+			if(setting->type == CONFIG_TYPE_COPY) {
+				setting = ((PancakeConfigurationSettingCopy*) setting)->setting;
+			}
+
 			// Destroy list group
 			if(setting->type == CONFIG_TYPE_LIST && setting->listGroup) {
 				UInt16 i;
@@ -270,7 +285,7 @@ static void PancakeConfigurationDestroyGroup(PancakeConfigurationGroup *group) {
 	HASH_ITER(hh, group->settings, setting, tmp) {
 		HASH_DEL(group->settings, setting);
 
-		if(setting->listGroup) {
+		if(setting->type != CONFIG_TYPE_COPY && setting->listGroup) {
 			PancakeConfigurationDestroyGroup(setting->listGroup);
 			PancakeFree(setting->listGroup);
 		}
@@ -301,7 +316,7 @@ void PancakeConfigurationDestroy() {
 	HASH_ITER(hh, PancakeConfiguration->settings, setting, tmp2) {
 		HASH_DEL(PancakeConfiguration->settings, setting);
 
-		if(setting->listGroup) {
+		if(setting->type != CONFIG_TYPE_COPY && setting->listGroup) {
 			PancakeConfigurationDestroyGroup(setting->listGroup);
 			PancakeFree(setting->listGroup);
 		}
@@ -337,6 +352,19 @@ PANCAKE_API void PancakeConfigurationAddGroupToGroup(PancakeConfigurationGroup *
 	copy->children = child->children;
 	copy->settings = child->settings;
 	copy->isCopy = 1;
+}
+
+PANCAKE_API void PancakeConfigurationAddSettingToGroup(PancakeConfigurationGroup *parent, PancakeConfigurationSetting *child) {
+	PancakeConfigurationSettingCopy *copy = PancakeAllocate(sizeof(PancakeConfigurationSettingCopy));
+
+	copy->type = CONFIG_TYPE_COPY;
+	copy->setting = child;
+
+	if(parent == NULL) {
+		HASH_ADD_KEYPTR(hh, PancakeConfiguration->settings, child->name.value, child->name.length, copy);
+	} else {
+		HASH_ADD_KEYPTR(hh, parent->settings, child->name.value, child->name.length, copy);
+	}
 }
 
 PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationLookupGroup(PancakeConfigurationGroup *parent, String name) {

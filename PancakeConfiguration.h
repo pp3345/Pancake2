@@ -9,10 +9,11 @@
 #	define PANCAKE_CONFIG_PATH "config/pancake.cfg"
 #endif
 
-#define CONFIG_TYPE_SERVER_ARCHITECTURE 1 << 7
-#define CONFIG_TYPE_SPECIAL 1 << 8
-#define CONFIG_TYPE_FILE 1 << 9
-#define CONFIG_TYPE_ANY 1 << 10
+#define CONFIG_TYPE_SERVER_ARCHITECTURE 16
+#define CONFIG_TYPE_SPECIAL 17
+#define CONFIG_TYPE_FILE 18
+#define CONFIG_TYPE_ANY 19
+#define CONFIG_TYPE_COPY 20
 
 #define PANCAKE_CONFIGURATION_INIT 1 << 0
 #define PANCAKE_CONFIGURATION_DTOR 1 << 1
@@ -25,18 +26,28 @@ typedef struct _PancakeConfigurationScopeValue PancakeConfigurationScopeValue;
 typedef UByte (*PancakeConfigurationHook)(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
 
 typedef struct _PancakeConfigurationSetting {
+	/* Hash handle must be the first and type the second element */
+	UT_hash_handle hh;
+
+	UByte type;
+	UInt8 valueSize;
+	UByte haveScopedValue;
+	UByte haveValue;
+
 	String name;
 	PancakeConfigurationHook hook;
 	PancakeConfigurationGroup *listGroup;
 	void *valuePtr;
 	config_value_t defaultValue;
-	UInt8 valueSize;
-	UByte type;
-	UByte haveScopedValue;
-	UByte haveValue;
-
-	UT_hash_handle hh;
 } PancakeConfigurationSetting;
+
+typedef struct _PancakeConfigurationSettingCopy {
+	/* Hash handle must be the first and type the second element */
+	UT_hash_handle hh;
+	UByte type;
+
+	PancakeConfigurationSetting *setting;
+} PancakeConfigurationSettingCopy;
 
 typedef struct _PancakeConfigurationGroup {
 	String name;
@@ -80,6 +91,7 @@ extern PancakeConfigurationStructure *PancakeConfiguration;
 PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationAddGroup(PancakeConfigurationGroup *parent, String name, PancakeConfigurationHook hook);
 PANCAKE_API PancakeConfigurationSetting *PancakeConfigurationAddSetting(PancakeConfigurationGroup *group, String name, UByte type, void *valuePtr, UInt8 valueSize, config_value_t defaultValue, PancakeConfigurationHook hook);
 PANCAKE_API void PancakeConfigurationAddGroupToGroup(PancakeConfigurationGroup *parent, PancakeConfigurationGroup *child);
+PANCAKE_API void PancakeConfigurationAddSettingToGroup(PancakeConfigurationGroup *parent, PancakeConfigurationSetting *child);
 PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationListGroup(PancakeConfigurationSetting *setting, PancakeConfigurationHook hook);
 PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationLookupGroup(PancakeConfigurationGroup *parent, String name);
 
