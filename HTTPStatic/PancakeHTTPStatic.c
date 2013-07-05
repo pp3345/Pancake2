@@ -40,6 +40,7 @@ static void PancakeHTTPStaticWrite(PancakeSocket *sock) {
 		String output;
 
 		if(feof((FILE*) request->contentServeData)) {
+			fclose(request->contentServeData);
 			PancakeHTTPOnRemoteHangup(sock);
 			return;
 		}
@@ -51,6 +52,13 @@ static void PancakeHTTPStaticWrite(PancakeSocket *sock) {
 	}
 
 	PancakeNetworkWrite(sock);
+}
+
+static void PancakeHTTPStaticOnRemoteHangup(PancakeSocket *sock) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	fclose(request->contentServeData);
+	PancakeHTTPOnRemoteHangup(sock);
 }
 
 static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
@@ -81,6 +89,7 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 		PancakeNetworkAddWriteSocket(sock);
 
 		sock->onWrite = PancakeHTTPStaticWrite;
+		sock->onRemoteHangup = PancakeHTTPStaticOnRemoteHangup;
 		return 1;
 	}
 
