@@ -523,7 +523,7 @@ PANCAKE_API void PancakeHTTPOutput(PancakeSocket *sock, String *output) {
 
 PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
-	UByte *offset;
+	UByte *offset, timeString[30];
 
 	sock->writeBuffer.size += 8192;
 	sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
@@ -554,6 +554,21 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 		memcpy(offset, PANCAKE_HTTP_SERVER_HEADER, sizeof(PANCAKE_HTTP_SERVER_HEADER) - 1);
 		offset += sizeof(PANCAKE_HTTP_SERVER_HEADER) - 1;
 	}
+
+	// Date
+	PancakeRFC1123Date(time(NULL), timeString);
+	memcpy(offset, "Date", sizeof("Date") - 1);
+	offset += sizeof("Date") - 1;
+	offset[0] = ':';
+	offset[1] = ' ';
+	offset += 2;
+	memcpy(offset, timeString, 29);
+	offset += 29;
+
+	// \r\n
+	offset[0] = '\r';
+	offset[1] = '\n';
+	offset += 2;
 
 	// Content-Length
 	if(request->contentLength) {
