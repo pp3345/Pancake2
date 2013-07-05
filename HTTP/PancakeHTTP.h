@@ -15,6 +15,8 @@ typedef struct _PancakeHTTPContentServeBackend PancakeHTTPContentServeBackend;
 
 typedef UByte (*PancakeHTTPContentServeHandler)(PancakeSocket *sock);
 
+#define PANCAKE_HTTP_SERVER_HEADER "Server: Pancake/" PANCAKE_VERSION "\r\n"
+
 typedef struct _PancakeHTTPContentServeBackend {
 	UByte *name;
 	PancakeHTTPContentServeHandler handler;
@@ -37,6 +39,7 @@ typedef struct _PancakeHTTPVirtualHostIndex {
 
 typedef struct _PancakeHTTPConfigurationStructure {
 	String *documentRoot;
+	UByte serverHeader;
 } PancakeHTTPConfigurationStructure;
 
 typedef struct _PancakeHTTPRequest {

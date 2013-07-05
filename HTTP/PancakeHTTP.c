@@ -183,18 +183,20 @@ static UByte PancakeHTTPContentServeBackendConfiguration(UByte step, config_sett
 
 UByte PancakeHTTPInitialize() {
 	PancakeConfigurationGroup *group, *child;
-	PancakeConfigurationSetting *setting;
+	PancakeConfigurationSetting *setting, *serverHeader;
 
 	group = PancakeConfigurationAddGroup(NULL, (String) {"HTTP", sizeof("HTTP") - 1}, NULL);
+	serverHeader = PancakeConfigurationAddSetting(group, (String) {"ServerHeader", sizeof("ServerHeader") - 1}, CONFIG_TYPE_BOOL, &PancakeHTTPConfiguration.serverHeader, sizeof(UByte), (config_value_t) 0, NULL);
 	PancakeNetworkRegisterListenInterfaceGroup(group, PancakeHTTPNetworkInterfaceConfiguration);
 
 	setting = PancakeConfigurationAddSetting(group, (String) {"VirtualHosts", sizeof("VirtualHosts") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, NULL);
 	group = PancakeConfigurationListGroup(setting, PancakeHTTPVirtualHostConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"Hosts", sizeof("Hosts") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, PancakeHTTPHostsConfiguration);
-	PancakeConfigurationAddSetting(group, (String) {"Default", sizeof("Default") - 1}, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeHTTPDefaultConfiguration);
+	PancakeConfigurationAddSetting(group, (String) {"Default", sizeof("Default") - 1}, CONFIG_TYPE_BOOL, NULL, 0, (config_value_t) 0, PancakeHTTPDefaultConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"DocumentRoot", sizeof("DocumentRoot") - 1}, CONFIG_TYPE_STRING, &PancakeHTTPConfiguration.documentRoot, sizeof(String*), (config_value_t) "", PancakeHTTPDocumentRootConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"ContentServeBackends", sizeof("ContentServeBackends") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, PancakeHTTPContentServeBackendConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"OutputFilters", sizeof("OutputFilters") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, NULL);
+	PancakeConfigurationAddSettingToGroup(group, serverHeader);
 
 	child = PancakeConfigurationLookupGroup(NULL, (String) {"Logging", sizeof("Logging") - 1});
 	PancakeConfigurationAddGroupToGroup(group, child);
@@ -546,6 +548,12 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 	offset[0] = '\r';
 	offset[1] = '\n';
 	offset += 2;
+
+	// Server
+	if(PancakeHTTPConfiguration.serverHeader) {
+		memcpy(offset, PANCAKE_HTTP_SERVER_HEADER, sizeof(PANCAKE_HTTP_SERVER_HEADER) - 1);
+		offset += sizeof(PANCAKE_HTTP_SERVER_HEADER) - 1;
+	}
 
 	// Content-Length
 	if(request->contentLength) {
