@@ -128,6 +128,11 @@ extern PancakeMainConfigurationStructure PancakeMainConfiguration;
 
 extern UByte PancakeDoShutdown;
 
+/* Platform-specific functions */
+#ifndef HAVE_ITOA
+#	define itoa(val, s, radix) sprintf(s, "%i", val)
+#endif
+
 /* Pancake version constant */
 #define PANCAKE_VERSION "2.0"
 #define PANCAKE_COPYRIGHT "2012 - 2013 Yussuf Khalil"

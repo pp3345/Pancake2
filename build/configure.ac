@@ -44,6 +44,7 @@ AC_CHECK_HEADER([ucontext.h], [AC_DEFINE([HAVE_UCONTEXT_H], [], [Have ucontext.h
 AC_CHECK_FUNC([sigaction], [AC_DEFINE([HAVE_SIGACTION], [], [Have sigaction()])])
 AC_CHECK_FUNC([vasprintf], [],  [AC_ERROR([vasprintf is not available on your system])])
 AC_CHECK_FUNC([accept4], [AC_DEFINE([HAVE_ACCEPT4], [], [Have accept4()])])
+AC_CHECK_FUNC([itoa], [AC_DEFINE([HAVE_ITOA], [], [Have itoa()])])
 
 if test -f "PancakeModules.c"; then
 	rm PancakeModules.c
