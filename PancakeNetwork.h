@@ -12,11 +12,11 @@ typedef struct _PancakeSocket PancakeSocket;
 typedef void (*PancakeNetworkEventHandler)(PancakeSocket *socket);
 typedef void (*PancakeSocketHandler)(PancakeSocket *socket);
 
-typedef struct _PancakeNetworkReadBuffer {
+typedef struct _PancakeNetworkBuffer {
 	UByte *value;
 	UInt32 length;
 	UInt32 size;
-} PancakeNetworkReadBuffer;
+} PancakeNetworkBuffer;
 
 typedef struct _PancakeSocket {
 	Int32 fd;
@@ -25,8 +25,8 @@ typedef struct _PancakeSocket {
 	PancakeNetworkEventHandler onRead;
 	PancakeNetworkEventHandler onWrite;
 	PancakeNetworkEventHandler onRemoteHangup;
-	PancakeNetworkReadBuffer readBuffer;
-	String writeBuffer;
+	PancakeNetworkBuffer readBuffer;
+	PancakeNetworkBuffer writeBuffer;
 
 	struct sockaddr *localAddress;
 	struct sockaddr remoteAddress;
@@ -63,7 +63,8 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 PANCAKE_API Byte *PancakeNetworkGetInterfaceName(struct sockaddr *addr);
 
 PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *sock);
-PANCAKE_API inline Byte PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength);
+PANCAKE_API inline UInt32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength);
+PANCAKE_API inline UInt32 PancakeNetworkWrite(PancakeSocket *sock);
 PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock);
 
 #define PancakeNetworkAddReadSocket(socket) (PancakeMainConfiguration.serverArchitecture->addReadSocket(socket))

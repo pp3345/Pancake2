@@ -395,11 +395,14 @@ PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *
 	client->readBuffer.size = 0;
 	client->readBuffer.length = 0;
 	client->readBuffer.value = NULL;
+	client->writeBuffer.size = 0;
+	client->writeBuffer.length = 0;
+	client->writeBuffer.value = NULL;
 
 	return client;
 }
 
-PANCAKE_API inline Byte PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength) {
+PANCAKE_API inline UInt32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength) {
 	UByte buf[maxLength];
 	UInt32 length;
 
@@ -431,6 +434,23 @@ PANCAKE_API inline Byte PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength
 	return length;
 }
 
+PANCAKE_API inline UInt32 PancakeNetworkWrite(PancakeSocket *sock) {
+	UInt32 length;
+
+	// Write data
+	length = write(sock->fd, sock->writeBuffer.value, sock->writeBuffer.length);
+
+	// Shrink buffer
+	if(length < sock->writeBuffer.length) {
+		memmove(sock->writeBuffer.value, sock->writeBuffer.value + length, sock->writeBuffer.length - length);
+		sock->writeBuffer.length -= length;
+	} else {
+		sock->writeBuffer.length = 0;
+	}
+
+	return length;
+}
+
 PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock) {
 	// Remove socket from list
 	PancakeNetworkRemoveSocket(sock);
@@ -441,6 +461,11 @@ PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock) {
 	// Free read buffer
 	if(sock->readBuffer.size) {
 		PancakeFree(sock->readBuffer.value);
+	}
+
+	// Free write buffer
+	if(sock->writeBuffer.size) {
+		PancakeFree(sock->writeBuffer.value);
 	}
 
 	// Free socket
