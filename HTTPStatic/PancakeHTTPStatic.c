@@ -76,6 +76,7 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 
 		request->contentLength = request->fileStat.st_size;
 		request->answerType = PancakeMIMELookupTypeByPath(&request->path);
+		request->lastModified = request->fileStat.st_mtim.tv_sec;
 		request->answerCode = 200;
 
 		// Open file

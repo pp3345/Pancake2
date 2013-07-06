@@ -449,6 +449,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		request->contentLength = 0;
 		request->answerType = NULL;
 		request->chunkedTransfer = 0;
+		request->lastModified = 0;
 
 		// Serve content
 		for(i = 0; i < request->vHost->numContentBackends; i++) {
@@ -599,6 +600,18 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 		offset[0] = '\r';
 		offset[1] = '\n';
 		offset += 2;
+	}
+
+	// Last-Modified
+	if(request->lastModified) {
+		memcpy(offset, "Last-Modified", sizeof("Last-Modified") - 1);
+		offset += sizeof("Last-Modified") - 1;
+		offset[0] = ':';
+		offset[1] = ' ';
+		offset[31] = '\r';
+		offset[32] = '\n';
+		PancakeRFC1123Date(request->lastModified, &offset[2]);
+		offset += 33;
 	}
 
 	// \r\n

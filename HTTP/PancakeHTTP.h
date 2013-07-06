@@ -58,6 +58,7 @@ typedef struct _PancakeHTTPRequest {
 	UInt16 answerCode;
 	PancakeMIMEType *answerType;
 	void *contentServeData;
+	Native lastModified;
 
 	UByte method;
 	UByte HTTPVersion;
