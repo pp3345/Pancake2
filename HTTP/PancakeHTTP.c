@@ -1208,9 +1208,9 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 		offset += sizeof("Last-Modified") - 1;
 		offset[0] = ':';
 		offset[1] = ' ';
+		PancakeRFC1123Date(request->lastModified, offset + 2);
 		offset[31] = '\r';
 		offset[32] = '\n';
-		PancakeRFC1123Date(request->lastModified, &offset[2]);
 		offset += 33;
 	}
 
