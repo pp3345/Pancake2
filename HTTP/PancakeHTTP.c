@@ -994,7 +994,7 @@ PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code) {
 
 	// Reallocate buffer to correct size
 	sock->writeBuffer.size = sock->writeBuffer.length + request->contentLength;
-	PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
+	sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
 
 	// Build exception page
 	offset = sock->writeBuffer.value + sock->writeBuffer.length;
