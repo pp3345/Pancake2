@@ -1140,8 +1140,12 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 	PancakeAssert(request->answerCode >= 100 && request->answerCode <= 599);
 	itoa(request->answerCode, &sock->writeBuffer.value[9], 10);
 
+	// Answer code string
+	sock->writeBuffer.value[12] = ' ';
+	memcpy(&sock->writeBuffer.value[13], PancakeHTTPAnswerCodes[request->answerCode - 100].value, PancakeHTTPAnswerCodes[request->answerCode - 100].length);
+
 	// \r\n - use offsets from here on to allow for dynamic-length answer code descriptions
-	offset = sock->writeBuffer.value + 12;
+	offset = sock->writeBuffer.value + 13 + PancakeHTTPAnswerCodes[request->answerCode - 100].length;
 	offset[0] = '\r';
 	offset[1] = '\n';
 	offset += 2;
