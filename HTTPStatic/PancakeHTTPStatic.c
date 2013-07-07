@@ -83,6 +83,7 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 		request->contentServeData = (void*) fopen(fullPath, "r");
 
 		if(request->contentServeData == NULL) {
+			PancakeHTTPException(sock, 403);
 			return 0;
 		}
 

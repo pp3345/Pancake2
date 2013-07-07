@@ -16,6 +16,7 @@ typedef struct _PancakeHTTPContentServeBackend PancakeHTTPContentServeBackend;
 typedef UByte (*PancakeHTTPContentServeHandler)(PancakeSocket *sock);
 
 #define PANCAKE_HTTP_SERVER_HEADER "Server: Pancake/" PANCAKE_VERSION "\r\n"
+#define PANCAKE_HTTP_SERVER_TOKEN "Pancake " PANCAKE_VERSION
 
 typedef struct _PancakeHTTPContentServeBackend {
 	UByte *name;
@@ -79,16 +80,29 @@ typedef struct _PancakeHTTPHeader {
 #define PANCAKE_HTTP_10 1
 #define PANCAKE_HTTP_11 2
 
+#define PANCAKE_HTTP_EXCEPTION 1 << 0
+
+#define PANCAKE_HTTP_EXCEPTION_PAGE_HEADER "<!doctype html><html><head><title>"
+#define PANCAKE_HTTP_EXCEPTION_PAGE_BODY_ERROR "</title><style>body{font-family:\"Arial\"}hr{border:1px solid #000}</style></head><body><h1>"
+#define PANCAKE_HTTP_EXCEPTION_PAGE_BODY_TOKEN "</h1><hr>"
+#define PANCAKE_HTTP_EXCEPTION_PAGE_FOOTER "</body></html>"
+
+
 extern PancakeModule PancakeHTTP;
 extern PancakeHTTPVirtualHostIndex *PancakeHTTPVirtualHosts;
 extern PancakeHTTPVirtualHost *PancakeHTTPDefaultVirtualHost;
 extern PancakeHTTPConfigurationStructure PancakeHTTPConfiguration;
+extern String PancakeHTTPAnswerCodes[];
 
 UByte PancakeHTTPInitialize();
 
 PANCAKE_API void PancakeHTTPRegisterContentServeBackend(PancakeHTTPContentServeBackend *backend);
 PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock);
-PANCAKE_API void PancakeHTTPOnRemoteHangup(PancakeSocket *sock);
+PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte ignoreException);
+PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code);
+PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock);
+PANCAKE_API void PancakeHTTPFullWriteBuffer(PancakeSocket *sock);
+PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock);
 
 #endif
 #endif

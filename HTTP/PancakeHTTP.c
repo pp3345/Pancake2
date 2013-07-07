@@ -12,6 +12,509 @@ PancakeModule PancakeHTTP = {
 		0
 };
 
+String PancakeHTTPAnswerCodes[] = {
+		(String) {"Continue", sizeof("Continue") - 1}, /* 100 */
+		(String) {"Switching Protocols", sizeof("Switching Protocols") - 1}, /* 101 */
+		(String) {"", 0}, /* 102 */
+		(String) {"", 0}, /* 103 */
+		(String) {"", 0}, /* 104 */
+		(String) {"", 0}, /* 105 */
+		(String) {"", 0}, /* 106 */
+		(String) {"", 0}, /* 107 */
+		(String) {"", 0}, /* 108 */
+		(String) {"", 0}, /* 109 */
+		(String) {"", 0}, /* 110 */
+		(String) {"", 0}, /* 111 */
+		(String) {"", 0}, /* 112 */
+		(String) {"", 0}, /* 113 */
+		(String) {"", 0}, /* 114 */
+		(String) {"", 0}, /* 115 */
+		(String) {"", 0}, /* 116 */
+		(String) {"", 0}, /* 117 */
+		(String) {"", 0}, /* 118 */
+		(String) {"", 0}, /* 119 */
+		(String) {"", 0}, /* 120 */
+		(String) {"", 0}, /* 121 */
+		(String) {"", 0}, /* 122 */
+		(String) {"", 0}, /* 123 */
+		(String) {"", 0}, /* 124 */
+		(String) {"", 0}, /* 125 */
+		(String) {"", 0}, /* 126 */
+		(String) {"", 0}, /* 127 */
+		(String) {"", 0}, /* 128 */
+		(String) {"", 0}, /* 129 */
+		(String) {"", 0}, /* 130 */
+		(String) {"", 0}, /* 131 */
+		(String) {"", 0}, /* 132 */
+		(String) {"", 0}, /* 133 */
+		(String) {"", 0}, /* 134 */
+		(String) {"", 0}, /* 135 */
+		(String) {"", 0}, /* 136 */
+		(String) {"", 0}, /* 137 */
+		(String) {"", 0}, /* 138 */
+		(String) {"", 0}, /* 139 */
+		(String) {"", 0}, /* 140 */
+		(String) {"", 0}, /* 141 */
+		(String) {"", 0}, /* 142 */
+		(String) {"", 0}, /* 143 */
+		(String) {"", 0}, /* 144 */
+		(String) {"", 0}, /* 145 */
+		(String) {"", 0}, /* 146 */
+		(String) {"", 0}, /* 147 */
+		(String) {"", 0}, /* 148 */
+		(String) {"", 0}, /* 149 */
+		(String) {"", 0}, /* 150 */
+		(String) {"", 0}, /* 151 */
+		(String) {"", 0}, /* 152 */
+		(String) {"", 0}, /* 153 */
+		(String) {"", 0}, /* 154 */
+		(String) {"", 0}, /* 155 */
+		(String) {"", 0}, /* 156 */
+		(String) {"", 0}, /* 157 */
+		(String) {"", 0}, /* 158 */
+		(String) {"", 0}, /* 159 */
+		(String) {"", 0}, /* 160 */
+		(String) {"", 0}, /* 161 */
+		(String) {"", 0}, /* 162 */
+		(String) {"", 0}, /* 163 */
+		(String) {"", 0}, /* 164 */
+		(String) {"", 0}, /* 165 */
+		(String) {"", 0}, /* 166 */
+		(String) {"", 0}, /* 167 */
+		(String) {"", 0}, /* 168 */
+		(String) {"", 0}, /* 169 */
+		(String) {"", 0}, /* 170 */
+		(String) {"", 0}, /* 171 */
+		(String) {"", 0}, /* 172 */
+		(String) {"", 0}, /* 173 */
+		(String) {"", 0}, /* 174 */
+		(String) {"", 0}, /* 175 */
+		(String) {"", 0}, /* 176 */
+		(String) {"", 0}, /* 177 */
+		(String) {"", 0}, /* 178 */
+		(String) {"", 0}, /* 179 */
+		(String) {"", 0}, /* 180 */
+		(String) {"", 0}, /* 181 */
+		(String) {"", 0}, /* 182 */
+		(String) {"", 0}, /* 183 */
+		(String) {"", 0}, /* 184 */
+		(String) {"", 0}, /* 185 */
+		(String) {"", 0}, /* 186 */
+		(String) {"", 0}, /* 187 */
+		(String) {"", 0}, /* 188 */
+		(String) {"", 0}, /* 189 */
+		(String) {"", 0}, /* 190 */
+		(String) {"", 0}, /* 191 */
+		(String) {"", 0}, /* 192 */
+		(String) {"", 0}, /* 193 */
+		(String) {"", 0}, /* 194 */
+		(String) {"", 0}, /* 195 */
+		(String) {"", 0}, /* 196 */
+		(String) {"", 0}, /* 197 */
+		(String) {"", 0}, /* 198 */
+		(String) {"", 0}, /* 199 */
+		(String) {"OK", sizeof("OK") - 1}, /* 200 */
+		(String) {"Created", sizeof("Created") - 1}, /* 201 */
+		(String) {"Accepted", sizeof("Accepted") - 1}, /* 202 */
+		(String) {"Non-Authoritative Information", sizeof("Non-Authoritative Information") - 1}, /* 203 */
+		(String) {"No Content", sizeof("No Content") - 1}, /* 204 */
+		(String) {"Reset Content", sizeof("Reset Content") - 1}, /* 205 */
+		(String) {"Partial Content", sizeof("Partial Content") - 1}, /* 206 */
+		(String) {"", 0}, /* 207 */
+		(String) {"", 0}, /* 208 */
+		(String) {"", 0}, /* 209 */
+		(String) {"", 0}, /* 210 */
+		(String) {"", 0}, /* 211 */
+		(String) {"", 0}, /* 212 */
+		(String) {"", 0}, /* 213 */
+		(String) {"", 0}, /* 214 */
+		(String) {"", 0}, /* 215 */
+		(String) {"", 0}, /* 216 */
+		(String) {"", 0}, /* 217 */
+		(String) {"", 0}, /* 218 */
+		(String) {"", 0}, /* 219 */
+		(String) {"", 0}, /* 220 */
+		(String) {"", 0}, /* 221 */
+		(String) {"", 0}, /* 222 */
+		(String) {"", 0}, /* 223 */
+		(String) {"", 0}, /* 224 */
+		(String) {"", 0}, /* 225 */
+		(String) {"", 0}, /* 226 */
+		(String) {"", 0}, /* 227 */
+		(String) {"", 0}, /* 228 */
+		(String) {"", 0}, /* 229 */
+		(String) {"", 0}, /* 230 */
+		(String) {"", 0}, /* 231 */
+		(String) {"", 0}, /* 232 */
+		(String) {"", 0}, /* 233 */
+		(String) {"", 0}, /* 234 */
+		(String) {"", 0}, /* 235 */
+		(String) {"", 0}, /* 236 */
+		(String) {"", 0}, /* 237 */
+		(String) {"", 0}, /* 238 */
+		(String) {"", 0}, /* 239 */
+		(String) {"", 0}, /* 240 */
+		(String) {"", 0}, /* 241 */
+		(String) {"", 0}, /* 242 */
+		(String) {"", 0}, /* 243 */
+		(String) {"", 0}, /* 244 */
+		(String) {"", 0}, /* 245 */
+		(String) {"", 0}, /* 246 */
+		(String) {"", 0}, /* 247 */
+		(String) {"", 0}, /* 248 */
+		(String) {"", 0}, /* 249 */
+		(String) {"", 0}, /* 250 */
+		(String) {"", 0}, /* 251 */
+		(String) {"", 0}, /* 252 */
+		(String) {"", 0}, /* 253 */
+		(String) {"", 0}, /* 254 */
+		(String) {"", 0}, /* 255 */
+		(String) {"", 0}, /* 256 */
+		(String) {"", 0}, /* 257 */
+		(String) {"", 0}, /* 258 */
+		(String) {"", 0}, /* 259 */
+		(String) {"", 0}, /* 260 */
+		(String) {"", 0}, /* 261 */
+		(String) {"", 0}, /* 262 */
+		(String) {"", 0}, /* 263 */
+		(String) {"", 0}, /* 264 */
+		(String) {"", 0}, /* 265 */
+		(String) {"", 0}, /* 266 */
+		(String) {"", 0}, /* 267 */
+		(String) {"", 0}, /* 268 */
+		(String) {"", 0}, /* 269 */
+		(String) {"", 0}, /* 270 */
+		(String) {"", 0}, /* 271 */
+		(String) {"", 0}, /* 272 */
+		(String) {"", 0}, /* 273 */
+		(String) {"", 0}, /* 274 */
+		(String) {"", 0}, /* 275 */
+		(String) {"", 0}, /* 276 */
+		(String) {"", 0}, /* 277 */
+		(String) {"", 0}, /* 278 */
+		(String) {"", 0}, /* 279 */
+		(String) {"", 0}, /* 280 */
+		(String) {"", 0}, /* 281 */
+		(String) {"", 0}, /* 282 */
+		(String) {"", 0}, /* 283 */
+		(String) {"", 0}, /* 284 */
+		(String) {"", 0}, /* 285 */
+		(String) {"", 0}, /* 286 */
+		(String) {"", 0}, /* 287 */
+		(String) {"", 0}, /* 288 */
+		(String) {"", 0}, /* 289 */
+		(String) {"", 0}, /* 290 */
+		(String) {"", 0}, /* 291 */
+		(String) {"", 0}, /* 292 */
+		(String) {"", 0}, /* 293 */
+		(String) {"", 0}, /* 294 */
+		(String) {"", 0}, /* 295 */
+		(String) {"", 0}, /* 296 */
+		(String) {"", 0}, /* 297 */
+		(String) {"", 0}, /* 298 */
+		(String) {"", 0}, /* 299 */
+		(String) {"Multiple Choices", sizeof("Multiple Choices") - 1}, /* 300 */
+		(String) {"Moved Permanently", sizeof("Moved Permanently") - 1}, /* 301 */
+		(String) {"Found", sizeof("Found") - 1}, /* 302 */
+		(String) {"See Other", sizeof("See Other") - 1}, /* 303 */
+		(String) {"Not Modified", sizeof("Not Modified") - 1}, /* 304 */
+		(String) {"Use Proxy", sizeof("Use Proxy") - 1}, /* 305 */
+		(String) {"", 0}, /* 306 */
+		(String) {"Temporary Redirect", sizeof("Temporary Redirect") - 1}, /* 307 */
+		(String) {"", 0}, /* 308 */
+		(String) {"", 0}, /* 309 */
+		(String) {"", 0}, /* 310 */
+		(String) {"", 0}, /* 311 */
+		(String) {"", 0}, /* 312 */
+		(String) {"", 0}, /* 313 */
+		(String) {"", 0}, /* 314 */
+		(String) {"", 0}, /* 315 */
+		(String) {"", 0}, /* 316 */
+		(String) {"", 0}, /* 317 */
+		(String) {"", 0}, /* 318 */
+		(String) {"", 0}, /* 319 */
+		(String) {"", 0}, /* 320 */
+		(String) {"", 0}, /* 321 */
+		(String) {"", 0}, /* 322 */
+		(String) {"", 0}, /* 323 */
+		(String) {"", 0}, /* 324 */
+		(String) {"", 0}, /* 325 */
+		(String) {"", 0}, /* 326 */
+		(String) {"", 0}, /* 327 */
+		(String) {"", 0}, /* 328 */
+		(String) {"", 0}, /* 329 */
+		(String) {"", 0}, /* 330 */
+		(String) {"", 0}, /* 331 */
+		(String) {"", 0}, /* 332 */
+		(String) {"", 0}, /* 333 */
+		(String) {"", 0}, /* 334 */
+		(String) {"", 0}, /* 335 */
+		(String) {"", 0}, /* 336 */
+		(String) {"", 0}, /* 337 */
+		(String) {"", 0}, /* 338 */
+		(String) {"", 0}, /* 339 */
+		(String) {"", 0}, /* 340 */
+		(String) {"", 0}, /* 341 */
+		(String) {"", 0}, /* 342 */
+		(String) {"", 0}, /* 343 */
+		(String) {"", 0}, /* 344 */
+		(String) {"", 0}, /* 345 */
+		(String) {"", 0}, /* 346 */
+		(String) {"", 0}, /* 347 */
+		(String) {"", 0}, /* 348 */
+		(String) {"", 0}, /* 349 */
+		(String) {"", 0}, /* 350 */
+		(String) {"", 0}, /* 351 */
+		(String) {"", 0}, /* 352 */
+		(String) {"", 0}, /* 353 */
+		(String) {"", 0}, /* 354 */
+		(String) {"", 0}, /* 355 */
+		(String) {"", 0}, /* 356 */
+		(String) {"", 0}, /* 357 */
+		(String) {"", 0}, /* 358 */
+		(String) {"", 0}, /* 359 */
+		(String) {"", 0}, /* 360 */
+		(String) {"", 0}, /* 361 */
+		(String) {"", 0}, /* 362 */
+		(String) {"", 0}, /* 363 */
+		(String) {"", 0}, /* 364 */
+		(String) {"", 0}, /* 365 */
+		(String) {"", 0}, /* 366 */
+		(String) {"", 0}, /* 367 */
+		(String) {"", 0}, /* 368 */
+		(String) {"", 0}, /* 369 */
+		(String) {"", 0}, /* 370 */
+		(String) {"", 0}, /* 371 */
+		(String) {"", 0}, /* 372 */
+		(String) {"", 0}, /* 373 */
+		(String) {"", 0}, /* 374 */
+		(String) {"", 0}, /* 375 */
+		(String) {"", 0}, /* 376 */
+		(String) {"", 0}, /* 377 */
+		(String) {"", 0}, /* 378 */
+		(String) {"", 0}, /* 379 */
+		(String) {"", 0}, /* 380 */
+		(String) {"", 0}, /* 381 */
+		(String) {"", 0}, /* 382 */
+		(String) {"", 0}, /* 383 */
+		(String) {"", 0}, /* 384 */
+		(String) {"", 0}, /* 385 */
+		(String) {"", 0}, /* 386 */
+		(String) {"", 0}, /* 387 */
+		(String) {"", 0}, /* 388 */
+		(String) {"", 0}, /* 389 */
+		(String) {"", 0}, /* 390 */
+		(String) {"", 0}, /* 391 */
+		(String) {"", 0}, /* 392 */
+		(String) {"", 0}, /* 393 */
+		(String) {"", 0}, /* 394 */
+		(String) {"", 0}, /* 395 */
+		(String) {"", 0}, /* 396 */
+		(String) {"", 0}, /* 397 */
+		(String) {"", 0}, /* 398 */
+		(String) {"", 0}, /* 399 */
+		(String) {"Bad Request", sizeof("Bad Request") - 1}, /* 400 */
+		(String) {"Unauthorized", sizeof("Unauthorized") - 1}, /* 401 */
+		(String) {"Payment Required", sizeof("Payment Required") - 1}, /* 402 */
+		(String) {"Forbidden", sizeof("Forbidden") - 1}, /* 403 */
+		(String) {"Not Found", sizeof("Not Found") - 1}, /* 404 */
+		(String) {"Method Not Allowed", sizeof("Method Not Allowed") - 1}, /* 405 */
+		(String) {"Not Acceptable", sizeof("Not Acceptable") - 1}, /* 406 */
+		(String) {"Proxy Authentication Required", sizeof("Proxy Authentication Required") - 1}, /* 407 */
+		(String) {"Request Timeout", sizeof("Request Timeout") - 1}, /* 408 */
+		(String) {"Conflict", sizeof("Conflict") - 1}, /* 409 */
+		(String) {"Gone", sizeof("Gone") - 1}, /* 410 */
+		(String) {"Length Required", sizeof("Length Required") - 1}, /* 411 */
+		(String) {"Precondition Failed", sizeof("Precondition Failed") - 1}, /* 412 */
+		(String) {"Request Entity Too Large", sizeof("Request Entity Too Large") - 1}, /* 413 */
+		(String) {"Request-URI Too Long", sizeof("Request-URI Too Long") - 1}, /* 414 */
+		(String) {"Unsupported Media Type", sizeof("Unsupported Media Type") - 1}, /* 415 */
+		(String) {"Requested Range Not Satisfiable", sizeof("Requested Range Not Satisfiable") - 1}, /* 416 */
+		(String) {"Expectation Failed", sizeof("Expectation Failed") - 1}, /* 417 */
+		(String) {"", 0}, /* 418 */
+		(String) {"", 0}, /* 419 */
+		(String) {"", 0}, /* 420 */
+		(String) {"", 0}, /* 421 */
+		(String) {"", 0}, /* 422 */
+		(String) {"", 0}, /* 423 */
+		(String) {"", 0}, /* 424 */
+		(String) {"", 0}, /* 425 */
+		(String) {"", 0}, /* 426 */
+		(String) {"", 0}, /* 427 */
+		(String) {"", 0}, /* 428 */
+		(String) {"", 0}, /* 429 */
+		(String) {"", 0}, /* 430 */
+		(String) {"", 0}, /* 431 */
+		(String) {"", 0}, /* 432 */
+		(String) {"", 0}, /* 433 */
+		(String) {"", 0}, /* 434 */
+		(String) {"", 0}, /* 435 */
+		(String) {"", 0}, /* 436 */
+		(String) {"", 0}, /* 437 */
+		(String) {"", 0}, /* 438 */
+		(String) {"", 0}, /* 439 */
+		(String) {"", 0}, /* 440 */
+		(String) {"", 0}, /* 441 */
+		(String) {"", 0}, /* 442 */
+		(String) {"", 0}, /* 443 */
+		(String) {"", 0}, /* 444 */
+		(String) {"", 0}, /* 445 */
+		(String) {"", 0}, /* 446 */
+		(String) {"", 0}, /* 447 */
+		(String) {"", 0}, /* 448 */
+		(String) {"", 0}, /* 449 */
+		(String) {"", 0}, /* 450 */
+		(String) {"", 0}, /* 451 */
+		(String) {"", 0}, /* 452 */
+		(String) {"", 0}, /* 453 */
+		(String) {"", 0}, /* 454 */
+		(String) {"", 0}, /* 455 */
+		(String) {"", 0}, /* 456 */
+		(String) {"", 0}, /* 457 */
+		(String) {"", 0}, /* 458 */
+		(String) {"", 0}, /* 459 */
+		(String) {"", 0}, /* 460 */
+		(String) {"", 0}, /* 461 */
+		(String) {"", 0}, /* 462 */
+		(String) {"", 0}, /* 463 */
+		(String) {"", 0}, /* 464 */
+		(String) {"", 0}, /* 465 */
+		(String) {"", 0}, /* 466 */
+		(String) {"", 0}, /* 467 */
+		(String) {"", 0}, /* 468 */
+		(String) {"", 0}, /* 469 */
+		(String) {"", 0}, /* 470 */
+		(String) {"", 0}, /* 471 */
+		(String) {"", 0}, /* 472 */
+		(String) {"", 0}, /* 473 */
+		(String) {"", 0}, /* 474 */
+		(String) {"", 0}, /* 475 */
+		(String) {"", 0}, /* 476 */
+		(String) {"", 0}, /* 477 */
+		(String) {"", 0}, /* 478 */
+		(String) {"", 0}, /* 479 */
+		(String) {"", 0}, /* 480 */
+		(String) {"", 0}, /* 481 */
+		(String) {"", 0}, /* 482 */
+		(String) {"", 0}, /* 483 */
+		(String) {"", 0}, /* 484 */
+		(String) {"", 0}, /* 485 */
+		(String) {"", 0}, /* 486 */
+		(String) {"", 0}, /* 487 */
+		(String) {"", 0}, /* 488 */
+		(String) {"", 0}, /* 489 */
+		(String) {"", 0}, /* 490 */
+		(String) {"", 0}, /* 491 */
+		(String) {"", 0}, /* 492 */
+		(String) {"", 0}, /* 493 */
+		(String) {"", 0}, /* 494 */
+		(String) {"", 0}, /* 495 */
+		(String) {"", 0}, /* 496 */
+		(String) {"", 0}, /* 497 */
+		(String) {"", 0}, /* 498 */
+		(String) {"", 0}, /* 499 */
+		(String) {"Internal Server Error", sizeof("Internal Server Error") - 1}, /* 500 */
+		(String) {"Not Implemented", sizeof("Not Implemented") - 1}, /* 501 */
+		(String) {"Bad Gateway", sizeof("Bad Gateway") - 1}, /* 502 */
+		(String) {"Service Unavailable", sizeof("Service Unavailable") - 1}, /* 503 */
+		(String) {"Gateway Timeout", sizeof("Gateway Timeout") - 1}, /* 504 */
+		(String) {"HTTP Version Not Supported", sizeof("HTTP Version Not Supported") - 1}, /* 505 */
+		(String) {"", 0}, /* 506 */
+		(String) {"", 0}, /* 507 */
+		(String) {"", 0}, /* 508 */
+		(String) {"", 0}, /* 509 */
+		(String) {"", 0}, /* 510 */
+		(String) {"", 0}, /* 511 */
+		(String) {"", 0}, /* 512 */
+		(String) {"", 0}, /* 513 */
+		(String) {"", 0}, /* 514 */
+		(String) {"", 0}, /* 515 */
+		(String) {"", 0}, /* 516 */
+		(String) {"", 0}, /* 517 */
+		(String) {"", 0}, /* 518 */
+		(String) {"", 0}, /* 519 */
+		(String) {"", 0}, /* 520 */
+		(String) {"", 0}, /* 521 */
+		(String) {"", 0}, /* 522 */
+		(String) {"", 0}, /* 523 */
+		(String) {"", 0}, /* 524 */
+		(String) {"", 0}, /* 525 */
+		(String) {"", 0}, /* 526 */
+		(String) {"", 0}, /* 527 */
+		(String) {"", 0}, /* 528 */
+		(String) {"", 0}, /* 529 */
+		(String) {"", 0}, /* 530 */
+		(String) {"", 0}, /* 531 */
+		(String) {"", 0}, /* 532 */
+		(String) {"", 0}, /* 533 */
+		(String) {"", 0}, /* 534 */
+		(String) {"", 0}, /* 535 */
+		(String) {"", 0}, /* 536 */
+		(String) {"", 0}, /* 537 */
+		(String) {"", 0}, /* 538 */
+		(String) {"", 0}, /* 539 */
+		(String) {"", 0}, /* 540 */
+		(String) {"", 0}, /* 541 */
+		(String) {"", 0}, /* 542 */
+		(String) {"", 0}, /* 543 */
+		(String) {"", 0}, /* 544 */
+		(String) {"", 0}, /* 545 */
+		(String) {"", 0}, /* 546 */
+		(String) {"", 0}, /* 547 */
+		(String) {"", 0}, /* 548 */
+		(String) {"", 0}, /* 549 */
+		(String) {"", 0}, /* 550 */
+		(String) {"", 0}, /* 551 */
+		(String) {"", 0}, /* 552 */
+		(String) {"", 0}, /* 553 */
+		(String) {"", 0}, /* 554 */
+		(String) {"", 0}, /* 555 */
+		(String) {"", 0}, /* 556 */
+		(String) {"", 0}, /* 557 */
+		(String) {"", 0}, /* 558 */
+		(String) {"", 0}, /* 559 */
+		(String) {"", 0}, /* 560 */
+		(String) {"", 0}, /* 561 */
+		(String) {"", 0}, /* 562 */
+		(String) {"", 0}, /* 563 */
+		(String) {"", 0}, /* 564 */
+		(String) {"", 0}, /* 565 */
+		(String) {"", 0}, /* 566 */
+		(String) {"", 0}, /* 567 */
+		(String) {"", 0}, /* 568 */
+		(String) {"", 0}, /* 569 */
+		(String) {"", 0}, /* 570 */
+		(String) {"", 0}, /* 571 */
+		(String) {"", 0}, /* 572 */
+		(String) {"", 0}, /* 573 */
+		(String) {"", 0}, /* 574 */
+		(String) {"", 0}, /* 575 */
+		(String) {"", 0}, /* 576 */
+		(String) {"", 0}, /* 577 */
+		(String) {"", 0}, /* 578 */
+		(String) {"", 0}, /* 579 */
+		(String) {"", 0}, /* 580 */
+		(String) {"", 0}, /* 581 */
+		(String) {"", 0}, /* 582 */
+		(String) {"", 0}, /* 583 */
+		(String) {"", 0}, /* 584 */
+		(String) {"", 0}, /* 585 */
+		(String) {"", 0}, /* 586 */
+		(String) {"", 0}, /* 587 */
+		(String) {"", 0}, /* 588 */
+		(String) {"", 0}, /* 589 */
+		(String) {"", 0}, /* 590 */
+		(String) {"", 0}, /* 591 */
+		(String) {"", 0}, /* 592 */
+		(String) {"", 0}, /* 593 */
+		(String) {"", 0}, /* 594 */
+		(String) {"", 0}, /* 595 */
+		(String) {"", 0}, /* 596 */
+		(String) {"", 0}, /* 597 */
+		(String) {"", 0}, /* 598 */
+		(String) {"", 0}, /* 599 */
+};
+
 PancakeHTTPVirtualHostIndex *PancakeHTTPVirtualHosts = NULL;
 PancakeHTTPVirtualHost *PancakeHTTPDefaultVirtualHost = NULL;
 PancakeHTTPConfigurationStructure PancakeHTTPConfiguration;
@@ -238,7 +741,6 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 	if(sock->readBuffer.length >= 5) {
 		PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 		UByte *offset, *headerEnd, *ptr, *ptr2, *ptr3;
-		UInt16 i;
 
 		if(!request->method) {
 			if(sock->readBuffer.value[0] == 'G') {
@@ -452,17 +954,102 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		request->lastModified = 0;
 
 		// Serve content
-		for(i = 0; i < request->vHost->numContentBackends; i++) {
-			if(request->vHost->contentBackends[i](sock)) {
-				PancakeConfigurationUnscope();
-				return;
-			}
+		if(PancakeHTTPServeContent(sock, 0)) {
+			PancakeConfigurationUnscope();
+			return;
 		}
 
 		// No content available
+		PancakeHTTPException(sock, 500);
 		PancakeConfigurationUnscope();
-		PancakeHTTPOnRemoteHangup(sock);
 	}
+}
+
+PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+	UByte *offset;
+
+	PancakeAssert(code >= 100 && code <= 599);
+	request->answerCode = code;
+
+	// Check for previous exception (prevent recursion)
+	if(sock->flags & PANCAKE_HTTP_EXCEPTION) {
+		return;
+	}
+
+	// Set exception flag
+	sock->flags |= PANCAKE_HTTP_EXCEPTION;
+
+	// Calculate page size
+	request->contentLength = 8 /* answer code length + whitespace * 2 */
+			+ PancakeHTTPAnswerCodes[code - 100].length * 2 /* <title> + <h1> */
+			+ (sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_HEADER) - 1)
+			+ (sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_BODY_ERROR) - 1)
+			+ (sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_BODY_TOKEN) - 1)
+			+ (PancakeHTTPConfiguration.serverHeader ? (sizeof(PANCAKE_HTTP_SERVER_TOKEN) - 1) : 0)
+			+ (sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_FOOTER) - 1);
+
+	// Set answer headers
+	PancakeHTTPBuildAnswerHeaders(sock);
+
+	// Reallocate buffer to correct size
+	sock->writeBuffer.size = sock->writeBuffer.length + request->contentLength;
+	PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
+
+	// Build exception page
+	offset = sock->writeBuffer.value + sock->writeBuffer.length;
+	memcpy(offset, PANCAKE_HTTP_EXCEPTION_PAGE_HEADER, sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_HEADER) - 1);
+	offset += sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_HEADER) - 1;
+
+	// answer code in <title>
+	itoa(request->answerCode, offset, 10);
+	offset += 3;
+	*offset = ' ';
+	offset++;
+	memcpy(offset, PancakeHTTPAnswerCodes[code - 100].value, PancakeHTTPAnswerCodes[code - 100].length);
+	offset += PancakeHTTPAnswerCodes[code - 100].length;
+
+	memcpy(offset, PANCAKE_HTTP_EXCEPTION_PAGE_BODY_ERROR, sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_BODY_ERROR) - 1);
+	offset += sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_BODY_ERROR) - 1;
+
+	// answer code in <h1>
+	itoa(request->answerCode, offset, 10);
+	offset += 3;
+	*offset = ' ';
+	offset++;
+	memcpy(offset, PancakeHTTPAnswerCodes[code - 100].value, PancakeHTTPAnswerCodes[code - 100].length);
+	offset += PancakeHTTPAnswerCodes[code - 100].length;
+
+	memcpy(offset, PANCAKE_HTTP_EXCEPTION_PAGE_BODY_TOKEN, sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_BODY_TOKEN) - 1);
+	offset += sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_BODY_TOKEN) - 1;
+
+	// Pancake server token
+	if(PancakeHTTPConfiguration.serverHeader) {
+		memcpy(offset, PANCAKE_HTTP_SERVER_TOKEN, sizeof(PANCAKE_HTTP_SERVER_TOKEN) - 1);
+		offset += sizeof(PANCAKE_HTTP_SERVER_TOKEN) - 1;
+	}
+
+	// Footer
+	memcpy(offset, PANCAKE_HTTP_EXCEPTION_PAGE_FOOTER, sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_FOOTER) - 1);
+	offset += sizeof(PANCAKE_HTTP_EXCEPTION_PAGE_FOOTER) - 1;
+
+	sock->writeBuffer.length = sock->writeBuffer.size;
+
+	PancakeNetworkAddWriteSocket(sock);
+	sock->onWrite = PancakeHTTPFullWriteBuffer;
+}
+
+PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte ignoreException) {
+	UInt16 i;
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	for(i = 0; i < request->vHost->numContentBackends; i++) {
+		if(request->vHost->contentBackends[i](sock) || (!ignoreException && (sock->flags & PANCAKE_HTTP_EXCEPTION))) {
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 static inline void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request) {
@@ -488,6 +1075,14 @@ PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock) {
 	PancakeNetworkClose(sock);
 }
 
+PANCAKE_API void PancakeHTTPFullWriteBuffer(PancakeSocket *sock) {
+	PancakeNetworkWrite(sock);
+
+	if(!sock->writeBuffer.length) {
+		PancakeHTTPOnRemoteHangup(sock);
+	}
+}
+
 PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
@@ -501,6 +1096,7 @@ PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock) {
 		fullPath[PancakeHTTPConfiguration.documentRoot->length + request->path.length] = '\0';
 
 		if(stat(fullPath, &request->fileStat) == -1) {
+			PancakeHTTPException(sock, 404);
 			return 0;
 		}
 	}
