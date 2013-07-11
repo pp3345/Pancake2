@@ -207,6 +207,14 @@ PANCAKE_API Byte *_PancakeDuplicateStringLength(Byte *string, Int32 length, Byte
 	return ptr;
 }
 
+PANCAKE_API void PancakeCheckHeap() {
+	PancakeAllocatedMemory *mem;
+
+	for(mem = allocated; mem != NULL; mem = mem->hh.next) {
+		_PancakeAssert(((UByte*) mem->ptr)[mem->size] == 0xff, "Overflow detected in memory allocated", mem->file, mem->line);
+	}
+}
+
 PANCAKE_API void PancakeDumpHeap() {
 	PancakeAllocatedMemory *mem;
 	UNative total = 0;

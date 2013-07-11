@@ -21,6 +21,7 @@ PANCAKE_API void *_PancakeReallocate(void *ptr, Native size, Byte *file, Int32 l
 PANCAKE_API Byte *_PancakeDuplicateString(Byte *string, Byte *file, Int32 line);
 PANCAKE_API Byte *_PancakeDuplicateStringLength(Byte *string, Int32 length, Byte *file, Int32 line);
 PANCAKE_API void PancakeDumpHeap();
+PANCAKE_API void PancakeCheckHeap();
 
 #if defined(HAVE_UCONTEXT_H) && defined(HAVE_EXECINFO_H)
 #	define HAVE_PANCAKE_SIGSEGV
