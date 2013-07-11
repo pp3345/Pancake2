@@ -58,6 +58,9 @@ static UByte PancakeLinuxPollShutdown() {
 }
 
 static UByte PancakeLinuxPollServerInitialize() {
+	// Just test epoll here, to make sure everything will work
+	// The actual epoll instance must be created in the workers as it can't be shared
+
 	// Initialize with size 32 on old kernels
 	PancakeLinuxPollFD = epoll_create(32);
 
@@ -65,6 +68,9 @@ static UByte PancakeLinuxPollServerInitialize() {
 		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't create epoll instance: %s", strerror(errno));
 		return 0;
 	}
+
+	close(PancakeLinuxPollFD);
+	PancakeLinuxPollFD = -1;
 
 	return 1;
 }
@@ -142,6 +148,17 @@ static inline void PancakeLinuxPollRemoveSocket(PancakeSocket *socket) {
 }
 
 static void PancakeLinuxPollWait() {
+	// Initialize with size 32 on old kernels
+	PancakeLinuxPollFD = epoll_create(32);
+
+	if(PancakeLinuxPollFD == -1) {
+		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't create epoll instance: %s", strerror(errno));
+		return;
+	}
+
+	// Activate listen sockets
+	PancakeNetworkActivateListenSockets();
+
 	while(1) {
 		struct epoll_event events[32];
 		Int32 numEvents, i;

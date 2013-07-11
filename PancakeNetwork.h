@@ -67,6 +67,8 @@ PANCAKE_API inline UInt32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLeng
 PANCAKE_API inline UInt32 PancakeNetworkWrite(PancakeSocket *sock);
 PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock);
 
+PANCAKE_API void PancakeNetworkActivateListenSockets();
+
 #define PancakeNetworkAddReadSocket(socket) (PancakeMainConfiguration.serverArchitecture->addReadSocket(socket))
 #define PancakeNetworkAddWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->addWriteSocket(socket))
 #define PancakeNetworkAddReadWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->addReadWriteSocket(socket))

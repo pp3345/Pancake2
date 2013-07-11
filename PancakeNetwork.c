@@ -1,6 +1,7 @@
 #include "PancakeNetwork.h"
 #include "PancakeConfiguration.h"
 #include "PancakeLogger.h"
+#include "PancakeWorkers.h"
 
 static PancakeServerArchitecture *architectures = NULL;
 static PancakeSocket **listenSockets = NULL;
@@ -26,14 +27,22 @@ UByte PancakeNetworkActivate() {
 			PancakeFree(name);
 			return 0;
 		}
+	}
+
+	return 1;
+}
+
+PANCAKE_API void PancakeNetworkActivateListenSockets() {
+	UInt16 i;
+
+	for(i = 0; i < numListenSockets; i++) {
+		PancakeSocket *sock = listenSockets[i];
 
 		// Add socket to read socket list
 		PancakeNetworkAddReadSocket(sock);
 	}
 
 	PancakeFree(listenSockets);
-
-	return 1;
 }
 
 PANCAKE_API Byte *PancakeNetworkGetInterfaceName(struct sockaddr *addr) {
@@ -73,6 +82,10 @@ PANCAKE_API void PancakeRegisterServerArchitecture(PancakeServerArchitecture *ar
 }
 
 void PancakeNetworkUnload() {
+	if(PancakeCurrentWorker->isMaster && numListenSockets) {
+		PancakeFree(listenSockets);
+	}
+
 	HASH_CLEAR(hh, architectures);
 }
 
