@@ -33,32 +33,40 @@ static UByte PancakeHTTPStaticInitialize() {
 	return 1;
 }
 
+static inline void PancakeHTTPStaticOnRequestEnd(PancakeHTTPRequest *request) {
+	fclose(request->contentServeData);
+}
+
 static void PancakeHTTPStaticWrite(PancakeSocket *sock) {
-	if(!sock->writeBuffer.length) {
-		PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
-		UByte buf[8192];
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	if(sock->writeBuffer.size < PancakeMainConfiguration.networkBuffering) {
+		sock->writeBuffer.size = PancakeMainConfiguration.networkBuffering;
+		sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, PancakeMainConfiguration.networkBuffering);
+	}
+
+	if(sock->writeBuffer.length < PancakeMainConfiguration.networkBuffering) {
+		UByte buf[sock->writeBuffer.size - sock->writeBuffer.length];
 		String output;
 
-		if(feof((FILE*) request->contentServeData)) {
-			fclose(request->contentServeData);
-			PancakeHTTPOnRequestEnd(sock);
-			return;
-		}
-
 		output.value = buf;
-		output.length = fread(buf, 1, 8192, request->contentServeData);
+		output.length = fread(buf, 1, sock->writeBuffer.size - sock->writeBuffer.length, request->contentServeData);
 
 		PancakeHTTPOutput(sock, &output);
 	}
 
+	if(feof((FILE*) request->contentServeData)) {
+		if(sock->writeBuffer.length) {
+			sock->onWrite = PancakeHTTPFullWriteBuffer;
+			PancakeHTTPFullWriteBuffer(sock);
+		} else {
+			PancakeHTTPOnRequestEnd(sock);
+		}
+
+		return;
+	}
+
 	PancakeNetworkWrite(sock);
-}
-
-static void PancakeHTTPStaticOnRemoteHangup(PancakeSocket *sock) {
-	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
-
-	fclose(request->contentServeData);
-	PancakeHTTPOnRemoteHangup(sock);
 }
 
 static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
@@ -91,7 +99,11 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 		PancakeNetworkAddWriteSocket(sock);
 
 		sock->onWrite = PancakeHTTPStaticWrite;
-		sock->onRemoteHangup = PancakeHTTPStaticOnRemoteHangup;
+		request->onRequestEnd = PancakeHTTPStaticOnRequestEnd;
+
+		// Try to write now
+		PancakeHTTPStaticWrite(sock);
+
 		return 1;
 	}
 
