@@ -12,8 +12,10 @@
 /* Forward declarations */
 typedef struct _PancakeHTTPHeader PancakeHTTPHeader;
 typedef struct _PancakeHTTPContentServeBackend PancakeHTTPContentServeBackend;
+typedef struct _PancakeHTTPRequest PancakeHTTPRequest;
 
 typedef UByte (*PancakeHTTPContentServeHandler)(PancakeSocket *sock);
+typedef void (*PancakeHTTPEventHandler)(PancakeHTTPRequest *request);
 
 #define PANCAKE_HTTP_SERVER_HEADER "Server: Pancake/" PANCAKE_VERSION "\r\n"
 #define PANCAKE_HTTP_SERVER_TOKEN "Pancake " PANCAKE_VERSION
@@ -61,6 +63,8 @@ typedef struct _PancakeHTTPRequest {
 	void *contentServeData;
 	Native lastModified;
 
+	PancakeHTTPEventHandler onRequestEnd;
+
 	UByte method;
 	UByte HTTPVersion;
 	UByte statDone;
@@ -103,7 +107,7 @@ PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock);
 PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte ignoreException);
 PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code);
 PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock);
-PANCAKE_API void PancakeHTTPFullWriteBuffer(PancakeSocket *sock);
+PANCAKE_API inline void PancakeHTTPFullWriteBuffer(PancakeSocket *sock);
 PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock);
 PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock);
 

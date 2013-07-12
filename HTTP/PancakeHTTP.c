@@ -717,6 +717,7 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	request->host.value = NULL;
 	request->path.value = NULL;
 	request->keepAlive = 0;
+	request->onRequestEnd = NULL;
 
 	PancakeConfigurationInitializeScopeGroup(&request->scopeGroup);
 }
@@ -1085,6 +1086,10 @@ PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte igno
 static inline void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request) {
 	PancakeHTTPHeader *header, *tmp;
 
+	if(request->onRequestEnd) {
+		request->onRequestEnd(request);
+	}
+
 	if(request->requestAddress.value) {
 		PancakeFree(request->requestAddress.value);
 	}
@@ -1108,7 +1113,7 @@ PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock) {
 	PancakeNetworkClose(sock);
 }
 
-PANCAKE_API void PancakeHTTPFullWriteBuffer(PancakeSocket *sock) {
+PANCAKE_API inline void PancakeHTTPFullWriteBuffer(PancakeSocket *sock) {
 	PancakeNetworkWrite(sock);
 
 	if(!sock->writeBuffer.length) {
