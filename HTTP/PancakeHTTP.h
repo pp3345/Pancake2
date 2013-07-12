@@ -65,6 +65,7 @@ typedef struct _PancakeHTTPRequest {
 	UByte HTTPVersion;
 	UByte statDone;
 	UByte chunkedTransfer;
+	UByte keepAlive;
 } PancakeHTTPRequest;
 
 typedef struct _PancakeHTTPHeader {
@@ -103,6 +104,7 @@ PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code);
 PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock);
 PANCAKE_API void PancakeHTTPFullWriteBuffer(PancakeSocket *sock);
 PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock);
+PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock);
 
 #endif
 #endif

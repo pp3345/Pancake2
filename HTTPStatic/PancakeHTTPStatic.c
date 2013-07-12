@@ -41,7 +41,7 @@ static void PancakeHTTPStaticWrite(PancakeSocket *sock) {
 
 		if(feof((FILE*) request->contentServeData)) {
 			fclose(request->contentServeData);
-			PancakeHTTPOnRemoteHangup(sock);
+			PancakeHTTPOnRequestEnd(sock);
 			return;
 		}
 

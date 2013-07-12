@@ -707,6 +707,17 @@ UByte PancakeHTTPInitialize() {
 	return 1;
 }
 
+static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *request) {
+	request->method = 0;
+	request->headers = NULL;
+	request->requestAddress.value = NULL;
+	request->host.value = NULL;
+	request->path.value = NULL;
+	request->keepAlive = 0;
+
+	PancakeConfigurationInitializeScopeGroup(&request->scopeGroup);
+}
+
 static void PancakeHTTPInitializeConnection(PancakeSocket *sock) {
 	PancakeSocket *client = PancakeNetworkAcceptConnection(sock);
 	PancakeHTTPRequest *request;
@@ -716,19 +727,25 @@ static void PancakeHTTPInitializeConnection(PancakeSocket *sock) {
 	}
 
 	request = PancakeAllocate(sizeof(PancakeHTTPRequest));
-	request->method = 0;
-	request->headers = NULL;
-	request->requestAddress.value = NULL;
-	request->host.value = NULL;
-	request->path.value = NULL;
-
-	PancakeConfigurationInitializeScopeGroup(&request->scopeGroup);
+	PancakeHTTPInitializeRequestStructure(request);
 
 	client->onRead = PancakeHTTPReadHeaderData;
 	client->onRemoteHangup = PancakeHTTPOnRemoteHangup;
 	client->data = (void*) request;
 
 	PancakeNetworkAddReadSocket(client);
+}
+
+static void PancakeHTTPInitializeKeepAliveConnection(PancakeSocket *sock) {
+	PancakeHTTPRequest *request;
+
+	request = PancakeAllocate(sizeof(PancakeHTTPRequest));
+	PancakeHTTPInitializeRequestStructure(request);
+
+	sock->onRead = PancakeHTTPReadHeaderData;
+	sock->data = (void*) request;
+
+	PancakeHTTPReadHeaderData(sock);
 }
 
 static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
@@ -907,6 +924,13 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 							request->host.length = ptr - ptr3;
 						}
 						break;
+					case 10:
+						if((ptr - ptr3) == (sizeof("keep-alive") - 1)
+							&& !memcmp(offset, "connection", 10)
+							&& !strncasecmp(ptr3, "keep-alive", sizeof("keep-alive") - 1)) {
+							request->keepAlive = 1;
+						}
+						break;
 				}
 
 				header = PancakeAllocate(sizeof(PancakeHTTPHeader));
@@ -952,6 +976,9 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		request->answerType = NULL;
 		request->chunkedTransfer = 0;
 		request->lastModified = 0;
+
+		// Disable reading on socket
+		PancakeNetworkRemoveReadSocket(sock);
 
 		// Serve content
 		if(PancakeHTTPServeContent(sock, 0)) {
@@ -1062,16 +1089,19 @@ static inline void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request) {
 	LL_FOREACH_SAFE(request->headers, header, tmp) {
 		PancakeFree(header);
 	}
+
+	PancakeConfigurationDestroyScopeGroup(&request->scopeGroup);
 }
 
 PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
-	PancakeHTTPCleanRequestData(request);
+	if(request != NULL) {
+		PancakeHTTPCleanRequestData(request);
 
-	PancakeConfigurationDestroyScopeGroup(&request->scopeGroup);
+		PancakeFree(sock->data);
+	}
 
-	PancakeFree(sock->data);
 	PancakeNetworkClose(sock);
 }
 
@@ -1079,7 +1109,7 @@ PANCAKE_API void PancakeHTTPFullWriteBuffer(PancakeSocket *sock) {
 	PancakeNetworkWrite(sock);
 
 	if(!sock->writeBuffer.length) {
-		PancakeHTTPOnRemoteHangup(sock);
+		PancakeHTTPOnRequestEnd(sock);
 	}
 }
 
@@ -1214,10 +1244,51 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 		offset += 33;
 	}
 
+	// Connection
+	if(request->keepAlive && !PancakeDoShutdown) {
+		memcpy(offset, "Connection: keep-alive\r\n", sizeof("Connection: keep-alive\r\n") - 1);
+		offset += sizeof("Connection: keep-alive\r\n") - 1;
+	} else {
+		memcpy(offset, "Connection: close\r\n", sizeof("Connection: close\r\n") - 1);
+		offset += sizeof("Connection: close\r\n") - 1;
+		request->keepAlive = 0;
+	}
+
 	// \r\n
 	offset[0] = '\r';
 	offset[1] = '\n';
 
 	sock->writeBuffer.length = offset - sock->writeBuffer.value + 2;
+}
+
+PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	if(request->keepAlive) {
+		PancakeNetworkRemoveWriteSocket(sock);
+		PancakeNetworkAddReadSocket(sock);
+
+		PancakeHTTPCleanRequestData(request);
+
+		PancakeFree(sock->data);
+		sock->data = NULL;
+
+		// Destroy write buffer
+		if(sock->writeBuffer.size) {
+			sock->writeBuffer.size = 0;
+			PancakeFree(sock->writeBuffer.value);
+			sock->writeBuffer.value = NULL;
+		}
+
+		// Reset HTTP exception flag
+		sock->flags ^= PANCAKE_HTTP_EXCEPTION;
+
+		sock->readBuffer.length = 0;
+
+		sock->onRead = PancakeHTTPInitializeKeepAliveConnection;
+		sock->onRemoteHangup = PancakeHTTPOnRemoteHangup;
+	} else {
+		PancakeHTTPOnRemoteHangup(sock);
+	}
 }
 #endif
