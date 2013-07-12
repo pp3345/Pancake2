@@ -121,6 +121,9 @@ typedef struct _PancakeMainConfigurationStructure {
 
 	/* ServerArchitecture */
 	PancakeServerArchitecture *serverArchitecture;
+
+	/* NetworkBuffering */
+	Int32 networkBuffering;
 } PancakeMainConfigurationStructure;
 
 extern PancakeModule *PancakeModules[];
