@@ -518,6 +518,7 @@ String PancakeHTTPAnswerCodes[] = {
 PancakeHTTPVirtualHostIndex *PancakeHTTPVirtualHosts = NULL;
 PancakeHTTPVirtualHost *PancakeHTTPDefaultVirtualHost = NULL;
 PancakeHTTPConfigurationStructure PancakeHTTPConfiguration;
+UInt16 PancakeHTTPNumVirtualHosts = 0;
 
 static PancakeHTTPContentServeBackend *contentBackends = NULL;
 
@@ -541,6 +542,8 @@ static UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *s
 			vhost->configurationScope = *scope;
 			vhost->contentBackends = NULL;
 			vhost->numContentBackends = 0;
+
+			PancakeHTTPNumVirtualHosts++;
 
 			setting->hook = (void*) vhost;
 		} break;
@@ -952,7 +955,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		}
 
 		// Fetch virtual host
-		if(!request->host.value) {
+		if(PancakeHTTPNumVirtualHosts == 1 || !request->host.value) {
 			request->vHost = PancakeHTTPDefaultVirtualHost;
 		} else {
 			PancakeHTTPVirtualHostIndex *index;
