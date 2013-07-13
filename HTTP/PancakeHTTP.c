@@ -1295,7 +1295,9 @@ PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
 		}
 
 		// Reset HTTP exception flag
-		sock->flags ^= PANCAKE_HTTP_EXCEPTION;
+		if(sock->flags & PANCAKE_HTTP_EXCEPTION) {
+			sock->flags ^= PANCAKE_HTTP_EXCEPTION;
+		}
 
 		sock->readBuffer.length = 0;
 
