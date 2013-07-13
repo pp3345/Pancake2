@@ -837,6 +837,9 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 				} else {
 					// http://abc.net
 					request->host.length = ptr - offset;
+					request->path.value = offset - 1;
+					request->path.length = 1;
+					*(offset - 1) = '/';
 				}
 			} else {
 				// aaa
