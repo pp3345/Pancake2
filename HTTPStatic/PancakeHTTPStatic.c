@@ -73,6 +73,9 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	if(PancakeHTTPRunAccessChecks(sock) && S_ISREG(request->fileStat.st_mode)) {
+		// File is OK, serve it
+		UByte fullPath[PancakeHTTPConfiguration.documentRoot->length + request->path.length + 1];
+
 		if(request->ifModifiedSince) {
 			UByte buf[29];
 
@@ -91,9 +94,6 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 				return 1;
 			}
 		}
-
-		// File is OK, serve it
-		UByte fullPath[PancakeHTTPConfiguration.documentRoot->length + request->path.length + 1];
 
 		memcpy(fullPath, PancakeHTTPConfiguration.documentRoot->value, PancakeHTTPConfiguration.documentRoot->length);
 		memcpy(fullPath + PancakeHTTPConfiguration.documentRoot->length, request->path.value, request->path.length);
