@@ -73,6 +73,25 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	if(PancakeHTTPRunAccessChecks(sock) && S_ISREG(request->fileStat.st_mode)) {
+		if(request->ifModifiedSince) {
+			UByte buf[29];
+
+			PancakeRFC1123Date(request->fileStat.st_mtim.tv_sec, buf);
+			if(!memcmp(request->ifModifiedSince, buf, 29)) {
+				// File not modified
+				request->answerCode = 304;
+
+				PancakeHTTPBuildAnswerHeaders(sock);
+				PancakeNetworkAddWriteSocket(sock);
+
+				sock->onWrite = PancakeHTTPFullWriteBuffer;
+
+				// Try to write now
+				PancakeHTTPFullWriteBuffer(sock);
+				return 1;
+			}
+		}
+
 		// File is OK, serve it
 		UByte fullPath[PancakeHTTPConfiguration.documentRoot->length + request->path.length + 1];
 

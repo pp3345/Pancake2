@@ -718,6 +718,7 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	request->path.value = NULL;
 	request->keepAlive = 0;
 	request->onRequestEnd = NULL;
+	request->ifModifiedSince = NULL;
 
 	PancakeConfigurationInitializeScopeGroup(&request->scopeGroup);
 }
@@ -933,6 +934,12 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 							&& !memcmp(offset, "connection", 10)
 							&& !strncasecmp(ptr3, "keep-alive", sizeof("keep-alive") - 1)) {
 							request->keepAlive = 1;
+						}
+						break;
+					case 17:
+						if((ptr - ptr3) == 29
+						&& !memcmp(offset, "if-modified-since", 17)) {
+							request->ifModifiedSince = ptr3;
 						}
 						break;
 				}
