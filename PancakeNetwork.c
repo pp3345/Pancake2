@@ -41,8 +41,6 @@ PANCAKE_API void PancakeNetworkActivateListenSockets() {
 		// Add socket to read socket list
 		PancakeNetworkAddReadSocket(sock);
 	}
-
-	PancakeFree(listenSockets);
 }
 
 PANCAKE_API Byte *PancakeNetworkGetInterfaceName(struct sockaddr *addr) {
@@ -82,9 +80,7 @@ PANCAKE_API void PancakeRegisterServerArchitecture(PancakeServerArchitecture *ar
 }
 
 void PancakeNetworkUnload() {
-	if(PancakeCurrentWorker->isMaster && numListenSockets) {
-		PancakeFree(listenSockets);
-	}
+	PancakeFree(listenSockets);
 
 	HASH_CLEAR(hh, architectures);
 }
