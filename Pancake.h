@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <limits.h>
 
 #ifdef HAVE_UCONTEXT_H
 #	include <ucontext.h>
