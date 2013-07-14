@@ -369,13 +369,26 @@ PANCAKE_API void PancakeConfigurationAddSettingToGroup(PancakeConfigurationGroup
 
 PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationLookupGroup(PancakeConfigurationGroup *parent, String name) {
 	for(parent = parent ? parent->children : PancakeConfiguration->groups; parent != NULL; parent = parent->hh.next) {
-		if((name.length == parent->name.length && !strcmp(name.value, parent->name.value))
-		|| (parent = PancakeConfigurationLookupGroup(parent, name))) {
+		PancakeConfigurationGroup *group;
+
+		if(name.length == parent->name.length && !strcmp(name.value, parent->name.value)) {
 			return parent;
+		}
+
+		if(group = PancakeConfigurationLookupGroup(parent, name)) {
+			return group;
 		}
 	}
 
 	return NULL;
+}
+
+PANCAKE_API PancakeConfigurationSetting *PancakeConfigurationLookupSetting(PancakeConfigurationGroup *parent, String name) {
+	PancakeConfigurationSetting *setting;
+
+	HASH_FIND(hh, parent ? parent->settings : PancakeConfiguration->settings, name.value, name.length, setting);
+
+	return setting;
 }
 
 PANCAKE_API PancakeConfigurationSetting *PancakeConfigurationAddSetting(PancakeConfigurationGroup *group, String name, UByte type, void *valuePtr, UInt8 valueSize, config_value_t defaultValue, PancakeConfigurationHook hook) {

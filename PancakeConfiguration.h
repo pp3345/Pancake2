@@ -94,6 +94,7 @@ PANCAKE_API void PancakeConfigurationAddGroupToGroup(PancakeConfigurationGroup *
 PANCAKE_API void PancakeConfigurationAddSettingToGroup(PancakeConfigurationGroup *parent, PancakeConfigurationSetting *child);
 PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationListGroup(PancakeConfigurationSetting *setting, PancakeConfigurationHook hook);
 PANCAKE_API PancakeConfigurationGroup *PancakeConfigurationLookupGroup(PancakeConfigurationGroup *parent, String name);
+PANCAKE_API PancakeConfigurationSetting *PancakeConfigurationLookupSetting(PancakeConfigurationGroup *parent, String name);
 
 /* Configuration scoping API */
 PANCAKE_API PancakeConfigurationScope *PancakeConfigurationAddScope();
