@@ -521,6 +521,7 @@ PancakeHTTPConfigurationStructure PancakeHTTPConfiguration;
 UInt16 PancakeHTTPNumVirtualHosts = 0;
 
 static PancakeHTTPContentServeBackend *contentBackends = NULL;
+static PancakeHTTPOutputFilter *outputFilters = NULL;
 
 /* Forward declarations */
 static void PancakeHTTPInitializeConnection(PancakeSocket *sock);
@@ -528,6 +529,10 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock);
 
 PANCAKE_API void PancakeHTTPRegisterContentServeBackend(PancakeHTTPContentServeBackend *backend) {
 	LL_APPEND(contentBackends, backend);
+}
+
+PANCAKE_API void PancakeHTTPRegisterOutputFilter(PancakeHTTPOutputFilter *filter) {
+	LL_APPEND(outputFilters, filter);
 }
 
 static UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
@@ -542,6 +547,9 @@ static UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *s
 			vhost->configurationScope = *scope;
 			vhost->contentBackends = NULL;
 			vhost->numContentBackends = 0;
+
+			vhost->outputFilters = NULL;
+			vhost->numOutputFilters = 0;
 
 			PancakeHTTPNumVirtualHosts++;
 
@@ -687,6 +695,40 @@ static UByte PancakeHTTPContentServeBackendConfiguration(UByte step, config_sett
 	return 1;
 }
 
+static UByte PancakeHTTPOutputFilterConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	config_setting_t *element;
+	UInt16 i = 0;
+	PancakeHTTPVirtualHost *vHost = (PancakeHTTPVirtualHost*) setting->parent->hook;
+
+	if(step == PANCAKE_CONFIGURATION_INIT) {
+		while(element = config_setting_get_elem(setting, i++)) {
+			PancakeHTTPOutputFilter *filter = NULL, *tmp;
+
+			LL_FOREACH(outputFilters, tmp) {
+				if(!strcmp(tmp->name, element->value.sval)) {
+					filter = tmp;
+					break;
+				}
+			}
+
+			if(filter == NULL) {
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Unknown HTTP output filter: %s", element->value.sval);
+				return 0;
+			}
+
+			vHost->numOutputFilters++;
+			vHost->outputFilters = PancakeReallocate(vHost->outputFilters, vHost->numOutputFilters * sizeof(PancakeHTTPOutputFilter*));
+			vHost->outputFilters[vHost->numOutputFilters - 1] = filter->handler;
+		}
+	} else {
+		if(vHost->outputFilters) {
+			PancakeFree(vHost->outputFilters);
+		}
+	}
+
+	return 1;
+}
+
 UByte PancakeHTTPInitialize() {
 	PancakeConfigurationGroup *group, *child;
 	PancakeConfigurationSetting *setting, *serverHeader;
@@ -701,7 +743,7 @@ UByte PancakeHTTPInitialize() {
 	PancakeConfigurationAddSetting(group, (String) {"Default", sizeof("Default") - 1}, CONFIG_TYPE_BOOL, NULL, 0, (config_value_t) 0, PancakeHTTPDefaultConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"DocumentRoot", sizeof("DocumentRoot") - 1}, CONFIG_TYPE_STRING, &PancakeHTTPConfiguration.documentRoot, sizeof(String*), (config_value_t) "", PancakeHTTPDocumentRootConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"ContentServeBackends", sizeof("ContentServeBackends") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, PancakeHTTPContentServeBackendConfiguration);
-	PancakeConfigurationAddSetting(group, (String) {"OutputFilters", sizeof("OutputFilters") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, NULL);
+	PancakeConfigurationAddSetting(group, (String) {"OutputFilters", sizeof("OutputFilters") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, PancakeHTTPOutputFilterConfiguration);
 	PancakeConfigurationAddSettingToGroup(group, serverHeader);
 
 	child = PancakeConfigurationLookupGroup(NULL, (String) {"Logging", sizeof("Logging") - 1});
@@ -719,6 +761,9 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	request->keepAlive = 0;
 	request->onRequestEnd = NULL;
 	request->ifModifiedSince = NULL;
+	request->outputFilterData = NULL;
+	request->onOutputEnd = NULL;
+	request->acceptEncoding.value = NULL;
 
 	PancakeConfigurationInitializeScopeGroup(&request->scopeGroup);
 }
@@ -939,6 +984,12 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 							request->keepAlive = 1;
 						}
 						break;
+					case 15:
+						if(!memcmp(offset, "accept-encoding", 15)) {
+							request->acceptEncoding.value = ptr3;
+							request->acceptEncoding.length = ptr - ptr3;
+						}
+						break;
 					case 17:
 						if((ptr - ptr3) == 29
 						&& !memcmp(offset, "if-modified-since", 17)) {
@@ -990,6 +1041,9 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		request->answerType = NULL;
 		request->chunkedTransfer = 0;
 		request->lastModified = 0;
+		request->outputFilter = NULL;
+		request->contentEncoding = NULL;
+		request->headerSent = 0;
 
 		// Disable reading on socket
 		PancakeNetworkRemoveReadSocket(sock);
@@ -1161,18 +1215,91 @@ PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock) {
 }
 
 PANCAKE_API void PancakeHTTPOutput(PancakeSocket *sock, String *output) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+	UInt16 i;
+
+	// Run output filter if available
+	if(request->outputFilter) {
+		request->outputFilter(sock, output);
+		return;
+	} else for(i = 0; i < request->vHost->numOutputFilters; i++) {
+		if(request->vHost->outputFilters[i](sock, output)) {
+			request->outputFilter = request->vHost->outputFilters[i];
+			return;
+		}
+	}
+
+	// No output filter available
+	// Build answer headers
+	if(!request->headerSent) {
+		PancakeHTTPBuildAnswerHeaders(sock);
+	}
+
+	// Resize buffer
 	if(sock->writeBuffer.size < sock->writeBuffer.length + output->length) {
 		sock->writeBuffer.size += output->length + 2048;
 		sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
 	}
 
+	// Copy to buffer
 	memcpy(sock->writeBuffer.value + sock->writeBuffer.length, output->value, output->length);
 	sock->writeBuffer.length += output->length;
+}
+
+PANCAKE_API void PancakeHTTPOutputChunk(PancakeSocket *sock, String *chunk) {
+	UByte *offset;
+
+	// Reallocate buffer if necessary
+	if(sock->writeBuffer.size < sock->writeBuffer.length + chunk->length + sizeof("ffffffff\r\n\r\n") - 1) {
+		sock->writeBuffer.size += chunk->length + sizeof("ffffffff\r\n\r\n");
+		sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
+	}
+
+	// Write length as hex value
+	offset = sock->writeBuffer.value + sock->writeBuffer.length;
+	offset += sprintf(offset, "%lx", chunk->length);
+
+	offset[0] = '\r';
+	offset[1] = '\n';
+	offset += 2;
+
+	// Copy chunk into buffer
+	memcpy(offset, chunk->value, chunk->length);
+	offset += chunk->length;
+
+	offset[0] = '\r';
+	offset[1] = '\n';
+
+	// Set buffer length
+	sock->writeBuffer.length = offset + 2 - sock->writeBuffer.value;
+}
+
+PANCAKE_API inline void PancakeHTTPOutputLastChunk(PancakeSocket *sock) {
+	UByte *offset;
+
+	if(sock->writeBuffer.size < sock->writeBuffer.length + sizeof("0\r\n\r\n") - 1) {
+		sock->writeBuffer.size += sizeof("0\r\n\r\n") - 1;
+		sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
+	}
+
+	offset = sock->writeBuffer.value + sock->writeBuffer.length;
+	offset[0] = '0';
+	offset[1] = '\r';
+	offset[2] = '\n';
+	offset[3] = '\r';
+	offset[4] = '\n';
+
+	sock->writeBuffer.length += sizeof("0\r\n\r\n") - 1;
 }
 
 PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 	UByte *offset;
+
+	PancakeAssert(request->headerSent == 0);
+
+	// Set headerSent flag
+	request->headerSent = 1;
 
 	sock->writeBuffer.size += 8192;
 	sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
@@ -1223,7 +1350,7 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 	offset += 2;
 
 	// Content-Length
-	if(request->contentLength) {
+	if(request->contentLength && !request->chunkedTransfer) {
 		memcpy(offset, "Content-Length", sizeof("Content-Length") - 1);
 		offset += sizeof("Content-Length") - 1;
 		offset[0] = ':';
@@ -1275,6 +1402,28 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 		request->keepAlive = 0;
 	}
 
+	// Transfer-Encoding
+	if(request->chunkedTransfer) {
+		memcpy(offset, "Transfer-Encoding: chunked\r\n", sizeof("Transfer-Encoding: chunked\r\n") - 1);
+		offset += sizeof("Transfer-Encoding: chunked\r\n") - 1;
+	}
+
+	// Content-Encoding
+	if(request->contentEncoding) {
+		memcpy(offset, "Content-Encoding", sizeof("Content-Encoding") - 1);
+		offset += sizeof("Content-Encoding") - 1;
+		offset[0] = ':';
+		offset[1] = ' ';
+		offset += 2;
+		memcpy(offset, request->contentEncoding->value, request->contentEncoding->length);
+		offset += request->contentEncoding->length;
+
+		// \r\n
+		offset[0] = '\r';
+		offset[1] = '\n';
+		offset += 2;
+	}
+
 	// \r\n
 	offset[0] = '\r';
 	offset[1] = '\n';
@@ -1284,6 +1433,20 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 
 PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	if(request->onOutputEnd) {
+		request->onOutputEnd(request);
+		request->onOutputEnd = NULL;
+	}
+
+	if(request->chunkedTransfer == 1) {
+		request->chunkedTransfer = 0;
+		PancakeHTTPOutputLastChunk(sock);
+
+		sock->onWrite = PancakeHTTPFullWriteBuffer;
+		PancakeHTTPFullWriteBuffer(sock);
+		return;
+	}
 
 	if(request->keepAlive) {
 		PancakeNetworkRemoveWriteSocket(sock);

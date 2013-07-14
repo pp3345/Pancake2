@@ -12,9 +12,11 @@
 /* Forward declarations */
 typedef struct _PancakeHTTPHeader PancakeHTTPHeader;
 typedef struct _PancakeHTTPContentServeBackend PancakeHTTPContentServeBackend;
+typedef struct _PancakeHTTPOutputFilter PancakeHTTPOutputFilter;
 typedef struct _PancakeHTTPRequest PancakeHTTPRequest;
 
 typedef UByte (*PancakeHTTPContentServeHandler)(PancakeSocket *sock);
+typedef UByte (*PancakeHTTPOutputFilterFunction)(PancakeSocket *sock, String *output);
 typedef void (*PancakeHTTPEventHandler)(PancakeHTTPRequest *request);
 
 #define PANCAKE_HTTP_SERVER_HEADER "Server: Pancake/" PANCAKE_VERSION "\r\n"
@@ -27,11 +29,20 @@ typedef struct _PancakeHTTPContentServeBackend {
 	PancakeHTTPContentServeBackend *next;
 } PancakeHTTPContentServeBackend;
 
+typedef struct _PancakeHTTPOutputFilter {
+	UByte *name;
+	PancakeHTTPOutputFilterFunction handler;
+
+	PancakeHTTPOutputFilter *next;
+} PancakeHTTPOutputFilter;
+
 typedef struct _PancakeHTTPVirtualHost {
 	PancakeConfigurationScope *configurationScope;
 	PancakeHTTPContentServeHandler *contentBackends;
+	PancakeHTTPOutputFilterFunction *outputFilters;
 
 	UInt16 numContentBackends;
+	UInt16 numOutputFilters;
 } PancakeHTTPVirtualHost;
 
 typedef struct _PancakeHTTPVirtualHostIndex {
@@ -49,6 +60,7 @@ typedef struct _PancakeHTTPRequest {
 	String requestAddress;
 	String host;
 	String path;
+	String acceptEncoding;
 	UByte *ifModifiedSince; /* always 29 bytes long */
 
 	PancakeHTTPVirtualHost *vHost;
@@ -62,15 +74,20 @@ typedef struct _PancakeHTTPRequest {
 	UInt16 answerCode;
 	PancakeMIMEType *answerType;
 	void *contentServeData;
+	void *outputFilterData;
+	String *contentEncoding;
+	PancakeHTTPOutputFilterFunction outputFilter;
 	Native lastModified;
 
 	PancakeHTTPEventHandler onRequestEnd;
+	PancakeHTTPEventHandler onOutputEnd;
 
 	UByte method;
 	UByte HTTPVersion;
 	UByte statDone;
 	UByte chunkedTransfer;
 	UByte keepAlive;
+	UByte headerSent;
 } PancakeHTTPRequest;
 
 typedef struct _PancakeHTTPHeader {
@@ -104,11 +121,14 @@ extern UInt16 PancakeHTTPNumVirtualHosts;
 UByte PancakeHTTPInitialize();
 
 PANCAKE_API void PancakeHTTPRegisterContentServeBackend(PancakeHTTPContentServeBackend *backend);
+PANCAKE_API void PancakeHTTPRegisterOutputFilter(PancakeHTTPOutputFilter *filter);
 PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock);
 PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte ignoreException);
 PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code);
 PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock);
 PANCAKE_API inline void PancakeHTTPFullWriteBuffer(PancakeSocket *sock);
+PANCAKE_API void PancakeHTTPOutputChunk(PancakeSocket *sock, String *chunk);
+PANCAKE_API inline void PancakeHTTPOutputLastChunk(PancakeSocket *sock);
 PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock);
 PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock);
 

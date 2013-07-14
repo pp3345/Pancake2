@@ -114,7 +114,6 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 			return 0;
 		}
 
-		PancakeHTTPBuildAnswerHeaders(sock);
 		PancakeNetworkAddWriteSocket(sock);
 
 		sock->onWrite = PancakeHTTPStaticWrite;
