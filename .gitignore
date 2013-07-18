@@ -218,3 +218,5 @@ config.h
 
 # config
 config/
+
+.autotools
