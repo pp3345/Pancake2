@@ -112,6 +112,7 @@ static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 		stream = (z_streamp) request->outputFilterData;
 	}
 
+	// Fill stream
 	stream->avail_in = stream->avail_out = chunk->length;
 	stream->next_in = chunk->value;
 	stream->next_out = out;
@@ -122,6 +123,7 @@ static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 	output.value = out;
 	output.length = chunk->length - stream->avail_out;
 
+	// Show debug information
 	PancakeDebug {
 		PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "%lu bytes deflated to %lu bytes (%.2f%%)", chunk->length, output.length, (double) output.length / chunk->length * 100);
 	}
