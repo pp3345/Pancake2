@@ -51,6 +51,8 @@ static UByte PancakeHTTPDeflateInitialize() {
 	vHostGroup = vHost->listGroup;
 	group = PancakeConfigurationAddGroup(HTTP, (String) {"Deflate", sizeof("Deflate") - 1}, NULL);
 	PancakeConfigurationAddSetting(group, (String) {"Level", sizeof("Level") - 1}, CONFIG_TYPE_INT, &PancakeHTTPDeflateConfiguration.level, sizeof(Int32), (config_value_t) 0, NULL);
+	PancakeConfigurationAddSetting(group, (String) {"WindowBits", sizeof("WindowBits") - 1}, CONFIG_TYPE_INT, &PancakeHTTPDeflateConfiguration.windowBits, sizeof(Int32), (config_value_t) -15, NULL);
+	PancakeConfigurationAddSetting(group, (String) {"MemoryLevel", sizeof("MemoryLevel") - 1}, CONFIG_TYPE_INT, &PancakeHTTPDeflateConfiguration.memoryLevel, sizeof(Int32), (config_value_t) 9, NULL);
 
 	// Deflate -> vHost configuration
 	PancakeConfigurationAddGroupToGroup(vHostGroup, group);
@@ -89,7 +91,7 @@ static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 			stream->zfree = NULL;
 			stream->opaque = NULL;
 
-			if(deflateInit2(stream, PancakeHTTPDeflateConfiguration.level, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
+			if(deflateInit2(stream, PancakeHTTPDeflateConfiguration.level, Z_DEFLATED, PancakeHTTPDeflateConfiguration.windowBits, PancakeHTTPDeflateConfiguration.memoryLevel, Z_DEFAULT_STRATEGY) != Z_OK) {
 				PancakeFree(stream);
 				return 0;
 			}

@@ -12,6 +12,8 @@
 
 typedef struct _PancakeHTTPDeflateConfigurationStructure {
 	Int32 level;
+	Int32 windowBits;
+	Int32 memoryLevel;
 } PancakeHTTPDeflateConfigurationStructure;
 
 extern PancakeModule PancakeHTTPDeflate;
