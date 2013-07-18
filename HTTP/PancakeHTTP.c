@@ -1046,7 +1046,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		request->headerSent = 0;
 
 		// Disable reading on socket
-		PancakeNetworkRemoveReadSocket(sock);
+		PancakeNetworkSetSocket(sock);
 
 		// Serve content
 		if(PancakeHTTPServeContent(sock, 0)) {
@@ -1130,7 +1130,7 @@ PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code) {
 
 	sock->writeBuffer.length = sock->writeBuffer.size;
 
-	PancakeNetworkAddWriteSocket(sock);
+	PancakeNetworkSetWriteSocket(sock);
 	sock->onWrite = PancakeHTTPFullWriteBuffer;
 }
 
@@ -1449,8 +1449,7 @@ PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
 	}
 
 	if(request->keepAlive) {
-		PancakeNetworkRemoveWriteSocket(sock);
-		PancakeNetworkAddReadSocket(sock);
+		PancakeNetworkSetReadSocket(sock);
 
 		PancakeHTTPCleanRequestData(request);
 

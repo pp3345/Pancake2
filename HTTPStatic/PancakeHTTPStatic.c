@@ -85,7 +85,7 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 				request->answerCode = 304;
 
 				PancakeHTTPBuildAnswerHeaders(sock);
-				PancakeNetworkAddWriteSocket(sock);
+				PancakeNetworkSetWriteSocket(sock);
 
 				sock->onWrite = PancakeHTTPFullWriteBuffer;
 
@@ -114,7 +114,7 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 			return 0;
 		}
 
-		PancakeNetworkAddWriteSocket(sock);
+		PancakeNetworkSetWriteSocket(sock);
 
 		sock->onWrite = PancakeHTTPStaticWrite;
 		request->onRequestEnd = PancakeHTTPStaticOnRequestEnd;

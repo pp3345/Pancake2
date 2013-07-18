@@ -20,6 +20,10 @@ static inline void PancakeLinuxPollRemoveSocket(PancakeSocket *socket);
 static inline void PancakeLinuxPollRemoveReadSocket(PancakeSocket *socket);
 static inline void PancakeLinuxPollRemoveWriteSocket(PancakeSocket *socket);
 
+static inline void PancakeLinuxPollSetReadSocket(PancakeSocket *socket);
+static inline void PancakeLinuxPollSetWriteSocket(PancakeSocket *socket);
+static inline void PancakeLinuxPollSetSocket(PancakeSocket *socket);
+
 PancakeModule PancakeLinuxPoll = {
 		"LinuxPoll",
 		PancakeLinuxPollInitialize,
@@ -41,6 +45,10 @@ PancakeServerArchitecture PancakeLinuxPollServer = {
 		PancakeLinuxPollRemoveReadSocket,
 		PancakeLinuxPollRemoveWriteSocket,
 		PancakeLinuxPollRemoveSocket,
+
+		PancakeLinuxPollSetReadSocket,
+		PancakeLinuxPollSetWriteSocket,
+		PancakeLinuxPollSetSocket,
 
 		PancakeLinuxPollServerInitialize,
 
@@ -173,6 +181,65 @@ static inline void PancakeLinuxPollRemoveWriteSocket(PancakeSocket *socket) {
 
 		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_MOD, socket->fd, &event);
 		socket->flags ^= PANCAKE_LINUX_POLL_OUT;
+	}
+}
+
+static inline void PancakeLinuxPollSetReadSocket(PancakeSocket *socket) {
+	struct epoll_event event;
+
+	event.events = EPOLLRDHUP | EPOLLIN;
+	event.data.ptr = (void*) socket;
+
+	socket->flags |= PANCAKE_LINUX_POLL_IN;
+
+	if(socket->flags & PANCAKE_LINUX_POLL_SOCKET) {
+		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_MOD, socket->fd, &event);
+
+		if(socket->flags & PANCAKE_LINUX_POLL_OUT) {
+			socket->flags ^= PANCAKE_LINUX_POLL_OUT;
+		}
+	} else {
+		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_ADD, socket->fd, &event);
+	}
+}
+
+static inline void PancakeLinuxPollSetWriteSocket(PancakeSocket *socket) {
+	struct epoll_event event;
+
+	event.events = EPOLLRDHUP | EPOLLOUT;
+	event.data.ptr = (void*) socket;
+
+	socket->flags |= PANCAKE_LINUX_POLL_OUT;
+
+	if(socket->flags & PANCAKE_LINUX_POLL_SOCKET) {
+		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_MOD, socket->fd, &event);
+
+		if(socket->flags & PANCAKE_LINUX_POLL_IN) {
+			socket->flags ^= PANCAKE_LINUX_POLL_IN;
+		}
+	} else {
+		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_ADD, socket->fd, &event);
+	}
+}
+
+static inline void PancakeLinuxPollSetSocket(PancakeSocket *socket) {
+	struct epoll_event event;
+
+	event.events = EPOLLRDHUP;
+	event.data.ptr = (void*) socket;
+
+	if(socket->flags & PANCAKE_LINUX_POLL_SOCKET) {
+		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_MOD, socket->fd, &event);
+
+		if(socket->flags & PANCAKE_LINUX_POLL_IN) {
+			socket->flags ^= PANCAKE_LINUX_POLL_IN;
+		}
+
+		if(socket->flags & PANCAKE_LINUX_POLL_OUT) {
+			socket->flags ^= PANCAKE_LINUX_POLL_OUT;
+		}
+	} else {
+		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_ADD, socket->fd, &event);
 	}
 }
 

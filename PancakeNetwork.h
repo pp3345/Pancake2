@@ -47,6 +47,10 @@ typedef struct _PancakeServerArchitecture {
 	PancakeSocketHandler removeWriteSocket;
 	PancakeSocketHandler removeSocket;
 
+	PancakeSocketHandler setReadSocket;
+	PancakeSocketHandler setWriteSocket;
+	PancakeSocketHandler setSocket;
+
 	PancakeModuleInitializeFunction initialize;
 
 	UT_hash_handle hh;
@@ -78,6 +82,10 @@ PANCAKE_API void PancakeNetworkActivateListenSockets();
 #define PancakeNetworkRemoveSocket(socket) (PancakeMainConfiguration.serverArchitecture->removeSocket(socket))
 #define PancakeNetworkRemoveReadSocket(socket) (PancakeMainConfiguration.serverArchitecture->removeReadSocket(socket))
 #define PancakeNetworkRemoveWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->removeWriteSocket(socket))
+
+#define PancakeNetworkSetReadSocket(socket) (PancakeMainConfiguration.serverArchitecture->setReadSocket(socket))
+#define PancakeNetworkSetWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->setWriteSocket(socket))
+#define PancakeNetworkSetSocket(socket) (PancakeMainConfiguration.serverArchitecture->setSocket(socket))
 
 UByte PancakeNetworkActivate();
 
