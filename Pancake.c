@@ -71,7 +71,9 @@ Int32 main(Int32 argc, Byte **argv) {
 
 	PancakeConfigurationAddSetting(NULL, (String) {"ServerArchitecture", sizeof("ServerArchitecture") - 1}, CONFIG_TYPE_STRING, &PancakeMainConfiguration.serverArchitecture, sizeof(PancakeServerArchitecture*), (config_value_t) 0, PancakeConfigurationServerArchitecture);
 
-	PancakeConfigurationAddSetting(NULL, (String) {"NetworkBuffering", sizeof("NetworkBuffering") - 1}, CONFIG_TYPE_INT, &PancakeMainConfiguration.networkBuffering, sizeof(Int32), (config_value_t) 0, NULL);
+	group = PancakeConfigurationAddGroup(NULL, (String) {"NetworkBuffering", sizeof("NetworkBuffering") - 1}, NULL);
+	PancakeConfigurationAddSetting(group, (String) {"Max", sizeof("Max") - 1}, CONFIG_TYPE_INT, &PancakeMainConfiguration.networkBufferingMax, sizeof(Int32), (config_value_t) 0, NULL);
+	PancakeConfigurationAddSetting(group, (String) {"Min", sizeof("Min") - 1}, CONFIG_TYPE_INT, &PancakeMainConfiguration.networkBufferingMin, sizeof(Int32), (config_value_t) 0, NULL);
 
 	// Fetch modules into accessible array
 	PancakeFetchModules(); // Defined by configure.ac

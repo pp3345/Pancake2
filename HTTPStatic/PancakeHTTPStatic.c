@@ -40,17 +40,12 @@ static inline void PancakeHTTPStaticOnRequestEnd(PancakeHTTPRequest *request) {
 static void PancakeHTTPStaticWrite(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
-	if(sock->writeBuffer.size < PancakeMainConfiguration.networkBuffering) {
-		sock->writeBuffer.size = PancakeMainConfiguration.networkBuffering;
-		sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, PancakeMainConfiguration.networkBuffering);
-	}
-
-	if(sock->writeBuffer.length < PancakeMainConfiguration.networkBuffering) {
-		UByte buf[sock->writeBuffer.size - sock->writeBuffer.length];
+	if(sock->writeBuffer.length < PancakeMainConfiguration.networkBufferingMin) {
+		UByte buf[PancakeMainConfiguration.networkBufferingMax - sock->writeBuffer.length];
 		String output;
 
 		output.value = buf;
-		output.length = fread(buf, 1, sock->writeBuffer.size - sock->writeBuffer.length, request->contentServeData);
+		output.length = fread(buf, 1, PancakeMainConfiguration.networkBufferingMax - sock->writeBuffer.length, request->contentServeData);
 
 		PancakeHTTPOutput(sock, &output);
 	}
