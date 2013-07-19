@@ -1251,7 +1251,7 @@ PANCAKE_API void PancakeHTTPOutputChunk(PancakeSocket *sock, String *chunk) {
 
 	// Reallocate buffer if necessary
 	if(sock->writeBuffer.size < sock->writeBuffer.length + chunk->length + sizeof("ffffffff\r\n\r\n") - 1) {
-		sock->writeBuffer.size += chunk->length + sizeof("ffffffff\r\n\r\n");
+		sock->writeBuffer.size = sock->writeBuffer.length + chunk->length + sizeof("ffffffff\r\n\r\n") - 1;
 		sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
 	}
 
