@@ -140,7 +140,7 @@ static void PancakeConfigurationLoadGroupDefaultValues(PancakeConfigurationGroup
 		}
 
 		if(!setting->haveValue && setting->valuePtr != NULL) {
-			PancakeConfigurationScopeValue *value = PancakeAllocate(sizeof(PancakeConfigurationScopeValue*));
+			PancakeConfigurationScopeValue *value = PancakeAllocate(sizeof(PancakeConfigurationScopeValue));
 
 			value->setting = setting;
 			value->value = setting->defaultValue;
