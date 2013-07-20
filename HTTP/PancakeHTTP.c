@@ -975,37 +975,45 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 						if(!memcmp(offset, "host", 4)) {
 							request->host.value = ptr3;
 							request->host.length = ptr - ptr3;
+							break;
 						}
-						break;
+						goto StoreHeader;
 					case 10:
-						if((ptr - ptr3) == (sizeof("keep-alive") - 1)
-							&& !memcmp(offset, "connection", 10)
-							&& !strncasecmp(ptr3, "keep-alive", sizeof("keep-alive") - 1)) {
-							request->keepAlive = 1;
+						if(!memcmp(offset, "connection", 10)) {
+							if((ptr - ptr3) == (sizeof("keep-alive") - 1)
+								&& !strncasecmp(ptr3, "keep-alive", sizeof("keep-alive") - 1)) {
+								request->keepAlive = 1;
+							}
+
+							break;
 						}
-						break;
+						goto StoreHeader;
 					case 15:
 						if(!memcmp(offset, "accept-encoding", 15)) {
 							request->acceptEncoding.value = ptr3;
 							request->acceptEncoding.length = ptr - ptr3;
+							break;
 						}
-						break;
+						goto StoreHeader;
 					case 17:
 						if((ptr - ptr3) == 29
 						&& !memcmp(offset, "if-modified-since", 17)) {
 							request->ifModifiedSince = ptr3;
+							break;
 						}
+						goto StoreHeader;
+					default:
+					StoreHeader:
+						header = PancakeAllocate(sizeof(PancakeHTTPHeader));
+						header->name.value = offset;
+						header->name.length = ptr2 - offset;
+						header->value.value = ptr3;
+						header->value.length = ptr - ptr3;
+
+						// Add header to list
+						LL_APPEND(request->headers, header);
 						break;
 				}
-
-				header = PancakeAllocate(sizeof(PancakeHTTPHeader));
-				header->name.value = offset;
-				header->name.length = ptr2 - offset;
-				header->value.value = ptr3;
-				header->value.length = ptr - ptr3;
-
-				// Add header to list
-				LL_APPEND(request->headers, header);
 
 				if(ptr == headerEnd) {
 					// Finished parsing headers
