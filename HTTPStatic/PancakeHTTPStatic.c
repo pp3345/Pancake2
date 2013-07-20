@@ -101,21 +101,28 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 		request->lastModified = request->fileStat.st_mtim.tv_sec;
 		request->answerCode = 200;
 
-		// Open file
-		request->contentServeData = (void*) fopen(fullPath, "r");
-
-		if(request->contentServeData == NULL) {
-			PancakeHTTPException(sock, 403);
-			return 0;
-		}
-
 		PancakeNetworkSetWriteSocket(sock);
 
-		sock->onWrite = PancakeHTTPStaticWrite;
-		request->onRequestEnd = PancakeHTTPStaticOnRequestEnd;
+		// Optimize for empty files
+		if(UNEXPECTED(!request->contentLength)) {
+			PancakeHTTPBuildAnswerHeaders(sock);
+			sock->onWrite = PancakeHTTPFullWriteBuffer;
+			PancakeHTTPFullWriteBuffer(sock);
+		} else {
+			// Open file
+			request->contentServeData = (void*) fopen(fullPath, "r");
 
-		// Try to write now
-		PancakeHTTPStaticWrite(sock);
+			if(request->contentServeData == NULL) {
+				PancakeHTTPException(sock, 403);
+				return 0;
+			}
+
+			sock->onWrite = PancakeHTTPStaticWrite;
+			request->onRequestEnd = PancakeHTTPStaticOnRequestEnd;
+
+			// Try to write now
+			PancakeHTTPStaticWrite(sock);
+		}
 
 		return 1;
 	}
