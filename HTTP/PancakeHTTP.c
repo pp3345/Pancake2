@@ -1198,7 +1198,7 @@ PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock) {
 
 	if(!request->statDone) {
 		UByte fullPath[PancakeHTTPConfiguration.documentRoot->length + request->path.length + 1];
-		UByte resolvedPath[PATH_MAX];
+		UByte *offset, *dot;
 
 		memcpy(fullPath, PancakeHTTPConfiguration.documentRoot->value, PancakeHTTPConfiguration.documentRoot->length);
 		memcpy(fullPath + PancakeHTTPConfiguration.documentRoot->length, request->path.value, request->path.length);
@@ -1206,12 +1206,31 @@ PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock) {
 		// null-terminate string
 		fullPath[PancakeHTTPConfiguration.documentRoot->length + request->path.length] = '\0';
 
-		// Resolve real path and disallow requests to paths lower than the docroot
-		if(stat(resolvedPath, &request->fileStat) == -1
-		|| realpath(fullPath, resolvedPath) == NULL
-		|| strncmp(resolvedPath, PancakeHTTPConfiguration.documentRoot->value, PancakeHTTPConfiguration.documentRoot->length)) {
+		// Try to stat file
+		if(stat(fullPath, &request->fileStat) == -1) {
 			PancakeHTTPException(sock, 404);
 			return 0;
+		}
+
+		offset = fullPath;
+
+		// Disallow requests to paths lower than the document root
+		while(dot = memchr(offset, '.', fullPath + PancakeHTTPConfiguration.documentRoot->length + request->path.length + 1 - offset)) {
+			if(dot[1] == '.') {
+				// .. detected, possible exploit
+				UByte resolvedPath[PATH_MAX];
+
+				if(realpath(fullPath, resolvedPath) == NULL
+				|| strlen(resolvedPath) < PancakeHTTPConfiguration.documentRoot->length
+				|| memcmp(fullPath, resolvedPath, PancakeHTTPConfiguration.documentRoot->length)) {
+					PancakeHTTPException(sock, 403);
+					return 0;
+				}
+
+				break;
+			}
+
+			offset = dot + 1;
 		}
 	}
 
