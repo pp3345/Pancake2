@@ -37,7 +37,7 @@
 #include <arpa/inet.h>
 
 /* Valgrind */
-#ifdef HAVE_VALGRIND_H
+#if defined(HAVE_VALGRIND_H) && defined(PANCAKE_DEBUG)
 #	include <valgrind/valgrind.h>
 #endif
 
