@@ -1207,9 +1207,9 @@ PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock) {
 		fullPath[PancakeHTTPConfiguration.documentRoot->length + request->path.length] = '\0';
 
 		// Resolve real path and disallow requests to paths lower than the docroot
-		if(realpath(fullPath, resolvedPath) == NULL
-		|| strncmp(resolvedPath, PancakeHTTPConfiguration.documentRoot->value, PancakeHTTPConfiguration.documentRoot->length)
-		|| stat(resolvedPath, &request->fileStat) == -1) {
+		if(stat(resolvedPath, &request->fileStat) == -1
+		|| realpath(fullPath, resolvedPath) == NULL
+		|| strncmp(resolvedPath, PancakeHTTPConfiguration.documentRoot->value, PancakeHTTPConfiguration.documentRoot->length)) {
 			PancakeHTTPException(sock, 404);
 			return 0;
 		}
