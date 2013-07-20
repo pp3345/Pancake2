@@ -69,8 +69,8 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 PANCAKE_API Byte *PancakeNetworkGetInterfaceName(struct sockaddr *addr);
 
 PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *sock);
-PANCAKE_API inline UInt32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength);
-PANCAKE_API inline UInt32 PancakeNetworkWrite(PancakeSocket *sock);
+PANCAKE_API inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength);
+PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock);
 PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock);
 
 PANCAKE_API void PancakeNetworkActivateListenSockets();

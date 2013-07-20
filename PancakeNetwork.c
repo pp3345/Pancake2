@@ -411,9 +411,9 @@ PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *
 	return client;
 }
 
-PANCAKE_API inline UInt32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength) {
+PANCAKE_API inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength) {
 	UByte buf[maxLength];
-	UInt32 length;
+	Int32 length;
 
 	length = read(sock->fd, buf, maxLength);
 
@@ -443,11 +443,25 @@ PANCAKE_API inline UInt32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLeng
 	return length;
 }
 
-PANCAKE_API inline UInt32 PancakeNetworkWrite(PancakeSocket *sock) {
-	UInt32 length;
+PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock) {
+	Int32 length;
 
 	// Write data
 	length = write(sock->fd, sock->writeBuffer.value, sock->writeBuffer.length);
+
+	if(length == -1) {
+#if EAGAIN != EWOULDBLOCK // On some systems these values differ
+		if(errno == EAGAIN || errno == EWOULDBLOCK)
+#else
+		if(errno == EAGAIN)
+#endif
+		{
+			return 0;
+		}
+
+		sock->onRemoteHangup(sock);
+		return -1;
+	}
 
 	// Shrink buffer
 	if(length < sock->writeBuffer.length) {
