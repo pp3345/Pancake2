@@ -805,25 +805,25 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 	}
 
 	// Parse HTTP
-	if(sock->readBuffer.length >= 5) {
+	if(EXPECTED(sock->readBuffer.length >= 5)) {
 		PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 		UByte *offset, *headerEnd, *ptr, *ptr2, *ptr3;
 
 		if(!request->method) {
 			if(sock->readBuffer.value[0] == 'G') {
-				if(sock->readBuffer.value[1] != 'E'
+				if(UNEXPECTED(sock->readBuffer.value[1] != 'E'
 				|| sock->readBuffer.value[2] != 'T'
-				|| sock->readBuffer.value[3] != ' ') {
+				|| sock->readBuffer.value[3] != ' ')) {
 					PancakeHTTPOnRemoteHangup(sock);
 					return;
 				}
 
 				request->method = PANCAKE_HTTP_GET;
 			} else if(sock->readBuffer.value[0] == 'P') {
-				if(sock->readBuffer.value[1] != 'O'
+				if(UNEXPECTED(sock->readBuffer.value[1] != 'O'
 				|| sock->readBuffer.value[2] != 'S'
 				|| sock->readBuffer.value[3] != 'T'
-				|| sock->readBuffer.value[4] != ' ') {
+				|| sock->readBuffer.value[4] != ' ')) {
 					PancakeHTTPOnRemoteHangup(sock);
 					return;
 				}
@@ -856,7 +856,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 
 		// Lookup end of request URI
 		ptr = memchr(offset, ' ', headerEnd - offset);
-		if(!ptr || ptr == offset) {
+		if(UNEXPECTED(!ptr || ptr == offset)) {
 			// Malformed header
 			PancakeHTTPOnRemoteHangup(sock);
 			return;
@@ -902,7 +902,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		offset = ptr + 1;
 
 		// Fetch HTTP version
-		if(offset + sizeof("HTTP/1.1") - 1 > headerEnd || memcmp(offset, "HTTP/1.", sizeof("HTTP/1.") - 1) != 0) {
+		if(UNEXPECTED(offset + sizeof("HTTP/1.1") - 1 > headerEnd || memcmp(offset, "HTTP/1.", sizeof("HTTP/1.") - 1) != 0)) {
 			// Malformed header
 			PancakeHTTPOnRemoteHangup(sock);
 			return;
@@ -924,8 +924,8 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 
 		offset++;
 
-		if(offset != headerEnd) {
-			if(*offset != '\r' || *(offset + 1) != '\n') {
+		if(EXPECTED(offset != headerEnd)) {
+			if(UNEXPECTED(*offset != '\r' || *(offset + 1) != '\n')) {
 				// Malformed header
 				PancakeHTTPOnRemoteHangup(sock);
 				return;
@@ -940,7 +940,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 				// memchr() can't fail since we have a \r\n\r\n at the end of the header for sure
 				ptr = memchr(offset, '\r', headerEnd - offset + 1);
 				PancakeAssert(ptr != NULL);
-				if(*(ptr + 1) != '\n') {
+				if(UNEXPECTED(*(ptr + 1) != '\n')) {
 					// Malformed header
 					PancakeHTTPOnRemoteHangup(sock);
 					return;
@@ -948,7 +948,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 
 				ptr2 = memchr(offset, ':', ptr - offset);
 
-				if(!ptr2 || ptr2 == offset) {
+				if(UNEXPECTED(!ptr2 || ptr2 == offset)) {
 					// Malformed header
 					PancakeHTTPOnRemoteHangup(sock);
 					return;
@@ -1057,7 +1057,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		PancakeNetworkSetSocket(sock);
 
 		// Serve content
-		if(PancakeHTTPServeContent(sock, 0)) {
+		if(EXPECTED(PancakeHTTPServeContent(sock, 0))) {
 			PancakeConfigurationUnscope();
 			return;
 		}

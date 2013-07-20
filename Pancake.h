@@ -54,8 +54,12 @@
 
 #if defined(__GNUC__) && __GNUC__ >= 4
 #	define PANCAKE_API __attribute__ ((visibility("default")))
+#	define EXPECTED(x) __builtin_expect((x), 1)
+#	define UNEXPECTED(x) __builtin_expect((x), 0)
 #else
 #	define PANCAKE_API
+#	define EXPECTED(x)
+#	define UNEXPECTED(x)
 #endif
 
 /* Type definitions */

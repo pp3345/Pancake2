@@ -259,7 +259,9 @@ static void PancakeLinuxPollWait() {
 		struct epoll_event events[32];
 		Int32 numEvents, i;
 
-		if((numEvents = epoll_wait(PancakeLinuxPollFD, events, 32, -1)) == -1) {
+		numEvents = epoll_wait(PancakeLinuxPollFD, events, 32, -1);
+
+		if(UNEXPECTED(numEvents == -1)) {
 			if(PancakeDoShutdown) {
 				return;
 			}
@@ -289,7 +291,7 @@ static void PancakeLinuxPollWait() {
 			}
 		}
 
-		if(PancakeDoShutdown) {
+		if(UNEXPECTED(PancakeDoShutdown)) {
 			return;
 		}
 	}
