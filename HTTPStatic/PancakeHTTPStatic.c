@@ -24,7 +24,7 @@ static PancakeHTTPContentServeBackend PancakeHTTPStaticContent = {
 };
 
 static UByte PancakeHTTPStaticInitialize() {
-	if(!PancakeHTTP.intialized) {
+	if(!PancakeHTTP.initialized) {
 		return 2;
 	}
 

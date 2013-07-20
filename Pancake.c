@@ -81,7 +81,7 @@ Int32 main(Int32 argc, Byte **argv) {
 	// Initialize modules
 	do {
 		while((module = PancakeModules[i])) {
-			if(module->intialized) {
+			if(module->initialized) {
 				continue;
 			}
 
@@ -100,7 +100,7 @@ Int32 main(Int32 argc, Byte **argv) {
 						break;
 					case 1:
 						// Init successful
-						module->intialized = 1;
+						module->initialized = 1;
 						break;
 					case 2:
 						// Defer init
@@ -108,7 +108,7 @@ Int32 main(Int32 argc, Byte **argv) {
 						break;
 				}
 			} else {
-				module->intialized = 1;
+				module->initialized = 1;
 			}
 
 			i++;

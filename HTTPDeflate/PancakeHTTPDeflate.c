@@ -39,7 +39,7 @@ static UByte PancakeHTTPDeflateInitialize() {
 	PancakeConfigurationSetting *vHost;
 
 	// Defer if HTTP module is not yet initialized
-	if(!PancakeHTTP.intialized) {
+	if(!PancakeHTTP.initialized) {
 		return 2;
 	}
 

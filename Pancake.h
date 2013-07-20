@@ -109,7 +109,7 @@ typedef struct _PancakeModule {
 	PancakeModuleInitializeFunction configurationLoaded;
 	PancakeModuleInitializeFunction shutdown;
 
-	UByte intialized;
+	UByte initialized;
 } PancakeModule;
 
 typedef struct _PancakeMainConfigurationStructure {
