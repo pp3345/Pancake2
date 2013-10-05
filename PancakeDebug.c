@@ -229,4 +229,9 @@ PANCAKE_API void PancakeDumpHeap() {
 		printf("[%i] %lu bytes total allocated\n", pid, total);
 	}
 }
+
+PANCAKE_API void PancakePrintString(String *string) {
+	printf("String(%lu) \"%.*s\"\n", string->length, (Int32) string->length, string->value);
+}
+
 #endif
