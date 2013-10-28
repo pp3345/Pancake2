@@ -7,7 +7,9 @@ typedef struct _PancakeServerArchitecture PancakeServerArchitecture;
 #include "Pancake.h"
 #include "PancakeConfiguration.h"
 
+/* Forward declarations */
 typedef struct _PancakeSocket PancakeSocket;
+typedef struct _PancakeNetworkConnectionCache PancakeNetworkConnectionCache;
 
 typedef void (*PancakeNetworkEventHandler)(PancakeSocket *socket);
 typedef void (*PancakeSocketHandler)(PancakeSocket *socket);
@@ -56,6 +58,16 @@ typedef struct _PancakeServerArchitecture {
 	UT_hash_handle hh;
 } PancakeServerArchitecture;
 
+typedef struct _PancakeNetworkClientInterface {
+	struct sockaddr *address;
+} PancakeNetworkClientInterface;
+
+typedef struct _PancakeNetworkConnectionCache {
+	PancakeSocket *socket;
+
+	PancakeNetworkConnectionCache *next;
+} PancakeNetworkConnectionCache;
+
 /* Forward declaration */
 typedef struct _PancakeConfigurationGroup PancakeConfigurationGroup;
 typedef struct _PancakeConfigurationSetting PancakeConfigurationSetting;
@@ -64,16 +76,20 @@ typedef struct config_setting_t config_setting_t;
 typedef UByte (*PancakeConfigurationHook)(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
 
 PANCAKE_API void PancakeRegisterServerArchitecture(PancakeServerArchitecture *arch);
+PANCAKE_API PancakeConfigurationGroup *PancakeNetworkRegisterClientInterfaceGroup(PancakeConfigurationGroup *parent, PancakeConfigurationHook hook);
 PANCAKE_API PancakeConfigurationSetting *PancakeNetworkRegisterListenInterfaceGroup(PancakeConfigurationGroup *parent, PancakeConfigurationHook hook);
 PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
+PANCAKE_API void PancakeNetworkClientInterfaceConfiguration(PancakeNetworkClientInterface *client);
 PANCAKE_API Byte *PancakeNetworkGetInterfaceName(struct sockaddr *addr);
 
 PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *sock);
+PANCAKE_API inline PancakeSocket *PancakeNetworkConnect(struct sockaddr *addr, PancakeNetworkConnectionCache **cache, UByte cachePolicy);
 PANCAKE_API inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength);
 PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock);
 PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock);
 
 PANCAKE_API void PancakeNetworkActivateListenSockets();
+PANCAKE_API inline void PancakeNetworkCacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *socket);
 
 #define PancakeNetworkAddReadSocket(socket) (PancakeMainConfiguration.serverArchitecture->addReadSocket(socket))
 #define PancakeNetworkAddWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->addWriteSocket(socket))
@@ -88,5 +104,8 @@ PANCAKE_API void PancakeNetworkActivateListenSockets();
 #define PancakeNetworkSetSocket(socket) (PancakeMainConfiguration.serverArchitecture->setSocket(socket))
 
 UByte PancakeNetworkActivate();
+
+#define PANCAKE_NETWORK_CONNECTION_CACHE_KEEP 1
+#define PANCAKE_NETWORK_CONNECTION_CACHE_REMOVE 2
 
 #endif

@@ -323,6 +323,124 @@ static UByte PancakeNetworkInterfaceBacklogConfiguration(UByte step, config_sett
 	return 1;
 }
 
+PANCAKE_API void PancakeNetworkClientInterfaceConfiguration(PancakeNetworkClientInterface *client) {
+	// Initialize value
+	client->address = NULL;
+}
+
+static UByte PancakeNetworkClientInterfaceNetworkConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	PancakeNetworkClientInterface *client = (PancakeNetworkClientInterface*) setting->parent->hook;
+
+	if(step == PANCAKE_CONFIGURATION_INIT) {
+		if(!strcmp(setting->value.sval, "ip4")) {
+			client->address = PancakeAllocate(sizeof(struct sockaddr_in));
+			client->address->sa_family = AF_INET;
+		} else if(!strcmp(setting->value.sval, "ip6")) {
+			client->address = PancakeAllocate(sizeof(struct sockaddr_in6));
+			client->address->sa_family = AF_INET6;
+		} else if(!strcmp(setting->value.sval, "unix")) {
+			client->address = PancakeAllocate(sizeof(struct sockaddr_un));
+			client->address->sa_family = AF_UNIX;
+		} else {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Invalid network family %s", setting->value.sval);
+			return 0;
+		}
+	} else {
+		PancakeFree(client->address);
+	}
+
+	return 1;
+}
+
+static UByte PancakeNetworkClientInterfaceAddressConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	if(step == PANCAKE_CONFIGURATION_INIT) {
+		PancakeNetworkClientInterface *client = (PancakeNetworkClientInterface*) setting->parent->hook;
+
+		if(client->address == NULL) {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Network family must be set before address");
+			return 0;
+		}
+
+		switch(client->address->sa_family) {
+			case AF_INET: {
+				struct sockaddr_in *addr = (struct sockaddr_in*) client->address;
+				int retval = inet_pton(AF_INET, setting->value.sval, &addr->sin_addr);
+
+				switch(retval) {
+					case -1:
+						PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Network address can not be parsed: %s", strerror(errno));
+						return 0;
+					case 0:
+						PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Invalid IPv4 address: %s", setting->value.sval);
+						return 0;
+				}
+			} break;
+			case AF_INET6: {
+				struct sockaddr_in6 *addr = (struct sockaddr_in6*) client->address;
+				int retval = inet_pton(AF_INET6, setting->value.sval, &addr->sin6_addr);
+
+				switch(retval) {
+					case -1:
+						PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Network address can not be parsed: %s", strerror(errno));
+						return 0;
+					case 0:
+						PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Invalid IPv6 address: %s", setting->value.sval);
+						return 0;
+				}
+			} break;
+			case AF_UNIX: {
+				struct sockaddr_un *addr = (struct sockaddr_un*) client->address;
+
+				if(strlen(setting->value.sval) > sizeof(addr->sun_path) - 1) {
+					PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "UNIX path %s is longer than the allowed limit of %i characters", setting->value.sval, sizeof(addr->sun_path) - 1);
+					return 0;
+				}
+
+				memcpy(addr->sun_path, setting->value.sval, strlen(setting->value.sval) + 1);
+			} break;
+		}
+	}
+
+	return 1;
+}
+
+static UByte PancakeNetworkClientInterfacePortConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	if(step == PANCAKE_CONFIGURATION_INIT) {
+		PancakeNetworkClientInterface *client = (PancakeNetworkClientInterface*) setting->parent->hook;
+
+		// Check whether network family is set
+		if(client->address == NULL) {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Network family must be set before port");
+			return 0;
+		}
+
+		// TCP supports only ports from 1 - 65535
+		if(setting->value.ival < 1 || setting->value.ival > 65535) {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Value out of range");
+			return 0;
+		}
+
+		switch(client->address->sa_family) {
+			case AF_INET: {
+				struct sockaddr_in *addr = (struct sockaddr_in*) client->address;
+
+				addr->sin_port = htons(setting->value.ival);
+			} break;
+			case AF_INET6: {
+				struct sockaddr_in6 *addr = (struct sockaddr_in6*) client->address;
+
+				addr->sin6_port = htons(setting->value.ival);
+			} break;
+			case AF_UNIX: {
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't set port on UNIX sockets");
+				return 0;
+			} break;
+		}
+	}
+
+	return 1;
+}
+
 PANCAKE_API PancakeConfigurationSetting *PancakeNetworkRegisterListenInterfaceGroup(PancakeConfigurationGroup *parent, PancakeConfigurationHook hook) {
 	PancakeConfigurationSetting *setting;
 	PancakeConfigurationGroup *group;
@@ -335,6 +453,19 @@ PANCAKE_API PancakeConfigurationSetting *PancakeNetworkRegisterListenInterfaceGr
 	PancakeConfigurationAddSetting(group, (String) {"Backlog", sizeof("Backlog") - 1}, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeNetworkInterfaceBacklogConfiguration);
 
 	return setting;
+}
+
+PANCAKE_API PancakeConfigurationGroup *PancakeNetworkRegisterClientInterfaceGroup(PancakeConfigurationGroup *parent, PancakeConfigurationHook hook) {
+	PancakeConfigurationGroup *group;
+
+	PancakeAssert(hook != NULL);
+
+	group = PancakeConfigurationAddGroup(parent, (String) {"Interface", sizeof("Interface") - 1}, hook);
+	PancakeConfigurationAddSetting(group, (String) {"Network", sizeof("Network") - 1}, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) "", PancakeNetworkClientInterfaceNetworkConfiguration);
+	PancakeConfigurationAddSetting(group, (String) {"Address", sizeof("Address") - 1}, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) "", PancakeNetworkClientInterfaceAddressConfiguration);
+	PancakeConfigurationAddSetting(group, (String) {"Port", sizeof("Port") - 1}, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeNetworkClientInterfacePortConfiguration);
+
+	return group;
 }
 
 UByte PancakeConfigurationServerArchitecture(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
@@ -409,6 +540,94 @@ PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *
 	client->writeBuffer.value = NULL;
 
 	return client;
+}
+
+PANCAKE_API inline void PancakeNetworkCacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *socket) {
+	PancakeNetworkConnectionCache *connection = PancakeAllocate(sizeof(PancakeNetworkConnectionCache));
+
+	connection->socket = socket;
+	// Prepend to prevent iteration through long cache lists
+	LL_PREPEND((*cache), connection);
+}
+
+PANCAKE_API inline void PancakeNetworkUncacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *sock) {
+	PancakeNetworkConnectionCache *connection = NULL;
+
+	LL_SEARCH_SCALAR(*cache, connection, socket, sock);
+
+	if(connection) {
+		LL_DELETE(*cache, connection);
+		PancakeFree(connection);
+	}
+}
+
+PANCAKE_API inline PancakeSocket *PancakeNetworkConnect(struct sockaddr *addr, PancakeNetworkConnectionCache **cache, UByte cachePolicy) {
+	Int32 fd, flags, structSize;
+	PancakeSocket *remote;
+
+	if(cache && *cache) {
+		PancakeAssert(cachePolicy == PANCAKE_NETWORK_CONNECTION_CACHE_KEEP || cachePolicy == PANCAKE_NETWORK_CONNECTION_CACHE_REMOVE);
+
+		if(cachePolicy == PANCAKE_NETWORK_CONNECTION_CACHE_KEEP) {
+			return (*cache)->socket;
+		} else {
+			PancakeNetworkConnectionCache *current = *cache;
+			remote = (*cache)->socket;
+
+			LL_DELETE((*cache), (*cache));
+			PancakeFree(current);
+
+			return remote;
+		}
+	}
+
+	// Create socket
+	fd = socket(addr->sa_family, SOCK_STREAM, addr->sa_family == AF_UNIX ? 0 : IPPROTO_TCP);
+
+	if(UNEXPECTED(fd == -1)) {
+		return NULL;
+	}
+
+	// Get sizeof struct
+	switch(addr->sa_family) {
+		case AF_INET:
+			structSize = sizeof(struct sockaddr_in);
+			break;
+		case AF_INET6:
+			structSize = sizeof(struct sockaddr_in6);
+			break;
+		case AF_UNIX:
+			structSize = sizeof(struct sockaddr_un);
+			break;
+	}
+
+	// Set to non-blocking mode
+	flags = fcntl(fd, F_GETFL);
+	flags |= O_NONBLOCK;
+	fcntl(fd, F_SETFL, flags);
+
+	// Try to connect
+	if(connect(fd, addr, structSize) == -1) {
+		close(fd);
+		return NULL;
+	}
+
+	// Allocate and initialize PancakeSocket
+	remote = PancakeAllocate(sizeof(PancakeSocket));
+	remote->fd = fd;
+	remote->flags = 0;
+	remote->readBuffer.size = 0;
+	remote->readBuffer.length = 0;
+	remote->readBuffer.value = NULL;
+	remote->writeBuffer.size = 0;
+	remote->writeBuffer.length = 0;
+	remote->writeBuffer.value = NULL;
+
+	if(cache && cachePolicy == PANCAKE_NETWORK_CONNECTION_CACHE_KEEP) {
+		PancakeNetworkCacheConnection(cache, remote);
+	}
+
+	return remote;
 }
 
 PANCAKE_API inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength) {
