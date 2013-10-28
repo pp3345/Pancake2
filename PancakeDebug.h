@@ -23,6 +23,7 @@ PANCAKE_API Byte *_PancakeDuplicateStringLength(Byte *string, Int32 length, Byte
 PANCAKE_API void PancakeDumpHeap();
 PANCAKE_API void PancakeCheckHeap();
 PANCAKE_API void PancakePrintString(String *string);
+PANCAKE_API void PancakeBacktrace();
 
 #if defined(HAVE_UCONTEXT_H) && defined(HAVE_EXECINFO_H)
 #	define HAVE_PANCAKE_SIGSEGV

@@ -234,4 +234,23 @@ PANCAKE_API void PancakePrintString(String *string) {
 	printf("String(%lu) \"%.*s\"\n", string->length, (Int32) string->length, string->value);
 }
 
+PANCAKE_API void PancakeBacktrace() {
+	void *array[50];
+	Native size, i;
+	Byte **strings;
+
+	size = backtrace(array, 50);
+	strings = backtrace_symbols(array, size);
+
+	if(strings == NULL) {
+		exit(1);
+	}
+
+	for(i = 0; i < size; i++) {
+		printf("#%li %s\n", size - i, strings[i]);
+	}
+
+	free(strings);
+}
+
 #endif
