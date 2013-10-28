@@ -757,6 +757,7 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	request->headers = NULL;
 	request->requestAddress.value = NULL;
 	request->host.value = NULL;
+	request->host.length = 0;
 	request->path.value = NULL;
 	request->keepAlive = 0;
 	request->onRequestEnd = NULL;
@@ -779,6 +780,8 @@ static void PancakeHTTPInitializeConnection(PancakeSocket *sock) {
 	request = PancakeAllocate(sizeof(PancakeHTTPRequest));
 	PancakeHTTPInitializeRequestStructure(request);
 
+	request->socket = client;
+
 	client->onRead = PancakeHTTPReadHeaderData;
 	client->onRemoteHangup = PancakeHTTPOnRemoteHangup;
 	client->data = (void*) request;
@@ -791,6 +794,8 @@ static void PancakeHTTPInitializeKeepAliveConnection(PancakeSocket *sock) {
 
 	request = PancakeAllocate(sizeof(PancakeHTTPRequest));
 	PancakeHTTPInitializeRequestStructure(request);
+
+	request->socket = sock;
 
 	sock->onRead = PancakeHTTPReadHeaderData;
 	sock->data = (void*) request;
@@ -865,7 +870,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		// Copy request URI
 		request->requestAddress.length = ptr - offset;
 		request->requestAddress.value = PancakeAllocate(request->requestAddress.length);
-		memcpy(request->requestAddress.value, ptr, request->requestAddress.length);
+		memcpy(request->requestAddress.value, offset, request->requestAddress.length);
 
 		// Resolve request URI
 		if(*offset != '/') {
@@ -1193,6 +1198,14 @@ PANCAKE_API inline void PancakeHTTPFullWriteBuffer(PancakeSocket *sock) {
 	}
 }
 
+PANCAKE_API inline void PancakeHTTPOnWrite(PancakeSocket *sock) {
+	PancakeNetworkWrite(sock);
+
+	if(!sock->writeBuffer.length) {
+		PancakeNetworkSetSocket(sock);
+	}
+}
+
 PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
@@ -1273,7 +1286,26 @@ PANCAKE_API void PancakeHTTPOutput(PancakeSocket *sock, String *output) {
 	sock->writeBuffer.length += output->length;
 }
 
-PANCAKE_API void PancakeHTTPOutputChunk(PancakeSocket *sock, String *chunk) {
+PANCAKE_API void PancakeHTTPOutputChunk(PancakeSocket *sock, String *output) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+	UInt16 i;
+
+	// Run output filter if available
+	if(request->outputFilter) {
+		request->outputFilter(sock, output);
+		return;
+	} else for(i = 0; i < request->vHost->numOutputFilters; i++) {
+		if(request->vHost->outputFilters[i](sock, output)) {
+			request->outputFilter = request->vHost->outputFilters[i];
+			return;
+		}
+	}
+
+	// Send chunk if no output filter available
+	PancakeHTTPSendChunk(sock, output);
+}
+
+PANCAKE_API void PancakeHTTPSendChunk(PancakeSocket *sock, String *chunk) {
 	UByte *offset;
 
 	// Reallocate buffer if necessary
@@ -1301,7 +1333,7 @@ PANCAKE_API void PancakeHTTPOutputChunk(PancakeSocket *sock, String *chunk) {
 	sock->writeBuffer.length = offset + 2 - sock->writeBuffer.value;
 }
 
-PANCAKE_API inline void PancakeHTTPOutputLastChunk(PancakeSocket *sock) {
+PANCAKE_API inline void PancakeHTTPSendLastChunk(PancakeSocket *sock) {
 	UByte *offset;
 
 	if(sock->writeBuffer.size < sock->writeBuffer.length + sizeof("0\r\n\r\n") - 1) {
@@ -1468,8 +1500,9 @@ PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
 
 	if(request->chunkedTransfer == 1) {
 		request->chunkedTransfer = 0;
-		PancakeHTTPOutputLastChunk(sock);
+		PancakeHTTPSendLastChunk(sock);
 
+		PancakeNetworkSetWriteSocket(sock);
 		sock->onWrite = PancakeHTTPFullWriteBuffer;
 		PancakeHTTPFullWriteBuffer(sock);
 		return;

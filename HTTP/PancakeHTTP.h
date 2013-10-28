@@ -81,6 +81,7 @@ typedef struct _PancakeHTTPRequest {
 
 	PancakeHTTPEventHandler onRequestEnd;
 	PancakeHTTPEventHandler onOutputEnd;
+	PancakeSocket *socket;
 
 	UByte method;
 	UByte HTTPVersion;
@@ -104,6 +105,8 @@ typedef struct _PancakeHTTPHeader {
 #define PANCAKE_HTTP_11 2
 
 #define PANCAKE_HTTP_EXCEPTION 1 << 0
+#define PANCAKE_HTTP_HEADER_DATA_COMPLETE 1 << 1
+#define PANCAKE_HTTP_CLIENT_HANGUP 1 << 2
 
 #define PANCAKE_HTTP_EXCEPTION_PAGE_HEADER "<!doctype html><html><head><title>"
 #define PANCAKE_HTTP_EXCEPTION_PAGE_BODY_ERROR "</title><style>body{font-family:\"Arial\"}hr{border:1px solid #000}</style></head><body><h1>"
@@ -127,10 +130,12 @@ PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte igno
 PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code);
 PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock);
 PANCAKE_API inline void PancakeHTTPFullWriteBuffer(PancakeSocket *sock);
-PANCAKE_API void PancakeHTTPOutputChunk(PancakeSocket *sock, String *chunk);
-PANCAKE_API inline void PancakeHTTPOutputLastChunk(PancakeSocket *sock);
+PANCAKE_API void PancakeHTTPOutputChunk(PancakeSocket *sock, String *output);
+PANCAKE_API void PancakeHTTPSendChunk(PancakeSocket *sock, String *chunk);
+PANCAKE_API inline void PancakeHTTPSendLastChunk(PancakeSocket *sock);
 PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock);
 PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock);
+PANCAKE_API inline void PancakeHTTPOnWrite(PancakeSocket *sock);
 
 #endif
 #endif
