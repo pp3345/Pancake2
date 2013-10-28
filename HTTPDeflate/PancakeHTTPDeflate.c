@@ -129,7 +129,7 @@ static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 	}
 
 	// Make chunk out of compressed data
-	PancakeHTTPOutputChunk(sock, &output);
+	PancakeHTTPSendChunk(sock, &output);
 
 	return 1;
 }
