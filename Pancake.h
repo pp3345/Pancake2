@@ -58,8 +58,8 @@
 #	define UNEXPECTED(x) __builtin_expect((x), 0)
 #else
 #	define PANCAKE_API
-#	define EXPECTED(x)
-#	define UNEXPECTED(x)
+#	define EXPECTED(x) x
+#	define UNEXPECTED(x) x
 #endif
 
 /* Type definitions */
