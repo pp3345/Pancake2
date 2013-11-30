@@ -1206,7 +1206,7 @@ PANCAKE_API inline void PancakeHTTPOnWrite(PancakeSocket *sock) {
 	}
 }
 
-PANCAKE_API void PancakeHTTPRemoveQueryString(PancakeHTTPRequest *request) {
+PANCAKE_API inline void PancakeHTTPRemoveQueryString(PancakeHTTPRequest *request) {
 	UByte *offset = memchr(request->path.value, '?', request->path.length);
 
 	if(offset) {
