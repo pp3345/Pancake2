@@ -513,6 +513,11 @@ static void PancakeHTTPFastCGIOnClientHangup(PancakeSocket *sock) {
 static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 	if(FastCGIConfiguration.client) {
 		PancakeHTTPRequest *request = (PancakeHTTPRequest*) clientSocket->data;
+		String queryString;
+
+		PancakeHTTPExtractQueryString(request, &queryString);
+
+		{ // Ugly, but necessary
 		PancakeSocket *socket;
 		UInt16 requestID = 0, i;
 		UInt32 offset, length;
@@ -623,6 +628,10 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 		FastCGIEncodeParameter(socket, &((String) {"REQUEST_METHOD", sizeof("REQUEST_METHOD") - 1}), &((String) {"GET", 3}));
 		FastCGIEncodeParameter(socket, &((String) {"SERVER_PROTOCOL", sizeof("SERVER_PROTOCOL") - 1}), &((String) {"HTTP/1.1", sizeof("HTTP/1.1") - 1}));
 
+		if(queryString.length) {
+			FastCGIEncodeParameter(socket, &((String) {"QUERY_STRING", sizeof("QUERY_STRING") -1 }), &queryString);
+		}
+
 		// Write HTTP headers
 		FastCGIEncodeParameter(socket, &((String) {"HTTP_HOST", sizeof("HTTP_HOST") - 1}), &request->host);
 
@@ -682,7 +691,7 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 		PancakeHTTPFastCGIOnWrite(socket);
 
 		return 1;
-	}
+	}}
 
 	return 0;
 }

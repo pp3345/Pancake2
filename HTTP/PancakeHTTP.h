@@ -137,6 +137,7 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock);
 PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock);
 PANCAKE_API inline void PancakeHTTPOnWrite(PancakeSocket *sock);
 PANCAKE_API inline void PancakeHTTPRemoveQueryString(PancakeHTTPRequest *request);
+PANCAKE_API inline void PancakeHTTPExtractQueryString(PancakeHTTPRequest *request, String *queryString);
 
 #endif
 #endif
