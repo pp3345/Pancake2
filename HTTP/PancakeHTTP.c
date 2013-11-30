@@ -1206,6 +1206,14 @@ PANCAKE_API inline void PancakeHTTPOnWrite(PancakeSocket *sock) {
 	}
 }
 
+PANCAKE_API void PancakeHTTPRemoveQueryString(PancakeHTTPRequest *request) {
+	UByte *offset = memchr(request->path.value, '?', request->path.length);
+
+	if(offset) {
+		request->path.length = offset - request->path.value;
+	}
+}
+
 PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
@@ -1213,11 +1221,14 @@ PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock) {
 		UByte fullPath[PancakeHTTPConfiguration.documentRoot->length + request->path.length + 1];
 		UByte *offset, *dot;
 
+		// Find query string offset
+		offset = memchr(request->path.value, '?', request->path.length);
+
 		memcpy(fullPath, PancakeHTTPConfiguration.documentRoot->value, PancakeHTTPConfiguration.documentRoot->length);
-		memcpy(fullPath + PancakeHTTPConfiguration.documentRoot->length, request->path.value, request->path.length);
+		memcpy(fullPath + PancakeHTTPConfiguration.documentRoot->length, request->path.value, offset ? offset - request->path.value : request->path.length);
 
 		// null-terminate string
-		fullPath[PancakeHTTPConfiguration.documentRoot->length + request->path.length] = '\0';
+		fullPath[PancakeHTTPConfiguration.documentRoot->length + (offset ? offset - request->path.value : request->path.length)] = '\0';
 
 		// Try to stat file
 		if(stat(fullPath, &request->fileStat) == -1) {

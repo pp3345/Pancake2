@@ -90,6 +90,8 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 			}
 		}
 
+		PancakeHTTPRemoveQueryString(request);
+
 		memcpy(fullPath, PancakeHTTPConfiguration.documentRoot->value, PancakeHTTPConfiguration.documentRoot->length);
 		memcpy(fullPath + PancakeHTTPConfiguration.documentRoot->length, request->path.value, request->path.length);
 
