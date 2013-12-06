@@ -76,7 +76,7 @@ static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 		UByte *d;
 
 		// Check whether client accepts deflate encoding
-		if(request->HTTPVersion == PANCAKE_HTTP_11 // Chunked TE requires HTTP 1.1
+		if(request->HTTPVersion == PANCAKE_HTTP_11 // No support for deflate in HTTP 1.0 and doesn't make sense anyway (no chunked TE)
 		&& PancakeHTTPDeflateConfiguration.level // Is deflate enabled?
 		&& !request->contentEncoding // Is the content already encoded?
 		&& request->acceptEncoding.value
@@ -100,9 +100,6 @@ static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 			request->onOutputEnd = PancakeHTTPDeflateOnOutputEnd;
 			request->chunkedTransfer = 1;
 			request->contentEncoding = &PancakeHTTPDeflateContentEncoding;
-
-			// Build answer headers
-			PancakeHTTPBuildAnswerHeaders(sock);
 		} else {
 			// Client does not accept deflate coding
 			return 0;

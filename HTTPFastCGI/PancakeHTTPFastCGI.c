@@ -348,11 +348,6 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 						output.value = offset + 4;
 						output.length = sock->readBuffer.value + 8 + contentLength - offset - 4;
 
-						if(request->HTTPVersion != PANCAKE_HTTP_10) {
-							// PancakeHTTPBuildAnswerHeaders() mustn't be called before all output is done on HTTP 1.0
-							PancakeHTTPBuildAnswerHeaders(request->socket);
-						}
-
 						if(output.length) {
 							PancakeHTTPOutputChunk(request->socket, &output);
 

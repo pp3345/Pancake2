@@ -1336,6 +1336,8 @@ PANCAKE_API void PancakeHTTPSendChunk(PancakeSocket *sock, String *chunk) {
 
 	// Do not use HTTP chunking on HTTP 1.0 connections
 	if(request->HTTPVersion == PANCAKE_HTTP_10) {
+		PancakeAssert(request->headerSent == 0);
+
 		if(sock->writeBuffer.size < sock->writeBuffer.length + chunk->length) {
 			sock->writeBuffer.size = sock->writeBuffer.length + chunk->length;
 			sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
@@ -1344,6 +1346,11 @@ PANCAKE_API void PancakeHTTPSendChunk(PancakeSocket *sock, String *chunk) {
 		memcpy(sock->writeBuffer.value + sock->writeBuffer.length, chunk->value, chunk->length);
 		sock->writeBuffer.length += chunk->length;
 		return;
+	}
+
+	// Send headers if not done yet
+	if(!request->headerSent) {
+		PancakeHTTPBuildAnswerHeaders(sock);
 	}
 
 	// Reallocate buffer if necessary
