@@ -1332,6 +1332,19 @@ PANCAKE_API void PancakeHTTPOutputChunk(PancakeSocket *sock, String *output) {
 
 PANCAKE_API void PancakeHTTPSendChunk(PancakeSocket *sock, String *chunk) {
 	UByte *offset;
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	// Do not use HTTP chunking on HTTP 1.0 connections
+	if(request->HTTPVersion == PANCAKE_HTTP_10) {
+		if(sock->writeBuffer.size < sock->writeBuffer.length + chunk->length) {
+			sock->writeBuffer.size = sock->writeBuffer.length + chunk->length;
+			sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
+		}
+
+		memcpy(sock->writeBuffer.value + sock->writeBuffer.length, chunk->value, chunk->length);
+		sock->writeBuffer.length += chunk->length;
+		return;
+	}
 
 	// Reallocate buffer if necessary
 	if(sock->writeBuffer.size < sock->writeBuffer.length + chunk->length + sizeof("ffffffff\r\n\r\n") - 1) {
@@ -1378,7 +1391,7 @@ PANCAKE_API inline void PancakeHTTPSendLastChunk(PancakeSocket *sock) {
 
 PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
-	UByte *offset;
+	UByte *offset, alignOutput = 0;
 
 	PancakeAssert(request->headerSent == 0);
 
@@ -1387,6 +1400,16 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 
 	sock->writeBuffer.size += 8192;
 	sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
+
+	if(request->HTTPVersion == PANCAKE_HTTP_10 && request->chunkedTransfer == 1) {
+		// Chunks from content backend complete, make HTTP1.0-compatible transfer
+		request->chunkedTransfer = 0;
+
+		request->contentLength = sock->writeBuffer.length;
+		memmove(sock->writeBuffer.value + 8192, sock->writeBuffer.value, request->contentLength);
+
+		alignOutput = 1;
+	}
 
 	// HTTP/1.x
 	sock->writeBuffer.value[0] = 'H';
@@ -1513,6 +1536,11 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 	offset[1] = '\n';
 
 	sock->writeBuffer.length = offset - sock->writeBuffer.value + 2;
+
+	if(alignOutput) {
+		memmove(sock->writeBuffer.value + sock->writeBuffer.length, sock->writeBuffer.value + 8192, request->contentLength);
+		sock->writeBuffer.length += request->contentLength;
+	}
 }
 
 PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {

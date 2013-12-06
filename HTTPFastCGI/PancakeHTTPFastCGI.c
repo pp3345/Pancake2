@@ -331,7 +331,11 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 				output.length = contentLength;
 
 				PancakeHTTPOutputChunk(request->socket, &output);
-				PancakeNetworkSetWriteSocket(request->socket);
+
+				if(request->HTTPVersion != PANCAKE_HTTP_10) {
+					// No chunked transfers in HTTP 1.0
+					PancakeNetworkSetWriteSocket(request->socket);
+				}
 			} else {
 				UByte *offset = sock->readBuffer.value + 8;
 
@@ -344,13 +348,20 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 						output.value = offset + 4;
 						output.length = sock->readBuffer.value + 8 + contentLength - offset - 4;
 
-						PancakeHTTPBuildAnswerHeaders(request->socket);
+						if(request->HTTPVersion != PANCAKE_HTTP_10) {
+							// PancakeHTTPBuildAnswerHeaders() mustn't be called before all output is done on HTTP 1.0
+							PancakeHTTPBuildAnswerHeaders(request->socket);
+						}
 
 						if(output.length) {
 							PancakeHTTPOutputChunk(request->socket, &output);
 
-							request->socket->onWrite = PancakeHTTPOnWrite;
-							PancakeNetworkSetWriteSocket(request->socket);
+							if(request->HTTPVersion != PANCAKE_HTTP_10) {
+								// No chunked transfers in HTTP 1.0
+
+								request->socket->onWrite = PancakeHTTPOnWrite;
+								PancakeNetworkSetWriteSocket(request->socket);
+							}
 						}
 						break;
 					}
@@ -385,6 +396,11 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 
 			request->socket->onRemoteHangup = PancakeHTTPOnRemoteHangup;
 			request->socket->flags ^= PANCAKE_HTTP_HEADER_DATA_COMPLETE;
+
+			if(request->HTTPVersion == PANCAKE_HTTP_10) {
+				PancakeHTTPBuildAnswerHeaders(request->socket);
+			}
+
 			request->socket->onWrite = PancakeHTTPFullWriteBuffer;
 			PancakeNetworkSetWriteSocket(request->socket);
 		} break;
