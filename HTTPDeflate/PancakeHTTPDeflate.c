@@ -69,7 +69,7 @@ static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 	z_streamp stream;
 	String output;
-	UByte out[chunk->length];
+	UByte out[chunk->length + 16];
 
 	// Is there already an existing deflate stream for this request?
 	if(!request->outputFilterData) {
@@ -110,7 +110,8 @@ static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 	}
 
 	// Fill stream
-	stream->avail_in = stream->avail_out = chunk->length;
+	stream->avail_out = chunk->length + 16;
+	stream->avail_in = chunk->length;
 	stream->next_in = chunk->value;
 	stream->next_out = out;
 
@@ -118,7 +119,7 @@ static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 	deflate(stream, Z_SYNC_FLUSH);
 
 	output.value = out;
-	output.length = chunk->length - stream->avail_out;
+	output.length = chunk->length - stream->avail_out + 16;
 
 	// Show debug information
 	PancakeDebug {
