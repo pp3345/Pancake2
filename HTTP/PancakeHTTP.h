@@ -65,6 +65,7 @@ typedef struct _PancakeHTTPRequest {
 
 	PancakeHTTPVirtualHost *vHost;
 	PancakeHTTPHeader *headers;
+	PancakeHTTPHeader *answerHeaders;
 
 	PancakeConfigurationScopeGroup scopeGroup;
 

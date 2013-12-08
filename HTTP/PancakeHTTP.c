@@ -755,6 +755,7 @@ UByte PancakeHTTPInitialize() {
 static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *request) {
 	request->method = 0;
 	request->headers = NULL;
+	request->answerHeaders = NULL;
 	request->requestAddress.value = NULL;
 	request->host.value = NULL;
 	request->host.length = 0;
@@ -1403,13 +1404,14 @@ PANCAKE_API inline void PancakeHTTPSendLastChunk(PancakeSocket *sock) {
 PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 	UByte *offset, alignOutput = 0;
+	UInt16 headerSize = 4096;
 
 	PancakeAssert(request->headerSent == 0);
 
 	// Set headerSent flag
 	request->headerSent = 1;
 
-	sock->writeBuffer.size += 8192;
+	sock->writeBuffer.size += headerSize;
 	sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
 
 	if(request->HTTPVersion == PANCAKE_HTTP_10 && request->chunkedTransfer == 1) {
@@ -1417,7 +1419,7 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 		request->chunkedTransfer = 0;
 
 		request->contentLength = sock->writeBuffer.length;
-		memmove(sock->writeBuffer.value + 8192, sock->writeBuffer.value, request->contentLength);
+		memmove(sock->writeBuffer.value + headerSize, sock->writeBuffer.value, request->contentLength);
 
 		alignOutput = 1;
 	}
@@ -1542,6 +1544,42 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 		offset += 2;
 	}
 
+	// Process custom answer headers
+	if(request->answerHeaders) {
+		PancakeHTTPHeader *header = NULL, *tmp;
+
+		LL_FOREACH_SAFE(request->answerHeaders, header, tmp) {
+			if((offset - sock->writeBuffer.value + header->name.length + header->value.length + 2) > headerSize) {
+				sock->writeBuffer.size += 1024;
+				sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
+
+				if(alignOutput) {
+					memmove(sock->writeBuffer.value + headerSize + 1024, sock->writeBuffer.value + headerSize, request->contentLength);
+				}
+
+				headerSize += 1024;
+			}
+
+			memcpy(offset, header->name.value, header->name.length);
+			offset += header->name.length;
+			offset[0] = ':';
+			offset[1] = ' ';
+			offset += 2;
+			memcpy(offset, header->value.value, header->value.length);
+			offset += header->value.length;
+
+			// \r\n
+			offset[0] = '\r';
+			offset[1] = '\n';
+			offset += 2;
+
+			// Free header instance
+			PancakeFree(header->name.value);
+			PancakeFree(header->value.value);
+			PancakeFree(header);
+		}
+	}
+
 	// \r\n
 	offset[0] = '\r';
 	offset[1] = '\n';
@@ -1549,7 +1587,7 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 	sock->writeBuffer.length = offset - sock->writeBuffer.value + 2;
 
 	if(alignOutput) {
-		memmove(sock->writeBuffer.value + sock->writeBuffer.length, sock->writeBuffer.value + 8192, request->contentLength);
+		memmove(sock->writeBuffer.value + sock->writeBuffer.length, sock->writeBuffer.value + headerSize, request->contentLength);
 		sock->writeBuffer.length += request->contentLength;
 	}
 }

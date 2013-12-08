@@ -338,27 +338,87 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 				}
 			} else {
 				UByte *offset = sock->readBuffer.value + 8;
+				UByte *start = offset;
+				UInt16 bytesLeft = sock->readBuffer.length - 8;
 
 				request->answerCode = 200;
 
-				while(offset = memchr(offset + 1, '\r', contentLength)) {
-					if(offset[1] == '\n' && offset[2] == '\r' && offset[3] == '\n') {
-						String output;
+				// Fetch headers
+				while(bytesLeft > 1 && (offset = memchr(offset + 1, '\r', bytesLeft))) {
+					if(offset[1] == '\n') {
+						UByte *ptr = memchr(start, ':', offset - start);
 
-						output.value = offset + 4;
-						output.length = sock->readBuffer.value + 8 + contentLength - offset - 4;
+						if(ptr) {
+							UByte *ptr2 = ptr;
 
-						if(output.length) {
-							PancakeHTTPOutputChunk(request->socket, &output);
+							// Lookup header value
+							while(*(++ptr2) == ' ' && ptr2 != offset);
 
-							if(request->HTTPVersion != PANCAKE_HTTP_10) {
-								// No chunked transfers in HTTP 1.0
+							// Parse special headers separately
+							switch(ptr - start) {
+								case 6:
+									if((*start == 'S' || *start == 's')
+									&& memcmp(start + 1, "tatus", 5)) {
+										break;
+									}
 
-								request->socket->onWrite = PancakeHTTPOnWrite;
-								PancakeNetworkSetWriteSocket(request->socket);
+									goto StoreHeader;
+								case 16:
+									if((*start == 'C' || *start == 'c')
+									&& (start[8] == 'E' || start[8] == 'e')
+									&& memcmp(start + 1, "ontent-", 7)
+									&& memcmp(start + 8, "ncoding", 7)) {
+										request->contentEncoding = PancakeAllocate(sizeof(String));
+
+										request->onRequestEnd = PancakeHTTPFreeContentEncoding;
+
+										request->contentEncoding->length = offset - ptr2;
+										request->contentEncoding->value = PancakeAllocate(request->contentEncoding->length);
+										memcpy(request->contentEncoding->value, ptr2, request->contentEncoding->length);
+
+										break;
+									}
+
+									goto StoreHeader;
+								default:
+								StoreHeader: {
+									PancakeHTTPHeader *header = PancakeAllocate(sizeof(PancakeHTTPHeader));
+
+									header->name.length = ptr - start;
+									header->name.value = PancakeAllocate(header->name.length);
+									memcpy(header->name.value, start, header->name.length);
+
+									header->value.length = offset - ptr2;
+									header->value.value = PancakeAllocate(header->value.length);
+									memcpy(header->value.value, ptr2, header->value.length);
+
+									LL_APPEND(request->answerHeaders, header);
+								} break;
 							}
 						}
-						break;
+
+						if(offset[2] == '\r' && offset[3] == '\n') {
+							String output;
+
+							output.value = offset + 4;
+							output.length = sock->readBuffer.value + 8 + contentLength - offset - 4;
+
+							if(output.length) {
+								PancakeHTTPOutputChunk(request->socket, &output);
+
+								if(request->HTTPVersion != PANCAKE_HTTP_10) {
+									// No chunked transfers in HTTP 1.0
+
+									request->socket->onWrite = PancakeHTTPOnWrite;
+									PancakeNetworkSetWriteSocket(request->socket);
+								}
+							}
+
+							break;
+						}
+
+						bytesLeft = (sock->readBuffer.value + sock->readBuffer.length) - offset;
+						start = offset + 2;
 					}
 				}
 
