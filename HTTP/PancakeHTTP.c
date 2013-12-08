@@ -1178,6 +1178,10 @@ static inline void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request) {
 	PancakeConfigurationDestroyScopeGroup(&request->scopeGroup);
 }
 
+PANCAKE_API inline void PancakeHTTPFreeContentEncoding(PancakeHTTPRequest *request) {
+	PancakeFree(request->contentEncoding);
+}
+
 PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
