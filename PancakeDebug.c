@@ -234,6 +234,10 @@ PANCAKE_API void PancakePrintString(String *string) {
 	printf("String(%lu) \"%.*s\"\n", string->length, (Int32) string->length, string->value);
 }
 
+PANCAKE_API void PancakePrintNetworkBuffer(PancakeNetworkBuffer *buf) {
+	printf("NetworkBuffer(%u, %u) \"%.*s\"\n", buf->length, buf->size, buf->length, buf->value);
+}
+
 PANCAKE_API void PancakeBacktrace() {
 	void *array[50];
 	Native size, i;
