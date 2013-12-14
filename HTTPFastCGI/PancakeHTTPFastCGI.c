@@ -646,7 +646,7 @@ static void PancakeHTTPFastCGIOnClientHangup(PancakeSocket *sock) {
 	// Resize buffer if necessary
 	if(FCGISocket->writeBuffer.size < FCGISocket->writeBuffer.length + sizeof(FCGIAbortRequest)) {
 		FCGISocket->writeBuffer.size += sizeof(FCGIAbortRequest);
-		PancakeReallocate(FCGISocket->writeBuffer.value, FCGISocket->writeBuffer.size);
+		FCGISocket->writeBuffer.value = PancakeReallocate(FCGISocket->writeBuffer.value, FCGISocket->writeBuffer.size);
 	}
 
 	// Copy record to buffer
