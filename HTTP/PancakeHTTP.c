@@ -766,6 +766,7 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	request->outputFilterData = NULL;
 	request->onOutputEnd = NULL;
 	request->acceptEncoding.value = NULL;
+	request->clientContentLength = 0;
 
 	PancakeConfigurationInitializeScopeGroup(&request->scopeGroup);
 }
@@ -850,6 +851,24 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 
 		if(request->method == PANCAKE_HTTP_POST) {
 			// Lookup end of header data since the end of the buffer is not necessarily \r\n\r\n
+			offset = ptr = sock->readBuffer.value + 5;
+
+			while(ptr = memchr(ptr, '\r', sock->readBuffer.value + sock->readBuffer.length - ptr)) {
+				if(sock->readBuffer.value + sock->readBuffer.length - ptr < 3) {
+					return;
+				}
+
+				if(ptr[1] == '\n' && ptr[2] == '\r' && ptr[3] == '\n') {
+					headerEnd = ptr;
+					break;
+				}
+
+				ptr++;
+			}
+
+			if(ptr == NULL) {
+				return;
+			}
 		} else if(sock->readBuffer.value[sock->readBuffer.length - 1] == '\n'
 			&& sock->readBuffer.value[sock->readBuffer.length - 2] == '\r'
 			&& sock->readBuffer.value[sock->readBuffer.length - 3] == '\n'
@@ -867,6 +886,8 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 			PancakeHTTPOnRemoteHangup(sock);
 			return;
 		}
+
+		request->headerEnd = headerEnd - sock->readBuffer.value;
 
 		// Copy request URI
 		request->requestAddress.length = ptr - offset;
@@ -990,6 +1011,13 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 								&& !strncasecmp(ptr3, "keep-alive", sizeof("keep-alive") - 1)) {
 								request->keepAlive = 1;
 							}
+
+							break;
+						}
+						goto StoreHeader;
+					case 14:
+						if(!memcmp(offset, "content-length", 14)) {
+							request->clientContentLength = atoi(ptr3);
 
 							break;
 						}

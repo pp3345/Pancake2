@@ -71,8 +71,10 @@ typedef struct _PancakeHTTPRequest {
 
 	struct stat fileStat;
 
+	UInt32 clientContentLength;
 	UInt32 contentLength;
 	UInt16 answerCode;
+	UInt16 headerEnd;
 	PancakeMIMEType *answerType;
 	void *contentServeData;
 	void *outputFilterData;

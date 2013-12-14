@@ -9,6 +9,8 @@
 static UByte PancakeHTTPFastCGIInitialize();
 static UByte PancakeHTTPFastCGIServe();
 static void PancakeHTTPFastCGIOnRemoteHangup(PancakeSocket *sock);
+static void PancakeHTTPFastCGIOnRead(PancakeSocket *sock);
+static void PancakeHTTPFastCGIOnWrite(PancakeSocket *sock);
 
 PancakeModule PancakeHTTPFastCGIModule = {
 		"HTTPFastCGI",
@@ -131,6 +133,70 @@ static UByte PancakeHTTPFastCGIInitialize() {
 	PancakeConfigurationAddSettingToGroup(VirtualHosts->listGroup, FastCGIClient);
 
 	return 1;
+}
+
+static void PancakeHTTPFastCGIWriteContentBody(PancakeSocket *socket, PancakeSocket *clientSocket, UInt16 requestID) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) clientSocket->data;
+	UInt32 length = clientSocket->readBuffer.length - 4 - request->headerEnd;
+	UByte haveMoreData = 0;
+	UByte *offset;
+
+	// Max length of FCGI record content data is 65535 bytes
+	if(length > 65535) {
+		length = 65535;
+		haveMoreData = 1;
+	} else if(length == 0) {
+		return;
+	}
+
+	clientSocket->readBuffer.length -= length;
+
+	// Must be smaller than available content length
+	if(UNEXPECTED(length > request->clientContentLength)) {
+		return;
+	}
+
+	if(socket->writeBuffer.size < socket->writeBuffer.length + 8 + length) {
+		socket->writeBuffer.size = socket->writeBuffer.length + 16 + length;
+		socket->writeBuffer.value = PancakeReallocate(socket->writeBuffer.value, socket->writeBuffer.size);
+	}
+
+	offset = socket->writeBuffer.value + socket->writeBuffer.length;
+	request->clientContentLength -= 65535;
+
+	// Build FCGI header
+	offset[0] = '\x1';
+	offset[1] = '\x5';
+#if PANCAKE_FASTCGI_MAX_REQUEST_ID > 255
+	offset[2] = requestID >> 8;
+#else
+	offset[2] = 0;
+#endif
+	offset[3] = (UByte) requestID;
+	offset[4] = length >> 8;
+	offset[5] = (UByte) length;
+	offset[6] = '\0';
+	offset[7] = '\0';
+
+	// Copy STDIN data to FCGI socket
+	memcpy(offset + 8, clientSocket->readBuffer.value + request->headerEnd + 4, length);
+
+	// Set buffer length
+	socket->writeBuffer.length += 8 + length;
+
+	// Try to write
+	PancakeHTTPFastCGIOnWrite(socket);
+
+	// Set to write mode if necessary
+	if(socket->writeBuffer.length) {
+		PancakeNetworkAddWriteSocket(socket);
+	}
+
+	// Send more data if available
+	if(haveMoreData) {
+		memmove(clientSocket->readBuffer.value + request->headerEnd + 4, clientSocket->readBuffer.value + request->headerEnd + 65539, clientSocket->readBuffer.length - 4 - request->headerEnd);
+		PancakeHTTPFastCGIWriteContentBody(socket, clientSocket, requestID);
+	}
 }
 
 static inline void FastCGIEncodeParameter(PancakeSocket *sock, String *name, String *value) {
@@ -334,7 +400,8 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 
 				if(request->HTTPVersion != PANCAKE_HTTP_10) {
 					// No chunked transfers in HTTP 1.0
-					PancakeNetworkSetWriteSocket(request->socket);
+
+					PancakeNetworkAddWriteSocket(request->socket);
 				}
 			} else {
 				UByte *offset = sock->readBuffer.value + 8;
@@ -410,7 +477,7 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 									// No chunked transfers in HTTP 1.0
 
 									request->socket->onWrite = PancakeHTTPOnWrite;
-									PancakeNetworkSetWriteSocket(request->socket);
+									PancakeNetworkAddWriteSocket(request->socket);
 								}
 							}
 
@@ -518,6 +585,27 @@ static void PancakeHTTPFastCGIOnRemoteHangup(PancakeSocket *sock) {
 
 	PancakeNetworkUncacheConnection(&client->connectionCache, sock);
 	PancakeNetworkClose(sock);
+}
+
+static void PancakeHTTPFastCGIOnClientRead(PancakeSocket *sock) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+	PancakeFastCGIClient *client;
+	UInt16 requestID = (UInt16) (UNative) request->contentServeData;
+
+	// Read data
+	PancakeNetworkRead(sock, 65535);
+
+	// Activate request scope group so that we can fetch the FastCGIClient
+	PancakeConfigurationActivateScopeGroup(&request->scopeGroup);
+
+	client = FastCGIConfiguration.client;
+
+	PancakeHTTPFastCGIWriteContentBody(client->sockets[requestID], sock, requestID);
+
+	// Remove read flag if all data was received
+	if(!request->clientContentLength) {
+		PancakeNetworkRemoveReadSocket(sock);
+	}
 }
 
 static void PancakeHTTPFastCGIOnClientHangup(PancakeSocket *sock) {
@@ -696,8 +784,17 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 		FastCGIEncodeParameter(socket, &((String) {"REQUEST_URI", sizeof("REQUEST_URI") - 1}), &request->requestAddress);
 		FastCGIEncodeParameter(socket, &((String) {"SERVER_NAME", sizeof("SERVER_NAME") - 1}), &request->host);
 		FastCGIEncodeParameter(socket, &((String) {"GATEWAY_INTERFACE", sizeof("GATEWAY_INTERFACE") - 1}), &((String) {"CGI/1.1", sizeof("CGI/1.1") - 1}));
-		FastCGIEncodeParameter(socket, &((String) {"REQUEST_METHOD", sizeof("REQUEST_METHOD") - 1}), &((String) {"GET", 3}));
 		FastCGIEncodeParameter(socket, &((String) {"SERVER_PROTOCOL", sizeof("SERVER_PROTOCOL") - 1}), &((String) {"HTTP/1.1", sizeof("HTTP/1.1") - 1}));
+
+		switch(request->method) {
+			default:
+			case PANCAKE_HTTP_GET:
+				FastCGIEncodeParameter(socket, &((String) {"REQUEST_METHOD", sizeof("REQUEST_METHOD") - 1}), &((String) {"GET", 3}));
+				break;
+			case PANCAKE_HTTP_POST:
+				FastCGIEncodeParameter(socket, &((String) {"REQUEST_METHOD", sizeof("REQUEST_METHOD") - 1}), &((String) {"POST", 4}));
+				break;
+		}
 
 		if(queryString.length) {
 			FastCGIEncodeParameter(socket, &((String) {"QUERY_STRING", sizeof("QUERY_STRING") -1 }), &queryString);
@@ -706,12 +803,29 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 		// Write HTTP headers
 		FastCGIEncodeParameter(socket, &((String) {"HTTP_HOST", sizeof("HTTP_HOST") - 1}), &request->host);
 
+		if(request->clientContentLength) {
+			UByte s[sizeof("4294967296")]; // 32-bit max value
+			String contentLength;
+
+			contentLength.value = s;
+			itoa(request->clientContentLength, s, 10);
+			contentLength.length = strlen(s);
+
+			FastCGIEncodeParameter(socket, &((String) {"HTTP_CONTENT_LENGTH", sizeof("HTTP_CONTENT_LENGTH") - 1}), &contentLength);
+			FastCGIEncodeParameter(socket, &((String) {"CONTENT_LENGTH", sizeof("CONTENT_LENGTH") - 1}), &contentLength);
+		}
+
 		LL_FOREACH(request->headers, header) {
 			UByte parameter[sizeof("HTTP_") - 1 + header->name.length];
 			UByte *coffset;
 
 			memcpy(parameter, "HTTP_", sizeof("HTTP_") - 1);
 			memcpy(parameter + sizeof("HTTP_") - 1, header->name.value, header->name.length);
+
+			// Handle Content-Type header
+			if(header->name.length == sizeof("content-type") - 1 && !memcmp(header->name.value, "content-type", sizeof("content-type") -1)) {
+				FastCGIEncodeParameter(socket, &((String) {"CONTENT_TYPE", sizeof("CONTENT_TYPE") - 1}), &header->value);
+			}
 
 			// Make parameter name uppercase
 			for(coffset = parameter + sizeof("HTTP_") - 1; coffset < parameter + sizeof(parameter); coffset++) {
@@ -760,6 +874,17 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 
 		// Try to write now
 		PancakeHTTPFastCGIOnWrite(socket);
+
+		// Write STDIN
+		if(request->headerEnd < clientSocket->readBuffer.length - 4) {
+			PancakeHTTPFastCGIWriteContentBody(socket, clientSocket, requestID);
+		}
+
+		// Transmit client data
+		if(request->clientContentLength) {
+			clientSocket->onRead = PancakeHTTPFastCGIOnClientRead;
+			PancakeNetworkSetReadSocket(clientSocket);
+		}
 
 		return 1;
 	}}
