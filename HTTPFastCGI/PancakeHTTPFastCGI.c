@@ -519,7 +519,7 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 			request->socket->onRemoteHangup = PancakeHTTPOnRemoteHangup;
 			request->socket->flags ^= PANCAKE_HTTP_HEADER_DATA_COMPLETE;
 
-			if(request->HTTPVersion == PANCAKE_HTTP_10) {
+			if(!request->headerSent) {
 				PancakeHTTPBuildAnswerHeaders(request->socket);
 			}
 
