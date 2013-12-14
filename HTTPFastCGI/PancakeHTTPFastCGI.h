@@ -9,6 +9,7 @@
 #include "HTTP/PancakeHTTP.h"
 
 #define PANCAKE_FASTCGI_MAX_REQUEST_ID 1024
+#define PANCAKE_FASTCGI_SERVER_SOFTWARE "Pancake/" PANCAKE_VERSION
 
 typedef struct _PancakeFastCGIClient {
 	// MUST be the first element (struct will be casted to PancakeNetworkClientInterface)

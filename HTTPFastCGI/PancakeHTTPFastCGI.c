@@ -785,6 +785,7 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 		FastCGIEncodeParameter(socket, &((String) {"SERVER_NAME", sizeof("SERVER_NAME") - 1}), &request->host);
 		FastCGIEncodeParameter(socket, &((String) {"GATEWAY_INTERFACE", sizeof("GATEWAY_INTERFACE") - 1}), &((String) {"CGI/1.1", sizeof("CGI/1.1") - 1}));
 		FastCGIEncodeParameter(socket, &((String) {"SERVER_PROTOCOL", sizeof("SERVER_PROTOCOL") - 1}), &((String) {"HTTP/1.1", sizeof("HTTP/1.1") - 1}));
+		FastCGIEncodeParameter(socket, &((String) {"SERVER_SOFTWARE", sizeof("SERVER_SOFTWARE") - 1}), &((String) {PANCAKE_FASTCGI_SERVER_SOFTWARE, sizeof(PANCAKE_FASTCGI_SERVER_SOFTWARE) - 1}));
 
 		switch(request->method) {
 			default:
