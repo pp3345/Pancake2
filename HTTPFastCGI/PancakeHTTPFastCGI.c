@@ -787,6 +787,29 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 		FastCGIEncodeParameter(socket, &((String) {"SERVER_PROTOCOL", sizeof("SERVER_PROTOCOL") - 1}), &((String) {"HTTP/1.1", sizeof("HTTP/1.1") - 1}));
 		FastCGIEncodeParameter(socket, &((String) {"SERVER_SOFTWARE", sizeof("SERVER_SOFTWARE") - 1}), &((String) {PANCAKE_FASTCGI_SERVER_SOFTWARE, sizeof(PANCAKE_FASTCGI_SERVER_SOFTWARE) - 1}));
 
+		switch(clientSocket->remoteAddress.sa_family) {
+			case AF_INET: {
+				Byte IPv4[INET_ADDRSTRLEN + 1];
+				String IPv4String;
+
+				inet_ntop(AF_INET, &((struct sockaddr_in*) &clientSocket->remoteAddress)->sin_addr, IPv4, INET_ADDRSTRLEN);
+
+				IPv4String.value = IPv4;
+				IPv4String.length = strlen(IPv4);
+				FastCGIEncodeParameter(socket, &((String) {"REMOTE_ADDR", sizeof("REMOTE_ADDR") - 1}), &IPv4String);
+			} break;
+			case AF_INET6: {
+				Byte IPv6[INET6_ADDRSTRLEN + 1];
+				String IPv6String;
+
+				inet_ntop(AF_INET, &((struct sockaddr_in6*) &clientSocket->remoteAddress)->sin6_addr, IPv6, INET_ADDRSTRLEN);
+
+				IPv6String.value = IPv6;
+				IPv6String.length = strlen(IPv6);
+				FastCGIEncodeParameter(socket, &((String) {"REMOTE_ADDR", sizeof("REMOTE_ADDR") - 1}), &IPv6String);
+			} break;
+		}
+
 		switch(request->method) {
 			default:
 			case PANCAKE_HTTP_GET:
