@@ -12,6 +12,8 @@
 #define uthash_free(ptr, sz) free(ptr)
 
 static PancakeAllocatedMemory *allocated = NULL;
+static UNative totalAllocated = 0;
+static UNative peakAllocated = 0;
 
 #ifdef HAVE_PANCAKE_SIGSEGV
 void PancakeDebugHandleSegfault(Int32 signum, siginfo_t *info, void *context) {
@@ -92,6 +94,12 @@ PANCAKE_API void *_PancakeAllocate(Native size, Byte *file, Int32 line) {
 	mem->ptr = ptr;
 	mem->size = size;
 
+	totalAllocated += size;
+
+	if(totalAllocated > peakAllocated) {
+		peakAllocated = totalAllocated;
+	}
+
 	// Set overflow detection byte
 	((UByte*) ptr)[size] = 0xff;
 
@@ -125,8 +133,16 @@ PANCAKE_API void *_PancakeReallocate(void *ptr, Native size, Byte *file, Int32 l
 	// Set overflow detection byte
 	((UByte*) newPtr)[size] = 0xff;
 
+	totalAllocated -= mem->size;
+
 	mem->ptr = newPtr;
 	mem->size = size;
+
+	totalAllocated += mem->size;
+
+	if(totalAllocated > peakAllocated) {
+		peakAllocated = totalAllocated;
+	}
 
 	HASH_DEL(allocated, mem);
 	HASH_ADD(hh, allocated, ptr, sizeof(void*), mem);
@@ -144,6 +160,8 @@ PANCAKE_API void _PancakeFree(void *ptr, Byte *file, Int32 line) {
 
 	// Check for memory overflow
 	_PancakeAssert(((UByte*) ptr)[mem->size] == 0xff, "Overflow detected in memory allocated", mem->file, mem->line);
+
+	totalAllocated -= mem->size;
 
 	free(ptr);
 	HASH_DEL(allocated, mem);
@@ -172,6 +190,12 @@ PANCAKE_API Byte *_PancakeDuplicateString(Byte *string, Byte *file, Int32 line) 
 	mem->ptr = ptr;
 	mem->size = size + 1;
 
+	totalAllocated += mem->size;
+
+	if(totalAllocated > peakAllocated) {
+		peakAllocated = totalAllocated;
+	}
+
 	// Set overflow detection byte
 	ptr[size + 2] = 0xff;
 
@@ -199,6 +223,12 @@ PANCAKE_API Byte *_PancakeDuplicateStringLength(Byte *string, Int32 length, Byte
 	mem->ptr = ptr;
 	mem->size = length + 1;
 
+	totalAllocated += mem->size;
+
+	if(totalAllocated > peakAllocated) {
+		peakAllocated = totalAllocated;
+	}
+
 	// Set overflow detection byte
 	ptr[length + 2] = 0xff;
 
@@ -217,17 +247,21 @@ PANCAKE_API void PancakeCheckHeap() {
 
 PANCAKE_API void PancakeDumpHeap() {
 	PancakeAllocatedMemory *mem;
-	UNative total = 0;
 	pid_t pid = getpid();
 
 	for(mem = allocated; mem != NULL; mem = mem->hh.next) {
 		printf("[%i] [%#lx] %u bytes allocated in %s on line %i\n", pid, (UNative) mem->ptr, mem->size, mem->file, mem->line);
-		total += mem->size;
+	}
+}
+
+PANCAKE_API void PancakeDumpMemoryUsage() {
+	pid_t pid = getpid();
+
+	if(totalAllocated) {
+		printf("[%i] %lu bytes total allocated\n", pid, totalAllocated);
 	}
 
-	if(total) {
-		printf("[%i] %lu bytes total allocated\n", pid, total);
-	}
+	printf("[%i] %lu bytes allocated at peak\n", pid, peakAllocated);
 }
 
 PANCAKE_API void PancakePrintString(String *string) {

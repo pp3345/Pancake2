@@ -272,6 +272,7 @@ Int32 main(Int32 argc, Byte **argv) {
 
 	// Show memory leaks
 	PancakeDumpHeap();
+	PancakeDumpMemoryUsage();
 
 	return 0;
 }
