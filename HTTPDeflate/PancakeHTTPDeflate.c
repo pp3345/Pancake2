@@ -79,9 +79,9 @@ static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 		if(request->HTTPVersion == PANCAKE_HTTP_11 // No support for deflate in HTTP 1.0 and doesn't make sense anyway (no chunked TE)
 		&& PancakeHTTPDeflateConfiguration.level // Is deflate enabled?
 		&& !request->contentEncoding // Is the content already encoded?
-		&& request->acceptEncoding.value
-		&& (d = memchr(request->acceptEncoding.value, 'd', request->acceptEncoding.length))
-		&& request->acceptEncoding.value + request->acceptEncoding.length - d >= sizeof("eflate") - 1
+		&& request->acceptEncoding.length
+		&& (d = memchr(sock->readBuffer.value + request->acceptEncoding.offset, 'd', request->acceptEncoding.length))
+		&& sock->readBuffer.value + request->acceptEncoding.offset + request->acceptEncoding.length - d >= sizeof("eflate") - 1
 		&& !memcmp(d + 1, "eflate", sizeof("eflate") - 1)) {
 			request->outputFilterData = PancakeAllocate(sizeof(z_stream));
 			stream = (z_streamp) request->outputFilterData;

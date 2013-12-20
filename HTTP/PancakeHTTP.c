@@ -765,7 +765,7 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	request->ifModifiedSince = NULL;
 	request->outputFilterData = NULL;
 	request->onOutputEnd = NULL;
-	request->acceptEncoding.value = NULL;
+	request->acceptEncoding.length = 0;
 	request->clientContentLength = 0;
 
 	PancakeConfigurationInitializeScopeGroup(&request->scopeGroup);
@@ -1024,7 +1024,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 						goto StoreHeader;
 					case 15:
 						if(!memcmp(offset, "accept-encoding", 15)) {
-							request->acceptEncoding.value = ptr3;
+							request->acceptEncoding.offset = ptr3 - sock->readBuffer.value;
 							request->acceptEncoding.length = ptr - ptr3;
 							break;
 						}
