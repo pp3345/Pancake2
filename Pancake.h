@@ -97,6 +97,11 @@ typedef struct _String {
 	UNative length;
 } String;
 
+typedef struct _StringOffset {
+	UNative offset;
+	UNative length;
+} StringOffset;
+
 typedef UByte (*PancakeModuleInitializeFunction)();
 typedef void (*PancakeWorkerEntryFunction)();
 
