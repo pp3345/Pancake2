@@ -19,7 +19,7 @@ UByte PancakeNetworkActivate() {
 		PancakeSocket *sock = listenSockets[i];
 
 		// Start listening on socket
-		if(listen(sock->fd, (Int32) sock->backlog) == -1) {
+		if(listen(sock->fd, (Int32) (UNative) sock->data) == -1) {
 			Byte *name = PancakeNetworkGetInterfaceName(sock->localAddress);
 
 			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't listen on %s: %s", name, strerror(errno));
@@ -27,6 +27,8 @@ UByte PancakeNetworkActivate() {
 			PancakeFree(name);
 			return 0;
 		}
+
+		sock->data = NULL;
 	}
 
 	return 1;
@@ -90,13 +92,13 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 		case PANCAKE_CONFIGURATION_INIT: {
 			PancakeSocket *socket = PancakeAllocate(sizeof(PancakeSocket));
 
-			socket->data = NULL;
+			/* Used for backlog storage */
+			socket->data = (void*) 0x1;
 			socket->fd = -1;
 			socket->localAddress = PancakeAllocate(sizeof(struct sockaddr));
 			socket->onRead = NULL;
 			socket->onWrite = NULL;
 			socket->onRemoteHangup = NULL;
-			socket->backlog = 1;
 			socket->flags = 0;
 
 			socket->localAddress->sa_family = 0;
@@ -317,7 +319,7 @@ static UByte PancakeNetworkInterfaceBacklogConfiguration(UByte step, config_sett
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeSocket *sock = (PancakeSocket*) setting->parent->hook;
 
-		sock->backlog = setting->value.ival;
+		sock->data = (void*) (UNative) setting->value.ival;
 	}
 
 	return 1;

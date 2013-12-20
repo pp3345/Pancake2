@@ -22,8 +22,7 @@ typedef struct _PancakeNetworkBuffer {
 
 typedef struct _PancakeSocket {
 	Int32 fd;
-	UInt16 flags;
-	UInt16 backlog;
+	UInt32 flags;
 	PancakeNetworkEventHandler onRead;
 	PancakeNetworkEventHandler onWrite;
 	PancakeNetworkEventHandler onRemoteHangup;
