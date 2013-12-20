@@ -29,6 +29,7 @@ PANCAKE_API void PancakeCheckHeap();
 PANCAKE_API void PancakePrintString(String *string);
 PANCAKE_API void PancakePrintNetworkBuffer(PancakeNetworkBuffer *buf);
 PANCAKE_API void PancakeBacktrace();
+PANCAKE_API void PancakeFreeAllocatorMeta();
 
 #if defined(HAVE_UCONTEXT_H) && defined(HAVE_EXECINFO_H)
 #	define HAVE_PANCAKE_SIGSEGV
@@ -56,6 +57,8 @@ typedef struct _PancakeAllocatedMemory {
 #else
 #	define PancakeAssert
 #	define PancakeDumpHeap()
+#	define PancakeDumpMemoryUsage()
+#	define PancakeFreeAllocatorMeta()
 #	define PancakeAllocate malloc
 #	define PancakeDuplicateStringLength strndup
 #	define PancakeDuplicateString strdup

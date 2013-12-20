@@ -264,6 +264,15 @@ PANCAKE_API void PancakeDumpMemoryUsage() {
 	printf("[%i] %lu bytes allocated at peak\n", pid, peakAllocated);
 }
 
+PANCAKE_API void PancakeFreeAllocatorMeta() {
+	PancakeAllocatedMemory *mem, *tmp;
+
+	HASH_ITER(hh, allocated, mem, tmp) {
+		HASH_DEL(allocated, mem);
+		free(mem);
+	}
+}
+
 PANCAKE_API void PancakePrintString(String *string) {
 	printf("String(%lu) \"%.*s\"\n", string->length, (Int32) string->length, string->value);
 }
