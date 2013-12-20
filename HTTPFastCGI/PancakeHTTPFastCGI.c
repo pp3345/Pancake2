@@ -827,6 +827,7 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 		// Write HTTP headers
 		FastCGIEncodeParameter(socket, &((String) {"HTTP_HOST", sizeof("HTTP_HOST") - 1}), &request->host);
 
+		// Content-Length
 		if(request->clientContentLength) {
 			UByte s[sizeof("4294967296")]; // 32-bit max value
 			String contentLength;
@@ -839,6 +840,12 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 			FastCGIEncodeParameter(socket, &((String) {"CONTENT_LENGTH", sizeof("CONTENT_LENGTH") - 1}), &contentLength);
 		}
 
+		// If-Modified-Since
+		if(request->ifModifiedSince.value) {
+			FastCGIEncodeParameter(socket, &((String) {"HTTP_IF_MODIFIED_SINCE", sizeof("HTTP_IF_MODIFIED_SINCE") - 1}), &request->ifModifiedSince);
+		}
+
+		// Other headers
 		LL_FOREACH(request->headers, header) {
 			UByte parameter[sizeof("HTTP_") - 1 + header->name.length];
 			UByte *coffset;
