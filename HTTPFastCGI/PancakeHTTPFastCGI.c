@@ -845,6 +845,16 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 			FastCGIEncodeParameter(socket, &((String) {"HTTP_IF_MODIFIED_SINCE", sizeof("HTTP_IF_MODIFIED_SINCE") - 1}), &request->ifModifiedSince);
 		}
 
+		// Accept-Encoding
+		if(request->acceptEncoding.length) {
+			String acceptEncoding;
+
+			acceptEncoding.length = request->acceptEncoding.length;
+			acceptEncoding.value = clientSocket->readBuffer.value + request->acceptEncoding.offset;
+
+			FastCGIEncodeParameter(socket, &((String) {"HTTP_ACCEPT_ENCODING", sizeof("HTTP_ACCEPT_ENCODING") - 1}), &acceptEncoding);
+		}
+
 		// Other headers
 		LL_FOREACH(request->headers, header) {
 			UByte parameter[sizeof("HTTP_") - 1 + header->name.length];
