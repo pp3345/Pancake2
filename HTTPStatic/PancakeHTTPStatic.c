@@ -71,11 +71,11 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 		// File is OK, serve it
 		UByte fullPath[PancakeHTTPConfiguration.documentRoot->length + request->path.length + 1];
 
-		if(request->ifModifiedSince) {
+		if(request->ifModifiedSince.value && request->ifModifiedSince.length == 29) {
 			UByte buf[29];
 
 			PancakeRFC1123Date(request->fileStat.st_mtim.tv_sec, buf);
-			if(!memcmp(request->ifModifiedSince, buf, 29)) {
+			if(!memcmp(request->ifModifiedSince.value, buf, 29)) {
 				// File not modified
 				request->answerCode = 304;
 

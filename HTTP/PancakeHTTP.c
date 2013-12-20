@@ -762,7 +762,7 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	request->path.value = NULL;
 	request->keepAlive = 0;
 	request->onRequestEnd = NULL;
-	request->ifModifiedSince = NULL;
+	request->ifModifiedSince.value = NULL;
 	request->outputFilterData = NULL;
 	request->onOutputEnd = NULL;
 	request->acceptEncoding.length = 0;
@@ -1030,9 +1030,9 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 						}
 						goto StoreHeader;
 					case 17:
-						if((ptr - ptr3) == 29
-						&& !memcmp(offset, "if-modified-since", 17)) {
-							request->ifModifiedSince = ptr3;
+						if(!memcmp(offset, "if-modified-since", 17)) {
+							request->ifModifiedSince.value = ptr3;
+							request->ifModifiedSince.length = ptr - ptr3;
 							break;
 						}
 						goto StoreHeader;

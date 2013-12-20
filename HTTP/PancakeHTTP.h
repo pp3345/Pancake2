@@ -60,8 +60,8 @@ typedef struct _PancakeHTTPRequest {
 	String requestAddress;
 	String host;
 	String path;
+	String ifModifiedSince;
 	StringOffset acceptEncoding;
-	UByte *ifModifiedSince; /* always 29 bytes long */
 
 	PancakeHTTPVirtualHost *vHost;
 	PancakeHTTPHeader *headers;
