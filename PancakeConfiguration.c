@@ -5,6 +5,18 @@
 PancakeConfigurationStructure *PancakeConfiguration;
 static PancakeConfigurationScope *rootScope;
 
+static Byte *configurationTypeNames[] = {
+		"none",
+		"group",
+		"integer",
+		"64-bit integer",
+		"float",
+		"string",
+		"boolean (true/false)",
+		"array",
+		"list"
+};
+
 void PancakeConfigurationInitialize() {
 	PancakeConfiguration = PancakeAllocate(sizeof(PancakeConfigurationStructure));
 	PancakeConfiguration->wrapper = PancakeAllocate(sizeof(config_t));
@@ -63,7 +75,8 @@ static UByte PancakeConfigurationCheckValue(PancakeConfigurationScope *scope, Pa
 
 			// Check setting type
 			if(setting->type != configSetting->type && configSetting->type != CONFIG_TYPE_ANY) {
-				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Failed to parse configuration: Bad value for %s in %s on line %i", configSetting->name, configSetting->file, configSetting->line);
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Failed to parse configuration: Bad value for %s: expected %s, got %s in %s on line %i", configSetting->name, configurationTypeNames[setting->type], configurationTypeNames[configSetting->type], configSetting->file, configSetting->line);
+
 				return 0;
 			}
 
