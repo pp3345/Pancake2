@@ -22,6 +22,7 @@ typedef struct _PancakeFastCGIClient {
 	PancakeSocket *sockets[PANCAKE_FASTCGI_MAX_REQUEST_ID];
 
 	Byte multiplex;
+	Byte keepAlive;
 	UInt16 highestRequestID;
 
 	UT_hash_handle hh;

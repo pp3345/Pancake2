@@ -45,6 +45,8 @@ static UByte PancakeHTTPFastCGIConfiguration(UByte step, config_setting_t *setti
 		client->multiplex = -1;
 		client->connectionCache = NULL;
 		client->highestRequestID = 0;
+		client->keepAlive = 0;
+
 		memset(&client->requests, 0, PANCAKE_FASTCGI_MAX_REQUEST_ID);
 		memset(&client->sockets, 0, PANCAKE_FASTCGI_MAX_REQUEST_ID);
 
@@ -110,6 +112,18 @@ static UByte PancakeHTTPFastCGIClientInterfaceConfiguration(UByte step, config_s
 	return 1;
 }
 
+static UByte PancakeHTTPFastCGIKeepAliveConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	PancakeFastCGIClient *client = (PancakeFastCGIClient*) setting->parent->hook;
+
+	if(step == PANCAKE_CONFIGURATION_INIT) {
+		PancakeAssert(!setting->value.ival || setting->value.ival == 1);
+
+		client->keepAlive = setting->value.ival;
+	}
+
+	return 1;
+}
+
 static UByte PancakeHTTPFastCGIInitialize() {
 	PancakeConfigurationSetting *FastCGIClients, *FastCGIClient, *VirtualHosts;
 	PancakeConfigurationGroup *FastCGIGroup, *HTTP;
@@ -125,6 +139,7 @@ static UByte PancakeHTTPFastCGIInitialize() {
 	FastCGIClients = PancakeConfigurationAddSetting(NULL, (String) {"FastCGIClients", sizeof("FastCGIClients") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, NULL);
 	FastCGIGroup = PancakeConfigurationListGroup(FastCGIClients, PancakeHTTPFastCGIConfiguration);
 	PancakeConfigurationAddSetting(FastCGIGroup, (String) {"Name", sizeof("Name") - 1}, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeHTTPFastCGINameConfiguration);
+	PancakeConfigurationAddSetting(FastCGIGroup, (String) {"KeepAlive", sizeof("KeepAlive") - 1}, CONFIG_TYPE_BOOL, NULL, 0, (config_value_t) 0, PancakeHTTPFastCGIKeepAliveConfiguration);
 	PancakeNetworkRegisterClientInterfaceGroup(FastCGIGroup, PancakeHTTPFastCGIClientInterfaceConfiguration);
 
 	HTTP = PancakeConfigurationLookupGroup(NULL, (String) {"HTTP", 4});
@@ -360,7 +375,7 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 				if(name.length == sizeof("FCGI_MPXS_CONNS") - 1
 				&& !memcmp(name.value, "FCGI_MPXS_CONNS", sizeof("FCGI_MPXS_CONNS") - 1)) {
 					if(value.length >= 1) {
-						if(value.value[0] == '\1') {
+						if(value.value[0] == '1') {
 							client->multiplex = 1;
 						} else {
 							client->multiplex = 0;
@@ -369,7 +384,7 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 						PancakeDebug {
 							Byte *interface = PancakeNetworkGetInterfaceName(client->address);
 
-							PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "FastCGI server %s is %scapable of multiplexing", interface, client->multiplex ? "not " : "");
+							PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "FastCGI server %s is %scapable of multiplexing", interface, client->multiplex == 0 ? "not " : "");
 							PancakeFree(interface);
 						}
 					}
@@ -501,13 +516,17 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 			client->sockets[requestID] = NULL;
 
 			// Cache FCGI connection
-			if(UNEXPECTED(sock->flags & PANCAKE_FASTCGI_UNCACHED_CONNECTION)) {
-				if(client->multiplex != -1) {
-					sock->flags ^= PANCAKE_FASTCGI_UNCACHED_CONNECTION;
+			if(client->keepAlive) {
+				if(UNEXPECTED(sock->flags & PANCAKE_FASTCGI_UNCACHED_CONNECTION)) {
+					if(client->multiplex != -1) {
+						sock->flags ^= PANCAKE_FASTCGI_UNCACHED_CONNECTION;
+					}
+					PancakeNetworkCacheConnection(&client->connectionCache, sock);
+				} else if(!client->multiplex) {
+					PancakeNetworkCacheConnection(&client->connectionCache, sock);
 				}
-				PancakeNetworkCacheConnection(&client->connectionCache, sock);
-			} else if(!client->multiplex) {
-				PancakeNetworkCacheConnection(&client->connectionCache, sock);
+			} else {
+				PancakeNetworkClose(sock);
 			}
 
 			// Check whether client hung up
@@ -525,6 +544,10 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 
 			request->socket->onWrite = PancakeHTTPFullWriteBuffer;
 			PancakeNetworkSetWriteSocket(request->socket);
+
+			if(!client->keepAlive) {
+				return;
+			}
 		} break;
 		default: {
 			PancakeDebug {
@@ -571,13 +594,21 @@ static void PancakeHTTPFastCGIOnRemoteHangup(PancakeSocket *sock) {
 
 	PancakeAssert(client != NULL);
 
+	// Iterate through requests
 	for(i = 0; i <= client->highestRequestID; i++) {
 		if(client->sockets[i] == sock) {
+			// Check whether client has already hung up
 			if(client->requests[i]->socket->flags & PANCAKE_HTTP_CLIENT_HANGUP) {
 				PancakeHTTPOnRemoteHangup(client->requests[i]->socket);
-			} else {
+			} else if(!client->requests[i]->headerSent) {
+				// Send exception if no data was sent yet
+				client->requests[i]->chunkedTransfer = 0;
 				PancakeHTTPException(client->requests[i]->socket, 502);
+			} else {
+				// End request if data was already sent
+				PancakeHTTPOnRequestEnd(client->requests[i]->socket);
 			}
+
 			client->requests[i] = NULL;
 			client->sockets[i] = NULL;
 		}
@@ -680,32 +711,20 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 		PancakeSocket *socket;
 		UInt16 requestID = 0, i;
 		UInt32 offset, length;
-		UByte FCGIBeginRequest[16] = "\1\1\0\0\0\x8\0\0\0\1\1\0\0\0\0\0",
+		UByte FCGIBeginRequest[16] = "\1\1\0\0\0\x8\0\0\0\1\0\0\0\0\0\0",
 				FCGIParams[8] = "\1\x4\0\0\0\0\0\0",
 				fullPath[PancakeHTTPConfiguration.documentRoot->length + request->path.length];
 		PancakeHTTPHeader *header;
 
-		socket = PancakeNetworkConnect(FastCGIConfiguration.client->address, &FastCGIConfiguration.client->connectionCache, FastCGIConfiguration.client->multiplex ? PANCAKE_NETWORK_CONNECTION_CACHE_KEEP : PANCAKE_NETWORK_CONNECTION_CACHE_REMOVE);
-
-		if(socket == NULL) {
-			// Connection failed
-			PancakeHTTPException(clientSocket, 503);
-			return 0;
-		}
-
-		socket->onRead = PancakeHTTPFastCGIOnRead;
-		socket->onWrite = PancakeHTTPFastCGIOnWrite;
-		socket->onRemoteHangup = PancakeHTTPFastCGIOnRemoteHangup;
-		socket->data = (void*) FastCGIConfiguration.client;
-
-		if(UNEXPECTED(FastCGIConfiguration.client->multiplex == -1)) {
+		// Get server capabilities if unknown
+        if(UNEXPECTED(FastCGIConfiguration.client->keepAlive && FastCGIConfiguration.client->multiplex == -1)) {
 			// Server capabilities unknown, let's ask
 			PancakeSocket *vsocket = PancakeNetworkConnect(FastCGIConfiguration.client->address, NULL, 0);
 
 			if(vsocket == NULL) {
-				// Connection failed
-				PancakeHTTPException(clientSocket, 503);
-				return 0;
+					// Connection failed
+					PancakeHTTPException(clientSocket, 503);
+					return 0;
 			}
 
 			socket->flags |= PANCAKE_FASTCGI_UNCACHED_CONNECTION;
@@ -721,9 +740,13 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 			// FCGI_GET_VALUES
 			memcpy(vsocket->writeBuffer.value, "\x1\x9\0\0\0\x11\0\0" "\xf\0" "FCGI_MPXS_CONNS", sizeof("\x1\x9\0\0\0\x11\0\0" "\xf\0" "FCGI_MPXS_CONNS") - 1);
 
-			PancakeNetworkAddReadWriteSocket(vsocket);
 			PancakeHTTPFastCGIOnWrite(vsocket);
-		}
+
+			// Add write socket if necessary
+			if(socket->writeBuffer.length) {
+				PancakeNetworkAddWriteSocket(vsocket);
+			}
+        }
 
 		// Lookup first free request ID
 		for(i = 1; i < PANCAKE_FASTCGI_MAX_REQUEST_ID; i++) {
@@ -738,6 +761,24 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 			PancakeHTTPException(clientSocket, 503);
 			return 0;
 		}
+
+		socket = PancakeNetworkConnect(FastCGIConfiguration.client->address, &FastCGIConfiguration.client->connectionCache, FastCGIConfiguration.client->multiplex == 1 ? PANCAKE_NETWORK_CONNECTION_CACHE_KEEP : PANCAKE_NETWORK_CONNECTION_CACHE_REMOVE);
+
+		if(socket == NULL) {
+			// Connection failed
+			PancakeHTTPException(clientSocket, 503);
+			return 0;
+		}
+
+		// Mark connection as uncached if server capabilities are unknown right now
+		if(UNEXPECTED(FastCGIConfiguration.client->keepAlive && FastCGIConfiguration.client->multiplex == -1)) {
+			socket->flags |= PANCAKE_FASTCGI_UNCACHED_CONNECTION;
+		}
+
+		socket->onRead = PancakeHTTPFastCGIOnRead;
+		socket->onWrite = PancakeHTTPFastCGIOnWrite;
+		socket->onRemoteHangup = PancakeHTTPFastCGIOnRemoteHangup;
+		socket->data = (void*) FastCGIConfiguration.client;
 
 		// Set FCGI client hangup handler
 		clientSocket->onRemoteHangup = PancakeHTTPFastCGIOnClientHangup;
@@ -766,6 +807,11 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 		FCGIBeginRequest[2] = requestID >> 8;
 #endif
 		FCGIBeginRequest[3] = (UByte) requestID;
+
+		// Set keep-alive flag
+		if(FastCGIConfiguration.client->keepAlive) {
+			FCGIBeginRequest[10] = 1;
+		}
 
 		// Copy record to buffer
 		memcpy(socket->writeBuffer.value + socket->writeBuffer.length, FCGIBeginRequest, sizeof(FCGIBeginRequest));
@@ -910,11 +956,13 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 		memcpy(socket->writeBuffer.value + socket->writeBuffer.length, FCGIParams, 8);
 		socket->writeBuffer.length += 8;
 
-		// Add socket to server architecture
-		PancakeNetworkAddReadWriteSocket(socket);
-
 		// Try to write now
 		PancakeHTTPFastCGIOnWrite(socket);
+
+		// Add socket to server architecture if necessary
+		if(socket->writeBuffer.length) {
+			PancakeNetworkAddWriteSocket(socket);
+		}
 
 		// Write STDIN
 		if(request->headerEnd < clientSocket->readBuffer.length - 4) {
