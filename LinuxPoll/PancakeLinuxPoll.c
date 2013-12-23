@@ -285,15 +285,18 @@ static void PancakeLinuxPollWait() {
 
 			if((events[i].events & EPOLLHUP) || (events[i].events & EPOLLRDHUP)) {
 				sock->onRemoteHangup(sock);
+				PancakeCheckHeap();
 				continue;
 			}
 
 			if(events[i].events & EPOLLIN) {
 				sock->onRead(sock);
+				PancakeCheckHeap();
 			}
 
 			if(events[i].events & EPOLLOUT) {
 				sock->onWrite(sock);
+				PancakeCheckHeap();
 			}
 		}
 
