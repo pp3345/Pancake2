@@ -525,29 +525,24 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 				} else if(!client->multiplex) {
 					PancakeNetworkCacheConnection(&client->connectionCache, sock);
 				}
-			} else {
-				PancakeNetworkClose(sock);
 			}
 
 			// Check whether client hung up
 			if(request->socket->flags & PANCAKE_HTTP_CLIENT_HANGUP) {
 				PancakeHTTPOnRemoteHangup(request->socket);
+
 				break;
 			}
 
 			request->socket->onRemoteHangup = PancakeHTTPOnRemoteHangup;
-			request->socket->flags ^= PANCAKE_HTTP_HEADER_DATA_COMPLETE;
 
+			// Send headers if not done yet
 			if(!request->headerSent) {
 				PancakeHTTPBuildAnswerHeaders(request->socket);
 			}
 
 			request->socket->onWrite = PancakeHTTPFullWriteBuffer;
 			PancakeNetworkSetWriteSocket(request->socket);
-
-			if(!client->keepAlive) {
-				return;
-			}
 		} break;
 		default: {
 			PancakeDebug {
@@ -606,7 +601,12 @@ static void PancakeHTTPFastCGIOnRemoteHangup(PancakeSocket *sock) {
 				PancakeHTTPException(client->requests[i]->socket, 502);
 			} else {
 				// End request if data was already sent
-				PancakeHTTPOnRequestEnd(client->requests[i]->socket);
+				// Do not run onRequestEnd if data is still waiting for write (write function will end request)
+				if(!client->requests[i]->socket->writeBuffer.length) {
+					PancakeHTTPOnRequestEnd(client->requests[i]->socket);
+				} else {
+					client->requests[i]->socket->onWrite = PancakeHTTPFullWriteBuffer;
+				}
 			}
 
 			client->requests[i] = NULL;
@@ -726,8 +726,6 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 					PancakeHTTPException(clientSocket, 503);
 					return 0;
 			}
-
-			socket->flags |= PANCAKE_FASTCGI_UNCACHED_CONNECTION;
 
 			vsocket->onRead = PancakeHTTPFastCGIOnRead;
 			vsocket->onWrite = PancakeHTTPFastCGIOnWrite;
