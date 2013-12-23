@@ -199,6 +199,8 @@ static inline void PancakeLinuxPollSetReadSocket(PancakeSocket *socket) {
 			socket->flags ^= PANCAKE_LINUX_POLL_OUT;
 		}
 	} else {
+		socket->flags |= PANCAKE_LINUX_POLL_SOCKET;
+
 		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_ADD, socket->fd, &event);
 	}
 }
@@ -218,6 +220,8 @@ static inline void PancakeLinuxPollSetWriteSocket(PancakeSocket *socket) {
 			socket->flags ^= PANCAKE_LINUX_POLL_IN;
 		}
 	} else {
+		socket->flags |= PANCAKE_LINUX_POLL_SOCKET;
+
 		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_ADD, socket->fd, &event);
 	}
 }
@@ -239,6 +243,8 @@ static inline void PancakeLinuxPollSetSocket(PancakeSocket *socket) {
 			socket->flags ^= PANCAKE_LINUX_POLL_OUT;
 		}
 	} else {
+		socket->flags |= PANCAKE_LINUX_POLL_SOCKET;
+
 		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_ADD, socket->fd, &event);
 	}
 }
