@@ -1658,6 +1658,11 @@ PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
 			sock->flags ^= PANCAKE_HTTP_EXCEPTION;
 		}
 
+		// Reset HTTP header data complete flag
+		if(sock->flags & PANCAKE_HTTP_HEADER_DATA_COMPLETE) {
+			sock->flags ^= PANCAKE_HTTP_HEADER_DATA_COMPLETE;
+		}
+
 		sock->readBuffer.length = 0;
 
 		sock->onRead = PancakeHTTPInitializeKeepAliveConnection;
