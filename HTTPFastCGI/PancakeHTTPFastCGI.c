@@ -91,6 +91,7 @@ static UByte PancakeHTTPFastCGIClientConfiguration(UByte step, config_setting_t 
 			return 0;
 		}
 
+		free(setting->value.sval);
 		setting->value.sval = (char*) client;
 		setting->type = CONFIG_TYPE_SPECIAL;
 	} else {
