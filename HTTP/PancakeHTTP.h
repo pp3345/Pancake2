@@ -103,6 +103,7 @@ typedef struct _PancakeHTTPHeader {
 
 #define PANCAKE_HTTP_GET 1
 #define PANCAKE_HTTP_POST 2
+#define PANCAKE_HTTP_HEAD 3
 
 #define PANCAKE_HTTP_10 1
 #define PANCAKE_HTTP_11 2

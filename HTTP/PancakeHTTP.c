@@ -836,6 +836,16 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 				}
 
 				request->method = PANCAKE_HTTP_POST;
+			} else if(sock->readBuffer.value[0] == 'H') {
+				if(UNEXPECTED(sock->readBuffer.value[1] != 'E'
+				|| sock->readBuffer.value[2] != 'A'
+				|| sock->readBuffer.value[3] != 'D'
+				|| sock->readBuffer.value[4] != ' ')) {
+					PancakeHTTPOnRemoteHangup(sock);
+					return;
+				}
+
+				request->method = PANCAKE_HTTP_HEAD;
 			} else {
 				// Probably non-HTTP data, disconnect the client
 				PancakeHTTPOnRemoteHangup(sock);
@@ -873,7 +883,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 			&& sock->readBuffer.value[sock->readBuffer.length - 2] == '\r'
 			&& sock->readBuffer.value[sock->readBuffer.length - 3] == '\n'
 			&& sock->readBuffer.value[sock->readBuffer.length - 4] == '\r') {
-			offset = sock->readBuffer.value + 4; // 4 = "GET "
+			offset = sock->readBuffer.value + (request->method == PANCAKE_HTTP_HEAD ? 5 : 4); // 5 = "HEAD "; 4 = "GET "
 			headerEnd = sock->readBuffer.value + sock->readBuffer.length - 4;
 		} else {
 			return;
@@ -1628,7 +1638,7 @@ PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
 		request->onOutputEnd = NULL;
 	}
 
-	if(request->chunkedTransfer == 1) {
+	if(request->chunkedTransfer == 1 && request->method != PANCAKE_HTTP_HEAD) {
 		request->chunkedTransfer = 0;
 		PancakeHTTPSendLastChunk(sock);
 

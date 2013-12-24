@@ -407,17 +407,20 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 			PancakeConfigurationActivateScopeGroup(&request->scopeGroup);
 
 			if(request->socket->flags & PANCAKE_HTTP_HEADER_DATA_COMPLETE) {
-				String output;
+				// We assume that the application won't send any output anyway when HEAD is used
+				if(EXPECTED(request->method != PANCAKE_HTTP_HEAD)) {
+					String output;
 
-				output.value = sock->readBuffer.value + 8;
-				output.length = contentLength;
+					output.value = sock->readBuffer.value + 8;
+					output.length = contentLength;
 
-				PancakeHTTPOutputChunk(request->socket, &output);
+					PancakeHTTPOutputChunk(request->socket, &output);
 
-				if(request->HTTPVersion != PANCAKE_HTTP_10) {
-					// No chunked transfers in HTTP 1.0
+					if(request->HTTPVersion != PANCAKE_HTTP_10) {
+						// No chunked transfers in HTTP 1.0
 
-					PancakeNetworkAddWriteSocket(request->socket);
+						PancakeNetworkAddWriteSocket(request->socket);
+					}
 				}
 			} else {
 				UByte *offset = sock->readBuffer.value + 8;
@@ -481,19 +484,22 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 						}
 
 						if(offset[2] == '\r' && offset[3] == '\n') {
-							String output;
+							// Do not send output when HEAD method is used
+							if(EXPECTED(request->method != PANCAKE_HTTP_HEAD)) {
+								String output;
 
-							output.value = offset + 4;
-							output.length = sock->readBuffer.value + 8 + contentLength - offset - 4;
+								output.value = offset + 4;
+								output.length = sock->readBuffer.value + 8 + contentLength - offset - 4;
 
-							if(output.length) {
-								PancakeHTTPOutputChunk(request->socket, &output);
+								if(output.length) {
+									PancakeHTTPOutputChunk(request->socket, &output);
 
-								if(request->HTTPVersion != PANCAKE_HTTP_10) {
-									// No chunked transfers in HTTP 1.0
+									if(request->HTTPVersion != PANCAKE_HTTP_10) {
+										// No chunked transfers in HTTP 1.0
 
-									request->socket->onWrite = PancakeHTTPOnWrite;
-									PancakeNetworkAddWriteSocket(request->socket);
+										request->socket->onWrite = PancakeHTTPOnWrite;
+										PancakeNetworkAddWriteSocket(request->socket);
+									}
 								}
 							}
 
@@ -862,6 +868,9 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 				break;
 			case PANCAKE_HTTP_POST:
 				FastCGIEncodeParameter(socket, &((String) {"REQUEST_METHOD", sizeof("REQUEST_METHOD") - 1}), &((String) {"POST", 4}));
+				break;
+			case PANCAKE_HTTP_HEAD:
+				FastCGIEncodeParameter(socket, &((String) {"REQUEST_METHOD", sizeof("REQUEST_METHOD") - 1}), &((String) {"HEAD", 4}));
 				break;
 		}
 

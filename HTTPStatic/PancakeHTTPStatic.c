@@ -106,7 +106,7 @@ static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 		PancakeNetworkSetWriteSocket(sock);
 
 		// Optimize for empty files
-		if(UNEXPECTED(!request->contentLength)) {
+		if(!request->contentLength || request->method == PANCAKE_HTTP_HEAD) {
 			PancakeHTTPBuildAnswerHeaders(sock);
 			sock->onWrite = PancakeHTTPFullWriteBuffer;
 			PancakeHTTPFullWriteBuffer(sock);
