@@ -57,6 +57,7 @@ typedef struct _PancakeAllocatedMemory {
 #else
 #	define PancakeAssert
 #	define PancakeDumpHeap()
+#	define PancakeCheckHeap()
 #	define PancakeDumpMemoryUsage()
 #	define PancakeFreeAllocatorMeta()
 #	define PancakeAllocate malloc
