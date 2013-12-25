@@ -522,6 +522,7 @@ UInt16 PancakeHTTPNumVirtualHosts = 0;
 
 static PancakeHTTPContentServeBackend *contentBackends = NULL;
 static PancakeHTTPOutputFilter *outputFilters = NULL;
+static PancakeHTTPParserHook *parserHooks = NULL;
 
 /* Forward declarations */
 static void PancakeHTTPInitializeConnection(PancakeSocket *sock);
@@ -533,6 +534,10 @@ PANCAKE_API void PancakeHTTPRegisterContentServeBackend(PancakeHTTPContentServeB
 
 PANCAKE_API void PancakeHTTPRegisterOutputFilter(PancakeHTTPOutputFilter *filter) {
 	LL_APPEND(outputFilters, filter);
+}
+
+PANCAKE_API void PancakeHTTPRegisterParserHook(PancakeHTTPParserHook *hook) {
+	LL_APPEND(parserHooks, hook);
 }
 
 static UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
@@ -550,6 +555,9 @@ static UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *s
 
 			vhost->outputFilters = NULL;
 			vhost->numOutputFilters = 0;
+
+			vhost->parserHooks = NULL;
+			vhost->numParserHooks = 0;
 
 			PancakeHTTPNumVirtualHosts++;
 
@@ -729,6 +737,40 @@ static UByte PancakeHTTPOutputFilterConfiguration(UByte step, config_setting_t *
 	return 1;
 }
 
+static UByte PancakeHTTPParserHookConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	config_setting_t *element;
+	UInt16 i = 0;
+	PancakeHTTPVirtualHost *vHost = (PancakeHTTPVirtualHost*) setting->parent->hook;
+
+	if(step == PANCAKE_CONFIGURATION_INIT) {
+		while(element = config_setting_get_elem(setting, i++)) {
+			PancakeHTTPParserHook *hook = NULL, *tmp;
+
+			LL_FOREACH(parserHooks, tmp) {
+				if(!strcmp(tmp->name, element->value.sval)) {
+					hook = tmp;
+					break;
+				}
+			}
+
+			if(hook == NULL) {
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Unknown HTTP parser hook: %s", element->value.sval);
+				return 0;
+			}
+
+			vHost->numParserHooks++;
+			vHost->parserHooks = PancakeReallocate(vHost->parserHooks, vHost->numParserHooks * sizeof(PancakeHTTPParserHook*));
+			vHost->parserHooks[vHost->numParserHooks - 1] = hook->handler;
+		}
+	} else {
+		if(vHost->parserHooks) {
+			PancakeFree(vHost->parserHooks);
+		}
+	}
+
+	return 1;
+}
+
 UByte PancakeHTTPInitialize() {
 	PancakeConfigurationGroup *group, *child;
 	PancakeConfigurationSetting *setting, *serverHeader;
@@ -744,6 +786,8 @@ UByte PancakeHTTPInitialize() {
 	PancakeConfigurationAddSetting(group, (String) {"DocumentRoot", sizeof("DocumentRoot") - 1}, CONFIG_TYPE_STRING, &PancakeHTTPConfiguration.documentRoot, sizeof(String*), (config_value_t) "", PancakeHTTPDocumentRootConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"ContentServeBackends", sizeof("ContentServeBackends") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, PancakeHTTPContentServeBackendConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"OutputFilters", sizeof("OutputFilters") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, PancakeHTTPOutputFilterConfiguration);
+	PancakeConfigurationAddSetting(group, (String) {"ParserHooks", sizeof("ParserHooks") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, PancakeHTTPParserHookConfiguration);
+
 	PancakeConfigurationAddSettingToGroup(group, serverHeader);
 
 	child = PancakeConfigurationLookupGroup(NULL, (String) {"Logging", sizeof("Logging") - 1});
@@ -766,6 +810,7 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	request->outputFilterData = NULL;
 	request->onOutputEnd = NULL;
 	request->acceptEncoding.length = 0;
+	request->authorization.length = 0;
 	request->clientContentLength = 0;
 
 	PancakeConfigurationInitializeScopeGroup(&request->scopeGroup);
@@ -815,6 +860,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 	if(EXPECTED(sock->readBuffer.length >= 5)) {
 		PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 		UByte *offset, *headerEnd, *ptr, *ptr2, *ptr3;
+		UInt8 i;
 
 		if(!request->method) {
 			if(sock->readBuffer.value[0] == 'G') {
@@ -1025,6 +1071,11 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 							break;
 						}
 						goto StoreHeader;
+					case 13:
+						if(!memcmp(offset, "authorization", 13)) {
+							request->authorization.offset = ptr3 - sock->readBuffer.value;
+							request->authorization.length = ptr - ptr3;
+						}
 					case 14:
 						if(!memcmp(offset, "content-length", 14)) {
 							request->clientContentLength = atoi(ptr3);
@@ -1099,6 +1150,14 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 
 		// Disable reading on socket
 		PancakeNetworkSetSocket(sock);
+
+		// Call parser hooks
+		for(i = 0; i < request->vHost->numParserHooks; i++) {
+			if(!request->vHost->parserHooks[i](sock)) {
+				PancakeConfigurationUnscope();
+				return;
+			}
+		}
 
 		// Serve content
 		if(EXPECTED(PancakeHTTPServeContent(sock, 0))) {

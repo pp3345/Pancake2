@@ -13,10 +13,12 @@
 typedef struct _PancakeHTTPHeader PancakeHTTPHeader;
 typedef struct _PancakeHTTPContentServeBackend PancakeHTTPContentServeBackend;
 typedef struct _PancakeHTTPOutputFilter PancakeHTTPOutputFilter;
+typedef struct _PancakeHTTPParserHook PancakeHTTPParserHook;
 typedef struct _PancakeHTTPRequest PancakeHTTPRequest;
 
 typedef UByte (*PancakeHTTPContentServeHandler)(PancakeSocket *sock);
 typedef UByte (*PancakeHTTPOutputFilterFunction)(PancakeSocket *sock, String *output);
+typedef UByte (*PancakeHTTPParserHookFunction)(PancakeSocket *sock);
 typedef void (*PancakeHTTPEventHandler)(PancakeHTTPRequest *request);
 
 #define PANCAKE_HTTP_SERVER_HEADER "Server: Pancake/" PANCAKE_VERSION "\r\n"
@@ -36,13 +38,22 @@ typedef struct _PancakeHTTPOutputFilter {
 	PancakeHTTPOutputFilter *next;
 } PancakeHTTPOutputFilter;
 
+typedef struct _PancakeHTTPParserHook {
+	UByte *name;
+	PancakeHTTPParserHookFunction handler;
+
+	PancakeHTTPParserHook *next;
+} PancakeHTTPParserHook;
+
 typedef struct _PancakeHTTPVirtualHost {
 	PancakeConfigurationScope *configurationScope;
 	PancakeHTTPContentServeHandler *contentBackends;
 	PancakeHTTPOutputFilterFunction *outputFilters;
+	PancakeHTTPParserHookFunction *parserHooks;
 
-	UInt16 numContentBackends;
-	UInt16 numOutputFilters;
+	UInt8 numContentBackends;
+	UInt8 numOutputFilters;
+	UInt8 numParserHooks;
 } PancakeHTTPVirtualHost;
 
 typedef struct _PancakeHTTPVirtualHostIndex {
@@ -62,6 +73,7 @@ typedef struct _PancakeHTTPRequest {
 	String path;
 	String ifModifiedSince;
 	StringOffset acceptEncoding;
+	StringOffset authorization;
 
 	PancakeHTTPVirtualHost *vHost;
 	PancakeHTTPHeader *headers;
@@ -129,6 +141,7 @@ UByte PancakeHTTPInitialize();
 
 PANCAKE_API void PancakeHTTPRegisterContentServeBackend(PancakeHTTPContentServeBackend *backend);
 PANCAKE_API void PancakeHTTPRegisterOutputFilter(PancakeHTTPOutputFilter *filter);
+PANCAKE_API void PancakeHTTPRegisterParserHook(PancakeHTTPParserHook *hook);
 PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock);
 PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte ignoreException);
 PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code);
