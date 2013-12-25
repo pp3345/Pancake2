@@ -6,6 +6,7 @@ AM_INIT_AUTOMAKE([1.10 no-define foreign])
 AC_CONFIG_HEADERS([config.h])
 
 PANCAKE_HAVE_SERVER_ARCHITECTURE=0
+PANCAKE_REQUIRE_OPENSSL=0
 
 AC_ARG_ENABLE([debug], 
 				[AS_HELP_STRING([--enable-debug], [Create a debug build of Pancake])],
@@ -45,6 +46,11 @@ AC_CHECK_FUNC([sigaction], [AC_DEFINE([HAVE_SIGACTION], [], [Have sigaction()])]
 AC_CHECK_FUNC([vasprintf], [],  [AC_ERROR([vasprintf is not available on your system])])
 AC_CHECK_FUNC([accept4], [AC_DEFINE([HAVE_ACCEPT4], [], [Have accept4()])])
 AC_CHECK_FUNC([itoa], [AC_DEFINE([HAVE_ITOA], [], [Have itoa()])])
+
+if test "$PANCAKE_REQUIRE_OPENSSL" == "1"; then
+	AC_CHECK_LIB([ssl], [DSA_get_default_method], [], [AC_ERROR([OpenSSL not found])])
+	AC_DEFINE([HAVE_OPENSSL], [1], [OpenSSL library])
+fi
 
 if test -f "PancakeModules.c"; then
 	rm PancakeModules.c
