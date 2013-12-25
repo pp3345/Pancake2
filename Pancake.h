@@ -98,9 +98,14 @@ typedef struct _String {
 } String;
 
 typedef struct _StringOffset {
+	UInt32 offset;
+	UInt32 length;
+} StringOffset;
+
+typedef struct _NativeStringOffset {
 	UNative offset;
 	UNative length;
-} StringOffset;
+} NativeStringOffset;
 
 typedef UByte (*PancakeModuleInitializeFunction)();
 typedef void (*PancakeWorkerEntryFunction)();
