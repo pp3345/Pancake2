@@ -1076,6 +1076,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 							request->authorization.offset = ptr3 - sock->readBuffer.value;
 							request->authorization.length = ptr - ptr3;
 						}
+						goto StoreHeader;
 					case 14:
 						if(!memcmp(offset, "content-length", 14)) {
 							request->clientContentLength = atoi(ptr3);
