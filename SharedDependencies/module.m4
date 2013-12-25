@@ -1,0 +1,1 @@
+# Dummy module.m4 for SharedDependencies, not a real module

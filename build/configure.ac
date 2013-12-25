@@ -7,6 +7,7 @@ AC_CONFIG_HEADERS([config.h])
 
 PANCAKE_HAVE_SERVER_ARCHITECTURE=0
 PANCAKE_REQUIRE_OPENSSL=0
+PANCAKE_REQUIRE_BASE64_DECODER=0
 
 AC_ARG_ENABLE([debug], 
 				[AS_HELP_STRING([--enable-debug], [Create a debug build of Pancake])],
@@ -50,6 +51,10 @@ AC_CHECK_FUNC([itoa], [AC_DEFINE([HAVE_ITOA], [], [Have itoa()])])
 if test "$PANCAKE_REQUIRE_OPENSSL" == "1"; then
 	AC_CHECK_LIB([ssl], [DSA_get_default_method], [], [AC_ERROR([OpenSSL not found])])
 	AC_DEFINE([HAVE_OPENSSL], [1], [OpenSSL library])
+fi
+
+if test "$PANCAKE_REQUIRE_BASE64_DECODER" == "1"; then
+	AC_DEFINE([PANCAKE_BASE64_DECODER_DEPENDENCY], [1], [libb64 base64 decoder])
 fi
 
 if test -f "PancakeModules.c"; then
