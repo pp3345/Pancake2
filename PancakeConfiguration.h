@@ -109,5 +109,6 @@ PANCAKE_API inline void PancakeConfigurationDestroyScopeGroup(PancakeConfigurati
 
 /* Configuration Hooks */
 UByte PancakeConfigurationFile(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
+UByte PancakeConfigurationString(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
 
 #endif

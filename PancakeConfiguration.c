@@ -554,3 +554,38 @@ UByte PancakeConfigurationFile(UByte step, config_setting_t *setting, PancakeCon
 
 	return 1;
 }
+
+UByte PancakeConfigurationString(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	String *str;
+
+	if(step == PANCAKE_CONFIGURATION_INIT) {
+		UInt32 length = strlen(setting->value.sval);
+
+		// Optimize if string is empty
+		if(!length) {
+			free(setting->value.sval);
+			setting->value.sval = NULL;
+			setting->type = CONFIG_TYPE_NONE;
+
+			return 1;
+		}
+
+		str = PancakeAllocate(sizeof(String));
+		str->value = setting->value.sval;
+		str->length = length;
+
+		setting->type = CONFIG_TYPE_SPECIAL;
+		setting->value.sval = (Byte*) str;
+	} else {
+		if(setting->type == CONFIG_TYPE_SPECIAL) {
+			str = (String*) setting->value.sval;
+			free(str->value);
+			PancakeFree(str);
+
+			// Make library happy
+			setting->type = CONFIG_TYPE_NONE;
+		}
+	}
+
+	return 1;
+}
