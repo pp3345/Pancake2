@@ -559,6 +559,10 @@ static UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *s
 			vhost->parserHooks = NULL;
 			vhost->numParserHooks = 0;
 
+#ifdef PANCAKE_HTTP_REWRITE
+			vhost->rewriteConfiguration = NULL;
+#endif
+
 			PancakeHTTPNumVirtualHosts++;
 
 			setting->hook = (void*) vhost;

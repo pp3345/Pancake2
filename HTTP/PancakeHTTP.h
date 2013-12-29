@@ -51,6 +51,10 @@ typedef struct _PancakeHTTPVirtualHost {
 	PancakeHTTPOutputFilterFunction *outputFilters;
 	PancakeHTTPParserHookFunction *parserHooks;
 
+#ifdef PANCAKE_HTTP_REWRITE
+	void *rewriteConfiguration;
+#endif
+
 	UInt8 numContentBackends;
 	UInt8 numOutputFilters;
 	UInt8 numParserHooks;
