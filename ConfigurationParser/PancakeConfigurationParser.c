@@ -1513,7 +1513,7 @@ config_setting_t *config_setting_add(config_setting_t *parent,
       return(NULL);
   }
 
-  if(config_setting_get_member(parent, name) != NULL)
+  if(((name && *name != '$') || (!name)) && config_setting_get_member(parent, name) != NULL)
     return(NULL); /* already exists */
 
   return(config_setting_create(parent, name, type));
