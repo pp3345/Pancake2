@@ -6,7 +6,10 @@
 #include "PancakeLogger.h"
 
 static Byte PANCAKE_HTTP_REWRITE_VM_NOP(PancakeSocket *sock, void *op1, void *op2);
+
 static Byte PANCAKE_HTTP_REWRITE_VM_SET_BOOL(PancakeSocket *sock, void *op1, void *op2);
+
+static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2);
 
 #ifdef PANCAKE_DEBUG
 UByte *PancakeHTTPRewriteOpcodeNames[] = {
@@ -14,13 +17,21 @@ UByte *PancakeHTTPRewriteOpcodeNames[] = {
 	"SET_BOOL",
 	"SET_INT",
 	"SET_STRING",
-	"SET_VARIABLE"
+	"SET_VARIABLE",
+	"IS_EQUAL_BOOL",
+	"IS_EQUAL_INT",
+	"IS_EQUAL_STRING",
+	"IS_EQUAL_VARIABLE"
 };
 #endif
 
 PancakeHTTPRewriteOpcodeHandler PancakeHTTPRewriteOpcodeHandlers[] = {
-	PANCAKE_HTTP_REWRITE_VM_NOP, /* NOP */
-	PANCAKE_HTTP_REWRITE_VM_SET_BOOL
+	PANCAKE_HTTP_REWRITE_VM_NOP,
+	PANCAKE_HTTP_REWRITE_VM_SET_BOOL,
+	NULL,
+	NULL,
+	NULL,
+	PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_BOOL
 };
 
 #define NEXT_OPCODE 2
@@ -70,6 +81,26 @@ static Byte PANCAKE_HTTP_REWRITE_VM_SET_BOOL(PancakeSocket *sock, void *op1, voi
 		}
 	} else {
 		var->location.ptr->boolv = (UByte) (UNative) op2;
+	}
+
+	return NEXT_OPCODE;
+}
+
+static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2) {
+	PancakeHTTPRewriteVariable *var = (PancakeHTTPRewriteVariable*) op1;
+
+	if(var->locationType == PANCAKE_HTTP_REWRITE_LOCATION_CALLBACK) {
+		PancakeHTTPRewriteValue value;
+
+		if(UNEXPECTED(!var->location.callback.get(sock, var, &value))) {
+			return FATAL;
+		}
+
+		if(value.boolv != (UByte) (UNative) op2) {
+			return STOP_EXECUTION;
+		}
+	} else if(var->location.ptr->boolv != (UByte) (UNative) op2) {
+		return STOP_EXECUTION;
 	}
 
 	return NEXT_OPCODE;
