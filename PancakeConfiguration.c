@@ -176,9 +176,9 @@ UByte PancakeConfigurationLoad() {
 	config_init(PancakeConfiguration->wrapper);
 
 	if(!config_read_file(PancakeConfiguration->wrapper, PANCAKE_CONFIG_PATH)) {
-		Byte *file = config_error_file(PancakeConfiguration->wrapper);
+		const Byte *file = config_error_file(PancakeConfiguration->wrapper);
+		const Byte *text = config_error_text(PancakeConfiguration->wrapper);
 		Int32 line = config_error_line(PancakeConfiguration->wrapper);
-		Byte *text = config_error_text(PancakeConfiguration->wrapper);
 
 		if(file != NULL) {
 			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Failed to parse configuration: %s in %s on line %i", text, file, line);

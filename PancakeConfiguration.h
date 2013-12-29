@@ -3,7 +3,7 @@
 #define _PANCAKE_CONFIGURATION_H
 
 #include "Pancake.h"
-#include <libconfig.h>
+#include "ConfigurationParser/PancakeConfigurationParser.h"
 
 #ifndef PANCAKE_CONFIG_PATH
 #	define PANCAKE_CONFIG_PATH "config/pancake.cfg"

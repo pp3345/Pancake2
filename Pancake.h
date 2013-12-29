@@ -6,7 +6,6 @@
 #	include "config.h"
 #endif
 
-#define _GNU_SOURCE
 #define __USE_GNU
 
 /* System includes */

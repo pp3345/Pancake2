@@ -2,8 +2,12 @@ dnl Worst build system ever here
 
 AC_INIT([Pancake], [2.0], [support@pancakehttp.net], [pancake], [http://pancakehttp.net])
 AC_PREREQ([2.59])
+AC_CONFIG_AUX_DIR([aux-build])
+AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([1.10 no-define foreign])
 AC_CONFIG_HEADERS([config.h])
+
+AC_GNU_SOURCE
 
 PANCAKE_HAVE_SERVER_ARCHITECTURE=0
 PANCAKE_REQUIRE_OPENSSL=0
@@ -13,12 +17,32 @@ AC_ARG_ENABLE([debug],
 				[AS_HELP_STRING([--enable-debug], [Create a debug build of Pancake])],
 				[AC_DEFINE([PANCAKE_DEBUG], [1], [Pancake debug mode])])
 
+AC_MSG_CHECKING([whether to enable debug mode])
 if test "$enable_debug" != ""; then
 	CFLAGS="-O0 -Wdouble-promotion -Wformat -Wimplicit-int -Wunused -Wtype-limits -g"
 	LDFLAGS="-rdynamic"
+	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
 fi
 
 AC_PROG_CC
+AM_PROG_CC_C_O
+
+AM_PROG_LEX
+if test Z"$LEX" != Zflex; then
+AC_ERROR([Flex not found])
+fi
+
+AC_PROG_YACC
+if test Z"$YACC" != "Zbison -y"; then
+AC_ERROR([Bison not found])
+fi
+
+AC_HEADER_STDC
+AC_CHECK_HEADERS(unistd.h stdint.h xlocale.h)
+AC_C_CONST
+AC_CHECK_FUNCS([newlocale uselocale freelocale])
 
 AC_ARG_WITH([config-path],
 				[AS_HELP_STRING([--with-config-path=PATH], [Path to configuration file])],
@@ -35,7 +59,6 @@ if test "$PANCAKE_HAVE_SERVER_ARCHITECTURE" == "0"; then
 fi
 
 AC_CHECK_SIZEOF([long])
-AC_CHECK_LIB([config], [config_init], [], [AC_ERROR([libconfig not found])])
 AC_CHECK_HEADER([libconfig.h], [], [AC_ERROR([libconfig.h not found])])
 AC_CHECK_HEADER([uthash.h], [], [AC_ERROR([uthash.h not found])])
 AC_CHECK_HEADER([utlist.h], [], [AC_ERROR([utlist.h not found])])

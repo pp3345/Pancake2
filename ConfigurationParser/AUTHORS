@@ -1,0 +1,8 @@
+PancakeConfigurationParser - Fork of libconfig for Pancake2
+
+Original authors of libconfig:
+
+Mark Lindner - Lead developer & maintainer.
+Daniel Marjamäki - Enhancements & bugfixes.
+Andrew Tytula - Windows port.
+Glenn Herteg - Enhancements, bugfixes, documentation corrections.
