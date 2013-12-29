@@ -59,7 +59,6 @@ if test "$PANCAKE_HAVE_SERVER_ARCHITECTURE" == "0"; then
 fi
 
 AC_CHECK_SIZEOF([long])
-AC_CHECK_HEADER([libconfig.h], [], [AC_ERROR([libconfig.h not found])])
 AC_CHECK_HEADER([uthash.h], [], [AC_ERROR([uthash.h not found])])
 AC_CHECK_HEADER([utlist.h], [], [AC_ERROR([utlist.h not found])])
 AC_CHECK_HEADER([execinfo.h], [AC_DEFINE([HAVE_EXECINFO_H], [], [Have execinfo.h])])
