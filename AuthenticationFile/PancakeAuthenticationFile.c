@@ -105,6 +105,7 @@ static UByte PancakeAuthenticationFileFileConfiguration(UByte step, config_setti
 			}
 		}
 
+		fclose(stream);
 		PancakeFree(buf);
 	} else {
 		PancakeAuthenticationFileUser *user, *tmp;
