@@ -113,6 +113,16 @@ static UByte PancakeHTTPRewriteCompileVariableOperation(UByte step, config_setti
 						break;
 				}
 				break;
+			case CONFIG_OP_IF_NOT_EQUAL:
+				switch(var->type) {
+					case PANCAKE_HTTP_REWRITE_BOOL:
+						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_NOT_EQUAL_BOOL, var, (void*) (UNative) setting->value.ival);
+						break;
+				}
+				break;
+			default:
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Unknown operand");
+				return 0;
 		}
 	}
 
