@@ -80,9 +80,9 @@ static void PancakeHTTPRewriteMakeOpcode(PancakeHTTPRewriteRuleset *ruleset, UBy
 	ruleset->opcodes = PancakeReallocate(ruleset->opcodes, ruleset->numOpcodes * sizeof(void*));
 	ruleset->opcodes[ruleset->numOpcodes - 1] = op;
 
-	PancakeDebug {
-		PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Compiled opcode %s: op1=%p op2=%p", PancakeHTTPRewriteOpcodeNames[opcode], op1, op2);
-	}
+#ifdef PANCAKE_DEBUG
+	PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Compiled opcode %s: op1=%p op2=%p", PancakeHTTPRewriteOpcodeNames[opcode], op1, op2);
+#endif
 }
 
 static UByte PancakeHTTPRewriteCompileVariableOperation(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
