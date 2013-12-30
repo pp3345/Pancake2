@@ -75,7 +75,7 @@ Byte PancakeHTTPRewriteVMExecute(PancakeSocket *sock, PancakeHTTPRewriteRuleset 
 
 static Byte PANCAKE_HTTP_REWRITE_VM_NOP(PancakeSocket *sock, void *op1, void *op2) {
 	/* Do nothing */
-	return 1;
+	return NEXT_OPCODE;
 }
 
 static Byte PANCAKE_HTTP_REWRITE_VM_SET_BOOL(PancakeSocket *sock, void *op1, void *op2) {
