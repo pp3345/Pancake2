@@ -196,10 +196,16 @@ UByte PancakeHTTPRewriteInitialize() {
 UByte PancakeHTTPRewriteShutdown() {
 	// Free variables
 	PancakeHTTPRewriteVariable *var, *tmp;
+	PancakeHTTPRewriteCallback *cb, *tmp2;
 
 	HASH_ITER(hh, variables, var, tmp) {
 		HASH_DEL(variables, var);
 		PancakeFree(var);
+	}
+
+	HASH_ITER(hh, callbacks, cb, tmp2) {
+		HASH_DEL(callbacks, cb);
+		PancakeFree(cb);
 	}
 
 	return 1;
