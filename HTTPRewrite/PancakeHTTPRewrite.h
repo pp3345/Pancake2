@@ -19,6 +19,7 @@ typedef struct _PancakeHTTPRewriteVariable PancakeHTTPRewriteVariable;
 
 typedef UByte (*PancakeHTTPRewriteVariableGetter)(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value);
 typedef UByte (*PancakeHTTPRewriteVariableSetter)(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value);
+typedef Byte (*PancakeHTTPRewriteCallbackFunction)(PancakeSocket *sock);
 typedef Byte (*PancakeHTTPRewriteOpcodeHandler)(PancakeSocket *sock, void *op1, void *op2);
 
 #define PANCAKE_HTTP_REWRITE_STRING 1
@@ -67,12 +68,20 @@ typedef struct _PancakeHTTPRewriteVariable {
 	UT_hash_handle hh;
 } PancakeHTTPRewriteVariable;
 
+typedef struct _PancakeHTTPRewriteCallback {
+	String name;
+	PancakeHTTPRewriteCallbackFunction callback;
+
+	UT_hash_handle hh;
+} PancakeHTTPRewriteCallback;
+
 typedef struct _PancakeHTTPRewriteConfigurationStructure {
 	PancakeHTTPRewriteRuleset **rulesets;
 	UNative numRulesets;
 } PancakeHTTPRewriteConfigurationStructure;
 
 PANCAKE_API void PancakeHTTPRewriteRegisterVariable(String name, UByte type, UByte flags, void *ptr, PancakeHTTPRewriteVariableGetter get, PancakeHTTPRewriteVariableSetter set);
+PANCAKE_API void PancakeHTTPRewriteRegisterCallback(String name, PancakeHTTPRewriteCallbackFunction callback);
 
 #endif
 

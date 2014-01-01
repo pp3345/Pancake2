@@ -28,6 +28,7 @@ static PancakeHTTPParserHook PancakeHTTPRewriteParserHook = {
 };
 
 static PancakeHTTPRewriteVariable *variables = NULL;
+static PancakeHTTPRewriteCallback *callbacks = NULL;
 static PancakeConfigurationGroup *rewriteRulesetConfiguration = NULL;
 
 static UByte PancakeHTTPRewriteRulesetConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
@@ -85,16 +86,22 @@ static void PancakeHTTPRewriteMakeOpcode(PancakeHTTPRewriteRuleset *ruleset, UBy
 #endif
 }
 
-static UByte PancakeHTTPRewriteCompileVariableOperation(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeHTTPRewriteVariable *var;
+	PancakeHTTPRewriteCallback *callback;
 	PancakeHTTPRewriteRuleset *ruleset;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		UInt32 length = strlen(setting->name);
 
-		// Lookup variable
-		HASH_FIND(hh, variables, setting->name, length, var);
-		PancakeAssert(var != NULL);
+		// Lookup variable or function
+		if(setting->op == CONFIG_OP_CALL) {
+			HASH_FIND(hh, callbacks, setting->name, length, callback);
+			PancakeAssert(var != NULL);
+		} else {
+			HASH_FIND(hh, variables, setting->name, length, var);
+			PancakeAssert(var != NULL);
+		}
 
 		ruleset = (PancakeHTTPRewriteRuleset*) setting->parent->hook;
 
@@ -128,6 +135,9 @@ static UByte PancakeHTTPRewriteCompileVariableOperation(UByte step, config_setti
 						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_NOT_EQUAL_INT, var, (void*) (UNative) setting->value.ival);
 						break;
 				}
+				break;
+			case CONFIG_OP_CALL:
+				PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_CALL, callback, NULL);
 				break;
 			default:
 				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Unknown operand");
@@ -226,15 +236,28 @@ PANCAKE_API void PancakeHTTPRewriteRegisterVariable(String name, UByte type, UBy
 
 	switch(var->type) {
 		case PANCAKE_HTTP_REWRITE_STRING:
-			PancakeConfigurationAddSetting(rewriteRulesetConfiguration, var->name, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompileVariableOperation);
+			PancakeConfigurationAddSetting(rewriteRulesetConfiguration, var->name, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
 			break;
 		case PANCAKE_HTTP_REWRITE_INT:
-			PancakeConfigurationAddSetting(rewriteRulesetConfiguration, var->name, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompileVariableOperation);
+			PancakeConfigurationAddSetting(rewriteRulesetConfiguration, var->name, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
 			break;
 		case PANCAKE_HTTP_REWRITE_BOOL:
-			PancakeConfigurationAddSetting(rewriteRulesetConfiguration, var->name, CONFIG_TYPE_BOOL, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompileVariableOperation);
+			PancakeConfigurationAddSetting(rewriteRulesetConfiguration, var->name, CONFIG_TYPE_BOOL, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
 			break;
 	}
+}
+
+PANCAKE_API void PancakeHTTPRewriteRegisterCallback(String name, PancakeHTTPRewriteCallbackFunction callback) {
+	PancakeHTTPRewriteCallback *cb = PancakeAllocate(sizeof(PancakeHTTPRewriteCallback));
+
+	cb->callback = callback;
+	cb->name = name;
+
+	// Store callback in hashtable
+	HASH_ADD_KEYPTR(hh, callbacks, cb->name.value, cb->name.length, cb);
+
+	// Create configuration setting
+	PancakeConfigurationAddSetting(rewriteRulesetConfiguration, cb->name, CONFIG_TYPE_NONE, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
 }
 
 static UByte PancakeHTTPRewrite(PancakeSocket *sock) {

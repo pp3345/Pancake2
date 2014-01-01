@@ -26,6 +26,8 @@
 #define PANCAKE_HTTP_REWRITE_OP_IS_NOT_EQUAL_STRING 11
 #define PANCAKE_HTTP_REWRITE_OP_IS_NOT_EQUAL_VARIABLE 12
 
+#define PANCAKE_HTTP_REWRITE_OP_CALL 13
+
 extern PancakeHTTPRewriteOpcodeHandler PancakeHTTPRewriteOpcodeHandlers[];
 
 #ifdef PANCAKE_DEBUG

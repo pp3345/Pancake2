@@ -16,6 +16,8 @@ static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_INT(PancakeSocket *sock, void *op1,
 static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2);
 static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT(PancakeSocket *sock, void *op1, void *op2);
 
+static Byte PANCAKE_HTTP_REWRITE_VM_CALL(PancakeSocket *sock, void *op1, void *op2);
+
 #ifdef PANCAKE_DEBUG
 UByte *PancakeHTTPRewriteOpcodeNames[] = {
 	"NOP",
@@ -30,7 +32,8 @@ UByte *PancakeHTTPRewriteOpcodeNames[] = {
 	"IS_NOT_EQUAL_BOOL",
 	"IS_NOT_EQUAL_INT",
 	"IS_NOT_EQUAL_STRING",
-	"IS_NOT_EQUAL_VARIABLE"
+	"IS_NOT_EQUAL_VARIABLE",
+	"CALL"
 };
 #endif
 
@@ -45,7 +48,10 @@ PancakeHTTPRewriteOpcodeHandler PancakeHTTPRewriteOpcodeHandlers[] = {
 	NULL,
 	NULL,
 	PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_BOOL,
-	PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT
+	PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT,
+	NULL,
+	NULL,
+	PANCAKE_HTTP_REWRITE_VM_CALL
 };
 
 #define NEXT_OPCODE 2
@@ -196,6 +202,21 @@ static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT(PancakeSocket *sock, void *
 	}
 
 	return NEXT_OPCODE;
+}
+
+static Byte PANCAKE_HTTP_REWRITE_VM_CALL(PancakeSocket *sock, void *op1, void *op2) {
+	PancakeHTTPRewriteCallback *cb = (PancakeHTTPRewriteCallback*) op1;
+
+	switch(cb->callback(sock)) {
+		case 1:
+			return NEXT_OPCODE;
+		case 0:
+			return STOP_EXECUTION;
+		case -1:
+			return STOP_PARSER;
+		default:
+			return FATAL;
+	}
 }
 
 #endif
