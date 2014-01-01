@@ -1152,6 +1152,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		request->outputFilter = NULL;
 		request->contentEncoding = NULL;
 		request->headerSent = 0;
+		request->answerCode = 0;
 
 		// Disable reading on socket
 		PancakeNetworkSetSocket(sock);
