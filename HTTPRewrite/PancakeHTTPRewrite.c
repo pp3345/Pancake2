@@ -104,6 +104,9 @@ static UByte PancakeHTTPRewriteCompileVariableOperation(UByte step, config_setti
 					case PANCAKE_HTTP_REWRITE_BOOL:
 						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_SET_BOOL, var, (void*) (UNative) setting->value.ival);
 						break;
+					case PANCAKE_HTTP_REWRITE_INT:
+						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_SET_INT, var, (void*) (UNative) setting->value.ival);
+						break;
 				}
 				break;
 			case CONFIG_OP_IF_EQUAL:
@@ -111,12 +114,18 @@ static UByte PancakeHTTPRewriteCompileVariableOperation(UByte step, config_setti
 					case PANCAKE_HTTP_REWRITE_BOOL:
 						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_EQUAL_BOOL, var, (void*) (UNative) setting->value.ival);
 						break;
+					case PANCAKE_HTTP_REWRITE_INT:
+						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_EQUAL_INT, var, (void*) (UNative) setting->value.ival);
+						break;
 				}
 				break;
 			case CONFIG_OP_IF_NOT_EQUAL:
 				switch(var->type) {
 					case PANCAKE_HTTP_REWRITE_BOOL:
 						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_NOT_EQUAL_BOOL, var, (void*) (UNative) setting->value.ival);
+						break;
+					case PANCAKE_HTTP_REWRITE_INT:
+						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_NOT_EQUAL_INT, var, (void*) (UNative) setting->value.ival);
 						break;
 				}
 				break;
