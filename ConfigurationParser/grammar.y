@@ -126,7 +126,7 @@ setting_terminator:
   ;
 
 operator:
-    TOK_EQUALS {}
+    TOK_EQUALS { ctx->setting->op = CONFIG_OP_SET; }
   |	TOK_IF_EQUAL { ctx->setting->op = CONFIG_OP_IF_EQUAL; }
   | TOK_IF_NOT_EQUAL { ctx->setting->op = CONFIG_OP_IF_NOT_EQUAL; }
   | TOK_IF_STARTS_WITH { ctx->setting->op = CONFIG_OP_IF_STARTS_WITH; }
@@ -134,6 +134,11 @@ operator:
   | TOK_IF_ENDS_WITH { ctx->setting->op = CONFIG_OP_IF_ENDS_WITH; }
   | TOK_APPEND { ctx->setting->op = CONFIG_OP_APPEND; }
   | TOK_PREPEND { ctx->setting->op = CONFIG_OP_PREPEND; }
+  ;
+
+setting_operation:
+  operator value
+  | TOK_LIST_START TOK_LIST_END { ctx->setting->op = CONFIG_OP_CALL; }
   ;
 
 setting:
@@ -151,7 +156,8 @@ setting:
       CAPTURE_PARSE_POS(ctx->setting);
     }
   }
-  operator value setting_terminator
+  setting_operation
+  setting_terminator
   ;
 
 array:
