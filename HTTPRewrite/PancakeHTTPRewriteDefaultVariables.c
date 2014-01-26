@@ -45,6 +45,33 @@ static UByte PancakeHTTPRewriteGetHTTPClientContentLength(PancakeSocket *sock, P
 	return 1;
 }
 
+static UByte PancakeHTTPRewriteGetHTTPVersion(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	PancakeAssert(request->HTTPVersion == PANCAKE_HTTP_10 || request->HTTPVersion == PANCAKE_HTTP_11);
+
+	value->intv = request->HTTPVersion == PANCAKE_HTTP_10 ? 10 : 11;
+	return 1;
+}
+
+static UByte PancakeHTTPRewriteSetHTTPVersion(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	if(UNEXPECTED(value->intv < 10 || value->intv > 11)) {
+		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Bad value for $HTTPVersion: must be 10 or 11");
+		return 0;
+	}
+
+	if(UNEXPECTED(value->intv == 11 && request->HTTPVersion < PANCAKE_HTTP_11)) {
+		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Can't set $HTTPVersion to higher value than supported by client");
+		return 0;
+	}
+
+	request->HTTPVersion = value->intv == 10 ? PANCAKE_HTTP_10 : PANCAKE_HTTP_11;
+
+	return 1;
+}
+
 static Byte PancakeHTTPRewriteThrowException(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
@@ -58,6 +85,7 @@ void PancakeHTTPRewriteRegisterDefaultVariables() {
 	PancakeHTTPRewriteRegisterVariable(StaticString("$HTTPKeepAlive"), PANCAKE_HTTP_REWRITE_BOOL, 0, NULL, PancakeHTTPRewriteGetHTTPKeepAlive, PancakeHTTPRewriteSetHTTPKeepAlive);
 	PancakeHTTPRewriteRegisterVariable(StaticString("$HTTPAnswerCode"), PANCAKE_HTTP_REWRITE_INT, 0, NULL, PancakeHTTPRewriteGetHTTPAnswerCode, PancakeHTTPRewriteSetHTTPAnswerCode);
 	PancakeHTTPRewriteRegisterVariable(StaticString("$HTTPClientContentLength"), PANCAKE_HTTP_REWRITE_INT, PANCAKE_HTTP_REWRITE_READ_ONLY, NULL, PancakeHTTPRewriteGetHTTPClientContentLength, NULL);
+	PancakeHTTPRewriteRegisterVariable(StaticString("$HTTPVersion"), PANCAKE_HTTP_REWRITE_INT, 0, NULL, PancakeHTTPRewriteGetHTTPVersion, PancakeHTTPRewriteSetHTTPVersion);
 
 	PancakeHTTPRewriteRegisterCallback(StaticString("ThrowException"), PancakeHTTPRewriteThrowException);
 }
