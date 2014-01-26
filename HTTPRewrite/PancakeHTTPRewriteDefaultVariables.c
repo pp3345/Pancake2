@@ -38,6 +38,13 @@ static UByte PancakeHTTPRewriteSetHTTPAnswerCode(PancakeSocket *sock, PancakeHTT
 	return 1;
 }
 
+static UByte PancakeHTTPRewriteGetHTTPClientContentLength(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	value->intv = (Int32) request->clientContentLength;
+	return 1;
+}
+
 static Byte PancakeHTTPRewriteThrowException(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
@@ -50,6 +57,7 @@ static Byte PancakeHTTPRewriteThrowException(PancakeSocket *sock) {
 void PancakeHTTPRewriteRegisterDefaultVariables() {
 	PancakeHTTPRewriteRegisterVariable(StaticString("$HTTPKeepAlive"), PANCAKE_HTTP_REWRITE_BOOL, 0, NULL, PancakeHTTPRewriteGetHTTPKeepAlive, PancakeHTTPRewriteSetHTTPKeepAlive);
 	PancakeHTTPRewriteRegisterVariable(StaticString("$HTTPAnswerCode"), PANCAKE_HTTP_REWRITE_INT, 0, NULL, PancakeHTTPRewriteGetHTTPAnswerCode, PancakeHTTPRewriteSetHTTPAnswerCode);
+	PancakeHTTPRewriteRegisterVariable(StaticString("$HTTPClientContentLength"), PANCAKE_HTTP_REWRITE_INT, PANCAKE_HTTP_REWRITE_READ_ONLY, NULL, PancakeHTTPRewriteGetHTTPClientContentLength, NULL);
 
 	PancakeHTTPRewriteRegisterCallback(StaticString("ThrowException"), PancakeHTTPRewriteThrowException);
 }

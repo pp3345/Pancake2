@@ -105,8 +105,15 @@ static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, Pa
 
 		ruleset = (PancakeHTTPRewriteRuleset*) setting->parent->hook;
 
+		// Compile opcode
 		switch(setting->op) {
 			case CONFIG_OP_SET:
+				// SET is not allowed on RO vars
+				if(var->flags & PANCAKE_HTTP_REWRITE_READ_ONLY) {
+					PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "SET operation is disallowed on read-only variables");
+					return 0;
+				}
+
 				switch(var->type) {
 					case PANCAKE_HTTP_REWRITE_BOOL:
 						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_SET_BOOL, var, (void*) (UNative) setting->value.ival);
@@ -219,7 +226,7 @@ PANCAKE_API void PancakeHTTPRewriteRegisterVariable(String name, UByte type, UBy
 	var->type = type;
 	var->flags = flags;
 
-	PancakeAssert(ptr || (get && set));
+	PancakeAssert(ptr || (get && (flags & PANCAKE_HTTP_REWRITE_READ_ONLY)) || (get && set));
 
 	if(ptr) {
 		var->location.ptr = ptr;
