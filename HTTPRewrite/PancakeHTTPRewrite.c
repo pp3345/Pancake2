@@ -93,6 +93,7 @@ static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, Pa
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		UInt32 length = strlen(setting->name);
+		String *string;
 
 		// Lookup variable or function
 		if(setting->op == CONFIG_OP_CALL) {
@@ -101,6 +102,15 @@ static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, Pa
 		} else {
 			HASH_FIND(hh, variables, setting->name, length, var);
 			PancakeAssert(var != NULL);
+
+			// Make String from string config values
+			if(var->type == PANCAKE_HTTP_REWRITE_STRING) {
+				string = PancakeAllocate(sizeof(String));
+				string->value = setting->value.sval;
+				string->length = strlen(setting->value.sval);
+
+				setting->hook = string;
+			}
 		}
 
 		ruleset = (PancakeHTTPRewriteRuleset*) setting->parent->hook;
@@ -131,6 +141,9 @@ static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, Pa
 					case PANCAKE_HTTP_REWRITE_INT:
 						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_EQUAL_INT, var, (void*) (UNative) setting->value.ival);
 						break;
+					case PANCAKE_HTTP_REWRITE_STRING:
+						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_EQUAL_STRING, var, (void*) string);
+						break;
 				}
 				break;
 			case CONFIG_OP_IF_NOT_EQUAL:
@@ -149,6 +162,11 @@ static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, Pa
 			default:
 				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Unknown operand");
 				return 0;
+		}
+	} else {
+		// Deallocate string values
+		if(setting->hook) {
+			PancakeFree(setting->hook);
 		}
 	}
 

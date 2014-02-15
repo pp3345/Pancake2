@@ -12,6 +12,7 @@ static Byte PANCAKE_HTTP_REWRITE_VM_SET_INT(PancakeSocket *sock, void *op1, void
 
 static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2);
 static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_INT(PancakeSocket *sock, void *op1, void *op2);
+static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_STRING(PancakeSocket *sock, void *op1, void *op2);
 
 static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2);
 static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT(PancakeSocket *sock, void *op1, void *op2);
@@ -45,7 +46,7 @@ PancakeHTTPRewriteOpcodeHandler PancakeHTTPRewriteOpcodeHandlers[] = {
 	NULL,
 	PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_BOOL,
 	PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_INT,
-	NULL,
+	PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_STRING,
 	NULL,
 	PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_BOOL,
 	PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT,
@@ -158,6 +159,29 @@ static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_INT(PancakeSocket *sock, void *op1,
 			return STOP_EXECUTION;
 		}
 	} else if(var->location.ptr->intv != (Int32) (UNative) op2) {
+		return STOP_EXECUTION;
+	}
+
+	return NEXT_OPCODE;
+}
+
+static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_STRING(PancakeSocket *sock, void *op1, void *op2) {
+	PancakeHTTPRewriteVariable *var = (PancakeHTTPRewriteVariable*) op1;
+	String *string = (String*) op2;
+
+	if(var->locationType == PANCAKE_HTTP_REWRITE_LOCATION_CALLBACK) {
+		PancakeHTTPRewriteValue value;
+
+		if(UNEXPECTED(!var->location.callback.get(sock, var, &value))) {
+			return FATAL;
+		}
+
+		if(value.stringv.length != string->length
+		|| memcmp(value.stringv.value, string->value, string->length)) {
+			return STOP_EXECUTION;
+		}
+	} else if(var->location.ptr->stringv.length != string->length
+			|| memcmp(var->location.ptr->stringv.value, string->value, string->length)) {
 		return STOP_EXECUTION;
 	}
 
