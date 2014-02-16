@@ -154,6 +154,9 @@ static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, Pa
 					case PANCAKE_HTTP_REWRITE_INT:
 						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_NOT_EQUAL_INT, var, (void*) (UNative) setting->value.ival);
 						break;
+					case PANCAKE_HTTP_REWRITE_STRING:
+						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_NOT_EQUAL_STRING, var, (void*) string);
+						break;
 				}
 				break;
 			case CONFIG_OP_CALL:
