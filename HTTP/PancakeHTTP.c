@@ -12,6 +12,12 @@ PancakeModule PancakeHTTP = {
 		0
 };
 
+const String PancakeHTTPMethods[] = {
+		StaticString("GET"),
+		StaticString("POST"),
+		StaticString("HEAD")
+};
+
 String PancakeHTTPAnswerCodes[] = {
 		(String) {"Continue", sizeof("Continue") - 1}, /* 100 */
 		(String) {"Switching Protocols", sizeof("Switching Protocols") - 1}, /* 101 */

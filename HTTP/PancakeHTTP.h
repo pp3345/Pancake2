@@ -139,6 +139,7 @@ extern PancakeHTTPVirtualHostIndex *PancakeHTTPVirtualHosts;
 extern PancakeHTTPVirtualHost *PancakeHTTPDefaultVirtualHost;
 extern PancakeHTTPConfigurationStructure PancakeHTTPConfiguration;
 extern String PancakeHTTPAnswerCodes[];
+extern const String PancakeHTTPMethods[];
 extern UInt16 PancakeHTTPNumVirtualHosts;
 
 UByte PancakeHTTPInitialize();
