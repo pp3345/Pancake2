@@ -28,6 +28,8 @@
 
 #define PANCAKE_HTTP_REWRITE_OP_CALL 13
 
+#define PANCAKE_HTTP_REWRITE_OP_ACTIVATE_SCOPE 14
+
 extern PancakeHTTPRewriteOpcodeHandler PancakeHTTPRewriteOpcodeHandlers[];
 
 #ifdef PANCAKE_DEBUG

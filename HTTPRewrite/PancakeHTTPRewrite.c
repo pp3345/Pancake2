@@ -12,7 +12,7 @@ PancakeModule PancakeHTTPRewriteModule = {
 	"HTTPRewrite",
 
 	PancakeHTTPRewriteInitialize,
-	NULL,
+	PancakeHTTPRewriteCheckConfiguration,
 	PancakeHTTPRewriteShutdown,
 
 	0
@@ -29,13 +29,45 @@ static PancakeHTTPParserHook PancakeHTTPRewriteParserHook = {
 
 static PancakeHTTPRewriteVariable *variables = NULL;
 static PancakeHTTPRewriteCallback *callbacks = NULL;
-static PancakeConfigurationGroup *rewriteRulesetConfiguration = NULL;
+PancakeConfigurationGroup *PancakeHTTPRewriteGroup = NULL;
+
+// Rewrite compiler state values
+#define COMPILER_STATE_OUT_OF_SCOPE 0
+#define COMPILER_STATE_IN_SCOPE 1
+
+// Rewrite compiler global variables
+static UByte CompilerState = 0;
+static PancakeConfigurationScope *ConfigurationScope = NULL;
+static PancakeHTTPRewriteRuleset *LastRuleset = NULL;
+
+static void PancakeHTTPRewriteMakeOpcode(PancakeHTTPRewriteRuleset *ruleset, UByte opcode, void *op1, void *op2) {
+	PancakeHTTPRewriteOpcode *op = PancakeAllocate(sizeof(PancakeHTTPRewriteOpcode));
+
+	op->handler = PancakeHTTPRewriteOpcodeHandlers[opcode];
+	op->op1 = op1;
+	op->op2 = op2;
+
+	// Add opcode to ruleset
+	ruleset->numOpcodes++;
+	ruleset->opcodes = PancakeReallocate(ruleset->opcodes, ruleset->numOpcodes * sizeof(void*));
+	ruleset->opcodes[ruleset->numOpcodes - 1] = op;
+
+#ifdef PANCAKE_DEBUG
+	PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Compiled opcode %s: op1=%p op2=%p", PancakeHTTPRewriteOpcodeNames[opcode], op1, op2);
+#endif
+}
 
 static UByte PancakeHTTPRewriteRulesetConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeHTTPRewriteRuleset *ruleset;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeHTTPRewriteConfigurationStructure *config = (PancakeHTTPRewriteConfigurationStructure*) setting->parent->hook;
+
+		// Add an activation opcode to previous ruleset if it still has a pending configuration scope before compiling new rulesets
+		if(CompilerState == COMPILER_STATE_IN_SCOPE) {
+			PancakeHTTPRewriteMakeOpcode(LastRuleset, PANCAKE_HTTP_REWRITE_OP_ACTIVATE_SCOPE, (void*) ConfigurationScope, NULL);
+			CompilerState = COMPILER_STATE_OUT_OF_SCOPE;
+		}
 
 		ruleset = PancakeAllocate(sizeof(PancakeHTTPRewriteRuleset));
 		setting->hook = ruleset;
@@ -46,6 +78,9 @@ static UByte PancakeHTTPRewriteRulesetConfiguration(UByte step, config_setting_t
 		config->numRulesets++;
 		config->rulesets = PancakeReallocate(config->rulesets, config->numRulesets * sizeof(void*));
 		config->rulesets[config->numRulesets - 1] = ruleset;
+
+		// Store ruleset
+		LastRuleset = ruleset;
 
 		PancakeDebug {
 			PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Compiling rewrite ruleset from %s:%i...", setting->file, setting->line);
@@ -67,23 +102,6 @@ static UByte PancakeHTTPRewriteRulesetConfiguration(UByte step, config_setting_t
 	}
 
 	return 1;
-}
-
-static void PancakeHTTPRewriteMakeOpcode(PancakeHTTPRewriteRuleset *ruleset, UByte opcode, void *op1, void *op2) {
-	PancakeHTTPRewriteOpcode *op = PancakeAllocate(sizeof(PancakeHTTPRewriteOpcode));
-
-	op->handler = PancakeHTTPRewriteOpcodeHandlers[opcode];
-	op->op1 = op1;
-	op->op2 = op2;
-
-	// Add opcode to ruleset
-	ruleset->numOpcodes++;
-	ruleset->opcodes = PancakeReallocate(ruleset->opcodes, ruleset->numOpcodes * sizeof(void*));
-	ruleset->opcodes[ruleset->numOpcodes - 1] = op;
-
-#ifdef PANCAKE_DEBUG
-	PancakeLoggerFormat(PANCAKE_LOGGER_SYSTEM, 0, "Compiled opcode %s: op1=%p op2=%p", PancakeHTTPRewriteOpcodeNames[opcode], op1, op2);
-#endif
 }
 
 static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
@@ -137,6 +155,12 @@ static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, Pa
 				}
 				break;
 			case CONFIG_OP_IF_EQUAL:
+				// Activate configuration scope first before executing new conditions
+				if(CompilerState == COMPILER_STATE_IN_SCOPE) {
+					PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_ACTIVATE_SCOPE, (void*) *scope, NULL);
+					CompilerState = COMPILER_STATE_OUT_OF_SCOPE;
+				}
+
 				switch(var->type) {
 					case PANCAKE_HTTP_REWRITE_BOOL:
 						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_EQUAL_BOOL, var, (void*) (UNative) setting->value.ival);
@@ -148,8 +172,15 @@ static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, Pa
 						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_EQUAL_STRING, var, (void*) string);
 						break;
 				}
+
 				break;
 			case CONFIG_OP_IF_NOT_EQUAL:
+				// Activate configuration scope first before executing new conditions
+				if(CompilerState == COMPILER_STATE_IN_SCOPE) {
+					PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_ACTIVATE_SCOPE, (void*) *scope, NULL);
+					CompilerState = COMPILER_STATE_OUT_OF_SCOPE;
+				}
+
 				switch(var->type) {
 					case PANCAKE_HTTP_REWRITE_BOOL:
 						PancakeHTTPRewriteMakeOpcode(ruleset, PANCAKE_HTTP_REWRITE_OP_IS_NOT_EQUAL_BOOL, var, (void*) (UNative) setting->value.ival);
@@ -216,10 +247,19 @@ UByte PancakeHTTPRewriteInitialize() {
 	group = setting->listGroup;
 
 	setting = PancakeConfigurationAddSetting(group, StaticString("Rewrite"), CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteConfiguration);
-	rewriteRulesetConfiguration = PancakeConfigurationListGroup(setting, PancakeHTTPRewriteRulesetConfiguration);
+	PancakeHTTPRewriteGroup = PancakeConfigurationListGroup(setting, PancakeHTTPRewriteRulesetConfiguration);
 
 	PancakeHTTPRewriteRegisterDefaultVariables();
 	PancakeHTTPRegisterParserHook(&PancakeHTTPRewriteParserHook);
+
+	return 1;
+}
+
+UByte PancakeHTTPRewriteCheckConfiguration() {
+	if(CompilerState == COMPILER_STATE_IN_SCOPE) {
+		PancakeHTTPRewriteMakeOpcode(LastRuleset, PANCAKE_HTTP_REWRITE_OP_ACTIVATE_SCOPE, (void*) ConfigurationScope, NULL);
+		CompilerState = COMPILER_STATE_OUT_OF_SCOPE;
+	}
 
 	return 1;
 }
@@ -273,13 +313,13 @@ PANCAKE_API void PancakeHTTPRewriteRegisterVariable(String name, UByte type, UBy
 
 	switch(var->type) {
 		case PANCAKE_HTTP_REWRITE_STRING:
-			PancakeConfigurationAddSetting(rewriteRulesetConfiguration, var->name, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
+			PancakeConfigurationAddSetting(PancakeHTTPRewriteGroup, var->name, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
 			break;
 		case PANCAKE_HTTP_REWRITE_INT:
-			PancakeConfigurationAddSetting(rewriteRulesetConfiguration, var->name, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
+			PancakeConfigurationAddSetting(PancakeHTTPRewriteGroup, var->name, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
 			break;
 		case PANCAKE_HTTP_REWRITE_BOOL:
-			PancakeConfigurationAddSetting(rewriteRulesetConfiguration, var->name, CONFIG_TYPE_BOOL, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
+			PancakeConfigurationAddSetting(PancakeHTTPRewriteGroup, var->name, CONFIG_TYPE_BOOL, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
 			break;
 	}
 }
@@ -294,7 +334,7 @@ PANCAKE_API void PancakeHTTPRewriteRegisterCallback(String name, PancakeHTTPRewr
 	HASH_ADD_KEYPTR(hh, callbacks, cb->name.value, cb->name.length, cb);
 
 	// Create configuration setting
-	PancakeConfigurationAddSetting(rewriteRulesetConfiguration, cb->name, CONFIG_TYPE_NONE, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
+	PancakeConfigurationAddSetting(PancakeHTTPRewriteGroup, cb->name, CONFIG_TYPE_NONE, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
 }
 
 static UByte PancakeHTTPRewrite(PancakeSocket *sock) {
@@ -315,6 +355,21 @@ static UByte PancakeHTTPRewrite(PancakeSocket *sock) {
 	}
 
 	return 1;
+}
+
+PANCAKE_API void PancakeHTTPRewriteConfigurationHook(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	// Check whether we are in rewrite group
+	if(setting->parent->parent && setting->parent->parent->name != NULL && strlen(setting->parent->parent->name) == sizeof("Rewrite") - 1 && !memcmp(setting->parent->parent->name, "Rewrite", sizeof("Rewrite") - 1)) {
+		if(CompilerState == COMPILER_STATE_OUT_OF_SCOPE) {
+			// Create new configuration scope
+			ConfigurationScope = PancakeConfigurationAddScope();
+
+			CompilerState = COMPILER_STATE_IN_SCOPE;
+		}
+
+		// Set scope for configuration value
+		*scope = ConfigurationScope;
+	}
 }
 
 #endif

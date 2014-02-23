@@ -21,6 +21,8 @@ static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_STRING(PancakeSocket *sock, voi
 
 static Byte PANCAKE_HTTP_REWRITE_VM_CALL(PancakeSocket *sock, void *op1, void *op2);
 
+static Byte PANCAKE_HTTP_REWRITE_VM_ACTIVATE_SCOPE(PancakeSocket *sock, void *op1, void *op2);
+
 #ifdef PANCAKE_DEBUG
 UByte *PancakeHTTPRewriteOpcodeNames[] = {
 	"NOP",
@@ -36,7 +38,8 @@ UByte *PancakeHTTPRewriteOpcodeNames[] = {
 	"IS_NOT_EQUAL_INT",
 	"IS_NOT_EQUAL_STRING",
 	"IS_NOT_EQUAL_VARIABLE",
-	"CALL"
+	"CALL",
+	"ACTIVATE_SCOPE"
 };
 #endif
 
@@ -54,7 +57,8 @@ PancakeHTTPRewriteOpcodeHandler PancakeHTTPRewriteOpcodeHandlers[] = {
 	PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT,
 	PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_STRING,
 	NULL,
-	PANCAKE_HTTP_REWRITE_VM_CALL
+	PANCAKE_HTTP_REWRITE_VM_CALL,
+	PANCAKE_HTTP_REWRITE_VM_ACTIVATE_SCOPE
 };
 
 #define NEXT_OPCODE 2
@@ -287,6 +291,16 @@ static Byte PANCAKE_HTTP_REWRITE_VM_CALL(PancakeSocket *sock, void *op1, void *o
 		default:
 			return FATAL;
 	}
+}
+
+static Byte PANCAKE_HTTP_REWRITE_VM_ACTIVATE_SCOPE(PancakeSocket *sock, void *op1, void *op2) {
+	PancakeConfigurationScope *scope = (PancakeConfigurationScope*) op1;
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	PancakeConfigurationActivateScope(scope);
+	PancakeConfigurationScopeGroupAddScope(&request->scopeGroup, scope);
+
+	return NEXT_OPCODE;
 }
 
 #endif

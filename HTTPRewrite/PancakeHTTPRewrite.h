@@ -11,6 +11,7 @@
 
 UByte PancakeHTTPRewriteInitialize();
 UByte PancakeHTTPRewriteShutdown();
+UByte PancakeHTTPRewriteCheckConfiguration();
 extern PancakeModule PancakeHTTPRewriteModule;
 
 /* Forward declarations */
@@ -82,6 +83,10 @@ typedef struct _PancakeHTTPRewriteConfigurationStructure {
 
 PANCAKE_API void PancakeHTTPRewriteRegisterVariable(String name, UByte type, UByte flags, void *ptr, PancakeHTTPRewriteVariableGetter get, PancakeHTTPRewriteVariableSetter set);
 PANCAKE_API void PancakeHTTPRewriteRegisterCallback(String name, PancakeHTTPRewriteCallbackFunction callback);
+
+PANCAKE_API void PancakeHTTPRewriteConfigurationHook(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
+
+extern PancakeConfigurationGroup *PancakeHTTPRewriteGroup;
 
 #endif
 
