@@ -94,6 +94,11 @@ static UByte PancakeHTTPRewriteRulesetConfiguration(UByte step, config_setting_t
 		for(i = 0; i < ruleset->numOpcodes; i++) {
 			PancakeHTTPRewriteOpcode *op = ruleset->opcodes[i];
 
+			if(op->handler == PancakeHTTPRewriteOpcodeHandlers[PANCAKE_HTTP_REWRITE_OP_ACTIVATE_SCOPE]) {
+				// Free scope
+				PancakeConfigurationDestroyScope(op->op1);
+			}
+
 			PancakeFree(op);
 		}
 
