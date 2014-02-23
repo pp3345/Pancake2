@@ -80,7 +80,7 @@ Int32 main(Int32 argc, Byte **argv) {
 
 	// Initialize modules
 	do {
-		while((module = PancakeModules[i])) {
+		for(i = 0; module = PancakeModules[i]; i++) {
 			if(module->initialized) {
 				continue;
 			}
@@ -110,15 +110,15 @@ Int32 main(Int32 argc, Byte **argv) {
 			} else {
 				module->initialized = 1;
 			}
-
-			i++;
 		}
 
 		if(haveDeferred) {
 			haveDeferred = 0;
 			continue;
 		}
-	} while(0);
+
+		break;
+	} while(1);
 
 	// Parse and check configuration
 	if(!PancakeConfigurationLoad()) {
