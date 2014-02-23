@@ -81,18 +81,25 @@ static UByte PancakeHTTPFastCGINameConfiguration(UByte step, config_setting_t *s
 
 static UByte PancakeHTTPFastCGIClientConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT) {
-		PancakeFastCGIClient *client = NULL;
 		UInt32 length = strlen(setting->value.sval);
 
-		HASH_FIND(hh, PancakeFastCGIClients, setting->value.sval, length, client);
+		if(length) {
+			PancakeFastCGIClient *client = NULL;
 
-		if(client == NULL) {
-			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Unknown FastCGI client configuration %s", setting->value.sval);
-			return 0;
+			HASH_FIND(hh, PancakeFastCGIClients, setting->value.sval, length, client);
+
+			if(client == NULL) {
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Unknown FastCGI client configuration %s", setting->value.sval);
+				return 0;
+			}
+
+			free(setting->value.sval);
+
+			setting->value.sval = (char*) client;
+		} else {
+			setting->value.sval = NULL;
 		}
 
-		free(setting->value.sval);
-		setting->value.sval = (char*) client;
 		setting->type = CONFIG_TYPE_SPECIAL;
 	} else {
 		// Make library happy
