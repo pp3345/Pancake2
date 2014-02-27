@@ -4,6 +4,10 @@
 
 #ifdef PANCAKE_HTTP
 
+#ifdef PANCAKE_HTTP_REWRITE
+#include "HTTPRewrite/PancakeHTTPRewrite.h"
+#endif
+
 PancakeModule PancakeHTTP = {
 		"HTTP",
 		PancakeHTTPInitialize,
@@ -642,6 +646,10 @@ static UByte PancakeHTTPDocumentRootConfiguration(UByte step, config_setting_t *
 				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Document root %s is not a directory", setting->value.sval);
 				return 0;
 			}
+
+#ifdef PANCAKE_HTTP_REWRITE
+			PancakeHTTPRewriteConfigurationHook(step, setting, scope);
+#endif
 
 			// Make String out of document root
 			documentRoot = PancakeAllocate(sizeof(String));

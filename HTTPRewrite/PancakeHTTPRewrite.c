@@ -257,6 +257,10 @@ UByte PancakeHTTPRewriteInitialize() {
 	PancakeHTTPRewriteRegisterDefaultVariables();
 	PancakeHTTPRegisterParserHook(&PancakeHTTPRewriteParserHook);
 
+	// Add HTTP DocumentRoot setting to rewrite ruleset group
+	setting = PancakeConfigurationLookupSetting(group, StaticString("DocumentRoot"));
+	PancakeConfigurationAddSettingToGroup(PancakeHTTPRewriteGroup, setting);
+
 	return 1;
 }
 
