@@ -198,7 +198,7 @@ UByte PancakeAuthenticationFileInitialize() {
 	setting = PancakeConfigurationLookupSetting(NULL, (String) {"Authentication", sizeof("Authentication") - 1});
 	group = setting->listGroup;
 	group = PancakeConfigurationAddGroup(group, (String) {"File", sizeof("File") - 1}, PancakeAuthenticationFileConfiguration);
-	PancakeConfigurationAddSetting(group, (String) {"Name", sizeof("Name") - 1}, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeAuthenticationFileFileConfiguration);
+	PancakeConfigurationAddSetting(group, StaticString("Path"), CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeAuthenticationFileFileConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"Encryption", sizeof("Encryption") - 1}, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeAuthenticationEncryptionConfiguration);
 
 	return 1;
