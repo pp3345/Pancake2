@@ -60,7 +60,7 @@ fi
 
 AC_CHECK_SIZEOF([long])
 AC_CHECK_HEADER([uthash.h], [], [AC_ERROR([uthash.h not found])])
-AC_CHECK_HEADER([utlist.h], [], [AC_ERROR([utlist.h not found])])
+#AC_CHECK_HEADER([utlist.h], [], [AC_ERROR([utlist.h not found])])
 AC_CHECK_HEADER([execinfo.h], [AC_DEFINE([HAVE_EXECINFO_H], [], [Have execinfo.h])])
 AC_CHECK_HEADER([errno.h],  [], [AC_ERROR([errno.h not found])])
 AC_CHECK_HEADER([valgrind/valgrind.h], [AC_DEFINE([HAVE_VALGRIND_H], [], [Have valgrind/valgrind.h])])

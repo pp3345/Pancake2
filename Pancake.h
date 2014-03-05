@@ -41,8 +41,8 @@
 #endif
 
 /* uthash library */
-#include <uthash.h>
-#include <utlist.h>
+#include "third-party/uthash/uthash.h"
+#include "third-party/uthash/utlist.h"
 
 /* Let uthash allocate the tables via Pancake */
 #undef uthash_malloc
