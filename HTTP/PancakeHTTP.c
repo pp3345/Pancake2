@@ -794,6 +794,7 @@ UByte PancakeHTTPInitialize() {
 	PancakeConfigurationSetting *setting, *serverHeader;
 
 	group = PancakeConfigurationAddGroup(NULL, (String) {"HTTP", sizeof("HTTP") - 1}, NULL);
+	PancakeConfigurationAddSetting(group, StaticString("RequestTimeout"), CONFIG_TYPE_INT, &PancakeHTTPConfiguration.requestTimeout, sizeof(UInt32), (config_value_t) 10, NULL);
 	serverHeader = PancakeConfigurationAddSetting(group, (String) {"ServerHeader", sizeof("ServerHeader") - 1}, CONFIG_TYPE_BOOL, &PancakeHTTPConfiguration.serverHeader, sizeof(UByte), (config_value_t) 0, NULL);
 	PancakeNetworkRegisterListenInterfaceGroup(group, PancakeHTTPNetworkInterfaceConfiguration);
 
@@ -830,6 +831,7 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	request->acceptEncoding.length = 0;
 	request->authorization.length = 0;
 	request->clientContentLength = 0;
+	request->schedulerEvent = NULL;
 
 	PancakeConfigurationInitializeScopeGroup(&request->scopeGroup);
 }
@@ -852,6 +854,7 @@ static void PancakeHTTPInitializeConnection(PancakeSocket *sock) {
 	client->data = (void*) request;
 
 	PancakeNetworkAddReadSocket(client);
+	PancakeHTTPReadHeaderData(client);
 }
 
 static void PancakeHTTPInitializeKeepAliveConnection(PancakeSocket *sock) {
@@ -868,7 +871,39 @@ static void PancakeHTTPInitializeKeepAliveConnection(PancakeSocket *sock) {
 	PancakeHTTPReadHeaderData(sock);
 }
 
+static inline void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request) {
+	PancakeHTTPHeader *header, *tmp;
+
+	if(request->onRequestEnd) {
+		request->onRequestEnd(request);
+	}
+
+	if(request->requestAddress.value) {
+		PancakeFree(request->requestAddress.value);
+	}
+
+	LL_FOREACH_SAFE(request->headers, header, tmp) {
+		PancakeFree(header);
+	}
+
+	PancakeConfigurationDestroyScopeGroup(&request->scopeGroup);
+}
+
+static void PancakeHTTPOnClientTimeout(PancakeSocket *sock) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
+	if(request != NULL) {
+		PancakeHTTPCleanRequestData(request);
+
+		PancakeFree(sock->data);
+	}
+
+	PancakeNetworkClose(sock);
+}
+
 static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
+	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
+
 	// Read data from socket
 	if(PancakeNetworkRead(sock, 1536) == -1) {
 		return;
@@ -876,7 +911,6 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 
 	// Parse HTTP
 	if(EXPECTED(sock->readBuffer.length >= 5)) {
-		PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 		UByte *offset, *headerEnd, *ptr, *ptr2, *ptr3;
 		UInt8 i;
 
@@ -929,6 +963,10 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 
 			while(ptr = memchr(ptr, '\r', sock->readBuffer.value + sock->readBuffer.length - ptr)) {
 				if(sock->readBuffer.value + sock->readBuffer.length - ptr < 3) {
+					if(!request->schedulerEvent) {
+						request->schedulerEvent = PancakeSchedule(time(NULL) + PancakeHTTPConfiguration.requestTimeout, (PancakeSchedulerEventCallback) PancakeHTTPOnClientTimeout, sock);
+					}
+
 					return;
 				}
 
@@ -941,6 +979,10 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 			}
 
 			if(ptr == NULL) {
+				if(!request->schedulerEvent) {
+					request->schedulerEvent = PancakeSchedule(time(NULL) + PancakeHTTPConfiguration.requestTimeout, (PancakeSchedulerEventCallback) PancakeHTTPOnClientTimeout, sock);
+				}
+
 				return;
 			}
 		} else if(sock->readBuffer.value[sock->readBuffer.length - 1] == '\n'
@@ -950,7 +992,17 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 			offset = sock->readBuffer.value + (request->method == PANCAKE_HTTP_HEAD ? 5 : 4); // 5 = "HEAD "; 4 = "GET "
 			headerEnd = sock->readBuffer.value + sock->readBuffer.length - 4;
 		} else {
+			if(!request->schedulerEvent) {
+				request->schedulerEvent = PancakeSchedule(time(NULL) + PancakeHTTPConfiguration.requestTimeout, (PancakeSchedulerEventCallback) PancakeHTTPOnClientTimeout, sock);
+			}
+
 			return;
+		}
+
+		// Unschedule timeout event
+		if(request->schedulerEvent) {
+			PancakeUnschedule(request->schedulerEvent);
+			request->schedulerEvent = NULL;
 		}
 
 		// Lookup end of request URI
@@ -1188,6 +1240,8 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		// No content available
 		PancakeHTTPException(sock, 500);
 		PancakeConfigurationUnscope();
+	} else if(!request->schedulerEvent) {
+		request->schedulerEvent = PancakeSchedule(time(NULL) + PancakeHTTPConfiguration.requestTimeout, (PancakeSchedulerEventCallback) PancakeHTTPOnClientTimeout, sock);
 	}
 }
 
@@ -1278,24 +1332,6 @@ PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte igno
 	return 0;
 }
 
-static inline void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request) {
-	PancakeHTTPHeader *header, *tmp;
-
-	if(request->onRequestEnd) {
-		request->onRequestEnd(request);
-	}
-
-	if(request->requestAddress.value) {
-		PancakeFree(request->requestAddress.value);
-	}
-
-	LL_FOREACH_SAFE(request->headers, header, tmp) {
-		PancakeFree(header);
-	}
-
-	PancakeConfigurationDestroyScopeGroup(&request->scopeGroup);
-}
-
 PANCAKE_API inline void PancakeHTTPFreeContentEncoding(PancakeHTTPRequest *request) {
 	PancakeFree(request->contentEncoding);
 }
@@ -1305,6 +1341,10 @@ PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock) {
 
 	if(request != NULL) {
 		PancakeHTTPCleanRequestData(request);
+
+		if(request->schedulerEvent) {
+			PancakeUnschedule(request->schedulerEvent);
+		}
 
 		PancakeFree(sock->data);
 	}

@@ -3,11 +3,13 @@
 #define _PANCAKE_HTTP_H
 
 #include "Pancake.h"
+
+#ifdef PANCAKE_HTTP
+
 #include "PancakeConfiguration.h"
 #include "PancakeNetwork.h"
 #include "MIME/PancakeMIME.h"
-
-#ifdef PANCAKE_HTTP
+#include "PancakeScheduler.h"
 
 /* Forward declarations */
 typedef struct _PancakeHTTPHeader PancakeHTTPHeader;
@@ -69,6 +71,7 @@ typedef struct _PancakeHTTPVirtualHostIndex {
 typedef struct _PancakeHTTPConfigurationStructure {
 	String *documentRoot;
 	UByte serverHeader;
+	UInt32 requestTimeout;
 } PancakeHTTPConfigurationStructure;
 
 typedef struct _PancakeHTTPRequest {
@@ -101,6 +104,7 @@ typedef struct _PancakeHTTPRequest {
 	PancakeHTTPEventHandler onRequestEnd;
 	PancakeHTTPEventHandler onOutputEnd;
 	PancakeSocket *socket;
+	PancakeSchedulerEvent *schedulerEvent;
 
 	UByte method;
 	UByte HTTPVersion;
