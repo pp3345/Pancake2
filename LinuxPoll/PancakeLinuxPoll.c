@@ -1,9 +1,11 @@
 #include "PancakeLinuxPoll.h"
+
+#ifdef PANCAKE_LINUX_POLL
+
 #include "PancakeNetwork.h"
 #include "PancakeConfiguration.h"
 #include "PancakeLogger.h"
-
-#ifdef PANCAKE_LINUX_POLL
+#include "PancakeScheduler.h"
 
 Int32 PancakeLinuxPollFD = -1;
 
@@ -265,7 +267,7 @@ static void PancakeLinuxPollWait() {
 		struct epoll_event events[32];
 		Int32 numEvents, i;
 
-		numEvents = epoll_wait(PancakeLinuxPollFD, events, 32, -1);
+		numEvents = epoll_wait(PancakeLinuxPollFD, events, 32, (PancakeSchedulerGetNextExecutionTime() - time(NULL)) * 1000);
 
 		if(UNEXPECTED(numEvents == -1)) {
 			if(PancakeDoShutdown) {
@@ -280,6 +282,7 @@ static void PancakeLinuxPollWait() {
 			return;
 		}
 
+		// Network events first
 		for(i = 0; i < numEvents; i++) {
 			PancakeSocket *sock = (PancakeSocket*) events[i].data.ptr;
 
@@ -304,6 +307,9 @@ static void PancakeLinuxPollWait() {
 				PancakeCheckHeap();
 			}
 		}
+
+		// Scheduler events second
+		PancakeSchedulerRun();
 
 		if(UNEXPECTED(PancakeDoShutdown)) {
 			return;
