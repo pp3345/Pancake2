@@ -25,6 +25,8 @@ PANCAKE_API PancakeSchedulerEvent *PancakeSchedule(UNative time, PancakeSchedule
 			CDL_PREPEND_ELEM(events, events, event);
 
 			events = event->next;
+		} else if(events->time >= time) {
+			CDL_PREPEND(events, event);
 		} else {
 			PancakeSchedulerEvent *ev;
 
@@ -46,12 +48,19 @@ PANCAKE_API PancakeSchedulerEvent *PancakeSchedule(UNative time, PancakeSchedule
 	PancakeDebug {
 		// Check for event order corruption
 		PancakeSchedulerEvent *ev;
+		UByte haveScheduledEvent = 0;
 
 		CDL_FOREACH(events, ev) {
 			if(ev->next != events) {
 				PancakeAssert(ev->time <= ev->next->time);
 			}
+
+			if(ev == event) {
+				haveScheduledEvent++;
+			}
 		}
+
+		PancakeAssert(haveScheduledEvent == 1);
 	}
 
 	return event;
