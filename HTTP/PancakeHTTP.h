@@ -72,6 +72,7 @@ typedef struct _PancakeHTTPConfigurationStructure {
 	String *documentRoot;
 	UByte serverHeader;
 	UInt32 requestTimeout;
+	UInt32 keepAliveTimeout;
 } PancakeHTTPConfigurationStructure;
 
 typedef struct _PancakeHTTPRequest {

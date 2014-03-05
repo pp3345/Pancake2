@@ -795,6 +795,7 @@ UByte PancakeHTTPInitialize() {
 
 	group = PancakeConfigurationAddGroup(NULL, (String) {"HTTP", sizeof("HTTP") - 1}, NULL);
 	PancakeConfigurationAddSetting(group, StaticString("RequestTimeout"), CONFIG_TYPE_INT, &PancakeHTTPConfiguration.requestTimeout, sizeof(UInt32), (config_value_t) 10, NULL);
+	PancakeConfigurationAddSetting(group, StaticString("KeepAliveTimeout"), CONFIG_TYPE_INT, &PancakeHTTPConfiguration.keepAliveTimeout, sizeof(UInt32), (config_value_t) 10, NULL);
 	serverHeader = PancakeConfigurationAddSetting(group, (String) {"ServerHeader", sizeof("ServerHeader") - 1}, CONFIG_TYPE_BOOL, &PancakeHTTPConfiguration.serverHeader, sizeof(UByte), (config_value_t) 0, NULL);
 	PancakeNetworkRegisterListenInterfaceGroup(group, PancakeHTTPNetworkInterfaceConfiguration);
 
@@ -865,7 +866,11 @@ static void PancakeHTTPInitializeKeepAliveConnection(PancakeSocket *sock) {
 
 	request->socket = sock;
 
+	// Unschedule keep-alive timeout event
+	PancakeUnschedule((PancakeSchedulerEvent*) sock->data);
+
 	sock->onRead = PancakeHTTPReadHeaderData;
+	sock->onRemoteHangup = PancakeHTTPOnRemoteHangup;
 	sock->data = (void*) request;
 
 	PancakeHTTPReadHeaderData(sock);
@@ -1352,6 +1357,11 @@ PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock) {
 	PancakeNetworkClose(sock);
 }
 
+static void PancakeHTTPOnKeepAliveRemoteHangup(PancakeSocket *sock) {
+	PancakeUnschedule((PancakeSchedulerEvent*) sock->data);
+	PancakeNetworkClose(sock);
+}
+
 PANCAKE_API inline void PancakeHTTPFullWriteBuffer(PancakeSocket *sock) {
 	PancakeNetworkWrite(sock);
 
@@ -1773,7 +1783,9 @@ PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
 		PancakeHTTPCleanRequestData(request);
 
 		PancakeFree(sock->data);
-		sock->data = NULL;
+
+		// Schedule keep-alive timeout event
+		sock->data = (void*) PancakeSchedule(time(NULL) + PancakeHTTPConfiguration.keepAliveTimeout, (PancakeSchedulerEventCallback) PancakeNetworkClose, sock);
 
 		// Destroy write buffer
 		if(sock->writeBuffer.size) {
@@ -1795,7 +1807,7 @@ PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
 		sock->readBuffer.length = 0;
 
 		sock->onRead = PancakeHTTPInitializeKeepAliveConnection;
-		sock->onRemoteHangup = PancakeHTTPOnRemoteHangup;
+		sock->onRemoteHangup = PancakeHTTPOnKeepAliveRemoteHangup;
 	} else {
 		PancakeHTTPOnRemoteHangup(sock);
 	}
