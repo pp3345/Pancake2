@@ -217,8 +217,11 @@ Int32 main(Int32 argc, Byte **argv) {
 	}
 
 	shutdown:
-
 	// Shutdown
+
+	// Scheduler first (will run all scheduled events, should not free anything before)
+	PancakeSchedulerShutdown();
+
 	if(PancakeCurrentWorker->isMaster) {
 		UInt16 i;
 
