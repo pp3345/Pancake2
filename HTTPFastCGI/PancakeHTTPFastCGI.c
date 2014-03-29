@@ -199,13 +199,13 @@ static void PancakeHTTPFastCGIWriteContentBody(PancakeSocket *socket, PancakeSoc
 		return;
 	}
 
-	if(socket->writeBuffer.size < socket->writeBuffer.length + 8 + length) {
+	if(socket->writeBuffer.size < socket->writeBuffer.length + 16 + length) {
 		socket->writeBuffer.size = socket->writeBuffer.length + 16 + length;
 		socket->writeBuffer.value = PancakeReallocate(socket->writeBuffer.value, socket->writeBuffer.size);
 	}
 
 	offset = socket->writeBuffer.value + socket->writeBuffer.length;
-	request->clientContentLength -= 65535;
+	request->clientContentLength -= length;
 
 	// Build FCGI header
 	offset[0] = '\x1';
@@ -221,8 +221,29 @@ static void PancakeHTTPFastCGIWriteContentBody(PancakeSocket *socket, PancakeSoc
 	offset[6] = '\0';
 	offset[7] = '\0';
 
+	offset += 8;
+
 	// Copy STDIN data to FCGI socket
-	memcpy(offset + 8, clientSocket->readBuffer.value + request->headerEnd + 4, length);
+	memcpy(offset, clientSocket->readBuffer.value + request->headerEnd + 4, length);
+
+	// Add empty record to mark end of data
+	if(!request->clientContentLength) {
+		offset += length;
+		offset[0] = '\x1';
+		offset[1] = '\x5';
+#if PANCAKE_FASTCGI_MAX_REQUEST_ID > 255
+		offset[2] = requestID >> 8;
+#else
+		offset[2] = 0;
+#endif
+		offset[3] = (UByte) requestID;
+		offset[4] = '\0';
+		offset[5] = '\0';
+		offset[6] = '\0';
+		offset[7] = '\0';
+
+		socket->writeBuffer.length += 8;
+	}
 
 	// Set buffer length
 	socket->writeBuffer.length += 8 + length;
