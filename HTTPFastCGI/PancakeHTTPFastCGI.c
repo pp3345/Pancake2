@@ -858,6 +858,7 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 
 		// Write FCGI parameters
 		FastCGIEncodeParameter(socket, &((String) {"SCRIPT_FILENAME", sizeof("SCRIPT_FILENAME") - 1}), &((String) {fullPath, sizeof(fullPath)}));
+		FastCGIEncodeParameter(socket, &StaticString("DOCUMENT_ROOT"), PancakeHTTPConfiguration.documentRoot);
 		FastCGIEncodeParameter(socket, &((String) {"SCRIPT_NAME", sizeof("SCRIPT_NAME") - 1}), &request->path);
 		FastCGIEncodeParameter(socket, &((String) {"REQUEST_URI", sizeof("REQUEST_URI") - 1}), &request->requestAddress);
 		FastCGIEncodeParameter(socket, &((String) {"SERVER_NAME", sizeof("SERVER_NAME") - 1}), &request->host);
