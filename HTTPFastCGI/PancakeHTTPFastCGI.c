@@ -622,11 +622,15 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 }
 
 static void PancakeHTTPFastCGIOnRead(PancakeSocket *sock) {
-	if(PancakeNetworkRead(sock, 65798) == -1) { // 65798 bytes = max record size
-		return;
-	}
+	UInt32 length;
+	do {
+		if((length = PancakeNetworkRead(sock, 131596)) == -1) { // 65798 bytes = max record size
+			return;
+		}
 
-	FastCGIReadRecord(sock);
+		FastCGIReadRecord(sock);
+	} while(length == 131596);
+	// We need to read all data, since we might not get the chance to read again if FCGI server has hung up (EPOLLRDHUP)
 }
 
 static void PancakeHTTPFastCGIOnWrite(PancakeSocket *sock) {
