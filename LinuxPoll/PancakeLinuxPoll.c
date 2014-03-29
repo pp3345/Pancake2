@@ -286,7 +286,7 @@ static void PancakeLinuxPollWait() {
 		for(i = 0; i < numEvents; i++) {
 			PancakeSocket *sock = (PancakeSocket*) events[i].data.ptr;
 
-			if((events[i].events & EPOLLHUP)) {
+			if((events[i].events & EPOLLHUP) && !(events[i].events & EPOLLRDHUP)) {
 				sock->onRemoteHangup(sock);
 				PancakeCheckHeap();
 				continue;
