@@ -775,7 +775,7 @@ static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 			PancakeHTTPFastCGIOnWrite(vsocket);
 
 			// Add write socket if necessary
-			if(socket->writeBuffer.length) {
+			if(vsocket->writeBuffer.length) {
 				PancakeNetworkAddWriteSocket(vsocket);
 			}
         }
