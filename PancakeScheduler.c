@@ -79,6 +79,18 @@ PANCAKE_API inline UNative PancakeSchedulerGetNextExecutionTime() {
 	return events->time < time(NULL) ? time(NULL) : events->time;
 }
 
+PANCAKE_API inline UNative PancakeSchedulerGetNextExecutionTimeOffset() {
+	UNative now;
+
+	if(!events) {
+		return 86400;
+	}
+
+	now = time(NULL);
+
+	return events->time < now ? 0 : events->time - now;
+}
+
 PANCAKE_API inline UNative PancakeSchedulerGetNextScheduledTime() {
 	if(!events) {
 		return 0;

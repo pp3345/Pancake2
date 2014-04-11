@@ -267,7 +267,7 @@ static void PancakeLinuxPollWait() {
 		struct epoll_event events[32];
 		Int32 numEvents, i;
 
-		numEvents = epoll_wait(PancakeLinuxPollFD, events, 32, (PancakeSchedulerGetNextExecutionTime() - time(NULL)) * 1000);
+		numEvents = epoll_wait(PancakeLinuxPollFD, events, 32, PancakeSchedulerGetNextExecutionTimeOffset() * 1000);
 
 		if(UNEXPECTED(numEvents == -1)) {
 			if(PancakeDoShutdown) {
