@@ -1,0 +1,39 @@
+#ifndef _PANCAKE_OPEN_SSL_H
+#define _PANCAKE_OPEN_SSL_H
+
+#include "Pancake.h"
+
+#ifdef PANCAKE_OPENSSL
+
+#include "PancakeNetwork.h"
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+
+extern PancakeModule PancakeOpenSSL;
+UByte PancakeOpenSSLInitialize();
+UByte PancakeOpenSSLShutdown();
+
+typedef struct _PancakeOpenSSLServerContext {
+	SSL_CTX *context;
+
+	UT_hash_handle hh;
+} PancakeOpenSSLServerContext;
+
+typedef struct _PancakeOpenSSLServerSocket {
+	PancakeSocket socket;
+
+	SSL_CTX *defaultContext;
+	PancakeOpenSSLServerContext *contexts;
+} PancakeOpenSSLServerSocket;
+
+typedef struct _PancakeOpenSSLSocket {
+	PancakeSocket socket;
+
+	SSL *session;
+	PancakeNetworkEventHandler previousHandler;
+} PancakeOpenSSLSocket;
+
+#endif
+
+#endif

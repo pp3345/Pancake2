@@ -70,11 +70,6 @@ AC_CHECK_FUNC([vasprintf], [],  [AC_ERROR([vasprintf is not available on your sy
 AC_CHECK_FUNC([accept4], [AC_DEFINE([HAVE_ACCEPT4], [], [Have accept4()])])
 AC_CHECK_FUNC([itoa], [AC_DEFINE([HAVE_ITOA], [], [Have itoa()])])
 
-if test "$PANCAKE_REQUIRE_OPENSSL" == "1"; then
-	AC_CHECK_LIB([ssl], [SSL_SESSION_new], [], [AC_ERROR([OpenSSL not found])])
-	AC_DEFINE([HAVE_OPENSSL], [1], [OpenSSL library])
-fi
-
 if test "$PANCAKE_REQUIRE_BASE64_DECODER" == "1"; then
 	AC_DEFINE([PANCAKE_BASE64_DECODER_DEPENDENCY], [1], [libb64 base64 decoder])
 fi
