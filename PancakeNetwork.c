@@ -5,6 +5,7 @@
 
 static PancakeServerArchitecture *architectures = NULL;
 static PancakeSocket **listenSockets = NULL;
+static PancakeNetworkLayer *networkLayers = NULL;
 static UInt16 numListenSockets = 0;
 
 UByte PancakeNetworkActivate() {
@@ -81,6 +82,10 @@ PANCAKE_API void PancakeRegisterServerArchitecture(PancakeServerArchitecture *ar
 	HASH_ADD_KEYPTR(hh, architectures, arch->name.value, arch->name.length, arch);
 }
 
+PANCAKE_API void PancakeNetworkRegisterNetworkLayer(PancakeNetworkLayer *layer) {
+	LL_APPEND(networkLayers, layer);
+}
+
 void PancakeNetworkUnload() {
 	PancakeFree(listenSockets);
 
@@ -100,6 +105,7 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 			socket->onWrite = NULL;
 			socket->onRemoteHangup = NULL;
 			socket->flags = 0;
+			socket->layer = NULL;
 
 			socket->localAddress->sa_family = 0;
 			memset(socket->localAddress->sa_data, 0, sizeof(socket->localAddress->sa_data));
@@ -162,6 +168,17 @@ static UByte PancakeNetworkInterfaceNetworkConfiguration(UByte step, config_sett
 	}
 
 	return 1;
+}
+
+PANCAKE_API void PancakeNetworkReplaceListenSocket(PancakeSocket *previous, PancakeSocket *new) {
+	UInt16 i = 0;
+
+	for(; i < numListenSockets; i++) {
+		if(listenSockets[i] == previous) {
+			listenSockets[i] = new;
+			return;
+		}
+	}
 }
 
 static UByte PancakeNetworkInterfaceTryBind(PancakeSocket *socket) {
@@ -325,6 +342,30 @@ static UByte PancakeNetworkInterfaceBacklogConfiguration(UByte step, config_sett
 	return 1;
 }
 
+static UByte PancakeNetworkInterfaceLayerConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	if(step == PANCAKE_CONFIGURATION_INIT) {
+		PancakeSocket *sock = (PancakeSocket*) setting->parent->hook;
+		PancakeNetworkLayer *layer;
+
+		LL_FOREACH(networkLayers, layer) {
+			if(strlen(setting->value.sval) == layer->name.length
+			&& !memcmp(setting->value.sval, layer->name.value, layer->name.length)) {
+				// Free some memory
+				free(setting->value.sval);
+				setting->type = CONFIG_TYPE_NONE;
+
+				sock->layer = layer;
+				return 1;
+			}
+		}
+
+		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Unknown network layer \"%s\"", setting->value.sval);
+		return 0;
+	}
+
+	return 1;
+}
+
 PANCAKE_API void PancakeNetworkClientInterfaceConfiguration(PancakeNetworkClientInterface *client) {
 	// Initialize value
 	client->address = NULL;
@@ -446,6 +487,7 @@ static UByte PancakeNetworkClientInterfacePortConfiguration(UByte step, config_s
 PANCAKE_API PancakeConfigurationSetting *PancakeNetworkRegisterListenInterfaceGroup(PancakeConfigurationGroup *parent, PancakeConfigurationHook hook) {
 	PancakeConfigurationSetting *setting;
 	PancakeConfigurationGroup *group;
+	PancakeNetworkLayer *layer;
 
 	setting = PancakeConfigurationAddSetting(parent, (String) {"Interfaces", sizeof("Interfaces") - 1}, CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, NULL);
 	group = PancakeConfigurationListGroup(setting, hook);
@@ -453,6 +495,13 @@ PANCAKE_API PancakeConfigurationSetting *PancakeNetworkRegisterListenInterfaceGr
 	PancakeConfigurationAddSetting(group, (String) {"Address", sizeof("Address") - 1}, CONFIG_TYPE_STRING, NULL, 0, (config_value_t) "", PancakeNetworkInterfaceAddressConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"Port", sizeof("Port") - 1}, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeNetworkInterfacePortConfiguration);
 	PancakeConfigurationAddSetting(group, (String) {"Backlog", sizeof("Backlog") - 1}, CONFIG_TYPE_INT, NULL, 0, (config_value_t) 0, PancakeNetworkInterfaceBacklogConfiguration);
+	PancakeConfigurationAddSetting(group, StaticString("NetworkLayer"), CONFIG_TYPE_STRING, NULL, 0, (config_value_t) "", PancakeNetworkInterfaceLayerConfiguration);
+
+	LL_FOREACH(networkLayers, layer) {
+		if(layer->configure) {
+			layer->configure(group, PANCAKE_NETWORK_LAYER_MODE_SERVER);
+		}
+	}
 
 	return setting;
 }
@@ -540,6 +589,14 @@ PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *
 	client->writeBuffer.size = 0;
 	client->writeBuffer.length = 0;
 	client->writeBuffer.value = NULL;
+	client->layer = sock->layer;
+
+	if(client->layer && EXPECTED(client->layer->acceptConnection != NULL)) {
+		if(!client->layer->acceptConnection(&client, sock)) {
+			PancakeFree(client);
+			return NULL;
+		}
+	}
 
 	return client;
 }
@@ -624,6 +681,7 @@ PANCAKE_API inline PancakeSocket *PancakeNetworkConnect(struct sockaddr *addr, P
 	remote->writeBuffer.size = 0;
 	remote->writeBuffer.length = 0;
 	remote->writeBuffer.value = NULL;
+	remote->layer = NULL;
 
 	if(cache && cachePolicy == PANCAKE_NETWORK_CONNECTION_CACHE_KEEP) {
 		PancakeNetworkCacheConnection(cache, remote);
@@ -636,20 +694,31 @@ PANCAKE_API inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLengt
 	UByte buf[maxLength];
 	Int32 length;
 
-	length = read(sock->fd, buf, maxLength);
+	if(sock->layer && EXPECTED(sock->layer->read != NULL)) {
+		// Read through network layer
+		length = sock->layer->read(sock, maxLength, buf);
 
-	if(length == -1) {
-#if EAGAIN != EWOULDBLOCK // On some systems these values differ
-		if(errno == EAGAIN || errno == EWOULDBLOCK)
-#else
-		if(errno == EAGAIN)
-#endif
-		{
-			return 0;
+		if(length == -1) {
+			sock->onRemoteHangup(sock);
+			return -1;
 		}
+	} else {
+		// Directly read from socket
+		length = read(sock->fd, buf, maxLength);
 
-		sock->onRemoteHangup(sock);
-		return -1;
+		if(length == -1) {
+#if EAGAIN != EWOULDBLOCK // On some systems these values differ
+			if(errno == EAGAIN || errno == EWOULDBLOCK)
+#else
+			if(errno == EAGAIN)
+#endif
+			{
+				return 0;
+			}
+
+			sock->onRemoteHangup(sock);
+			return -1;
+		}
 	}
 
 	if(sock->readBuffer.size < sock->readBuffer.length + length) {
@@ -667,21 +736,31 @@ PANCAKE_API inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLengt
 PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock) {
 	Int32 length;
 
-	// Write data
-	length = write(sock->fd, sock->writeBuffer.value, sock->writeBuffer.length);
+	if(sock->layer && EXPECTED(sock->layer->write != NULL)) {
+		// Write through network layer
+		length = sock->layer->write(sock);
 
-	if(length == -1) {
-#if EAGAIN != EWOULDBLOCK // On some systems these values differ
-		if(errno == EAGAIN || errno == EWOULDBLOCK)
-#else
-		if(errno == EAGAIN)
-#endif
-		{
-			return 0;
+		if(length == -1) {
+			sock->onRemoteHangup(sock);
+			return -1;
 		}
+	} else {
+		// Write data directly to socket
+		length = write(sock->fd, sock->writeBuffer.value, sock->writeBuffer.length);
 
-		sock->onRemoteHangup(sock);
-		return -1;
+		if(length == -1) {
+	#if EAGAIN != EWOULDBLOCK // On some systems these values differ
+			if(errno == EAGAIN || errno == EWOULDBLOCK)
+	#else
+			if(errno == EAGAIN)
+	#endif
+			{
+				return 0;
+			}
+
+			sock->onRemoteHangup(sock);
+			return -1;
+		}
 	}
 
 	// Shrink buffer
@@ -698,6 +777,10 @@ PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock) {
 PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock) {
 	// Remove socket from list
 	PancakeNetworkRemoveSocket(sock);
+
+	if(sock->layer && EXPECTED(sock->layer->close != NULL)) {
+		sock->layer->close(sock);
+	}
 
 	// Close underlying file descriptor
 	close(sock->fd);
