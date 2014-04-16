@@ -789,9 +789,18 @@ static UByte PancakeHTTPParserHookConfiguration(UByte step, config_setting_t *se
 	return 1;
 }
 
+static UByte initDeferred = 0;
+
 UByte PancakeHTTPInitialize() {
 	PancakeConfigurationGroup *group, *child;
 	PancakeConfigurationSetting *setting, *serverHeader;
+
+	if(!initDeferred) {
+		// Defer once to make sure all network layers are registered before creating interface group
+		initDeferred = 1;
+
+		return 2;
+	}
 
 	group = PancakeConfigurationAddGroup(NULL, (String) {"HTTP", sizeof("HTTP") - 1}, NULL);
 	PancakeConfigurationAddSetting(group, StaticString("RequestTimeout"), CONFIG_TYPE_INT, &PancakeHTTPConfiguration.requestTimeout, sizeof(UInt32), (config_value_t) 10, NULL);
