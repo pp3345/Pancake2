@@ -152,6 +152,7 @@ Int32 main(Int32 argc, Byte **argv) {
 	sigaddset(&signalSet, SIGCHLD);
 	sigaddset(&signalSet, SIGINT);
 	sigaddset(&signalSet, SIGTERM);
+	sigaddset(&signalSet, SIGPIPE);
 	signalAction.sa_sigaction = PancakeSignalHandler;
 	signalAction.sa_mask = signalSet;
 	signalAction.sa_flags = SA_SIGINFO;
@@ -159,6 +160,7 @@ Int32 main(Int32 argc, Byte **argv) {
 	sigaction(SIGCHLD, &signalAction, NULL);
 	sigaction(SIGINT, &signalAction, NULL);
 	sigaction(SIGTERM, &signalAction, NULL);
+	sigaction(SIGPIPE, &signalAction, NULL);
 
 	// Run workers
 	if(PancakeMainConfiguration.workers > 0) {
@@ -287,6 +289,8 @@ static void PancakeSignalHandler(Int32 type, siginfo_t *info, void *context) {
 		case SIGTERM:
 			PancakeDoShutdown = 1;
 			break;
+		case SIGPIPE:
+			return;
 		case SIGCHLD:
 			if(PancakeDoShutdown) {
 				return;
