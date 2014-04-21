@@ -113,6 +113,7 @@ PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock);
 
 PANCAKE_API void PancakeNetworkActivateListenSockets();
 PANCAKE_API inline void PancakeNetworkCacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *socket);
+PANCAKE_API inline void PancakeNetworkUncacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *sock);
 
 PANCAKE_API void PancakeNetworkRegisterNetworkLayer(PancakeNetworkLayer *layer);
 
