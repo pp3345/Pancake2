@@ -107,8 +107,15 @@ PANCAKE_API inline void PancakeConfigurationScopeGroupAddScope(PancakeConfigurat
 PANCAKE_API inline void PancakeConfigurationActivateScopeGroup(PancakeConfigurationScopeGroup *group);
 PANCAKE_API inline void PancakeConfigurationDestroyScopeGroup(PancakeConfigurationScopeGroup *group);
 
+/* Initialization functions */
+void PancakeConfigurationInitialize();
+UByte PancakeConfigurationLoad();
+void PancakeConfigurationUnload();
+void PancakeConfigurationDestroy();
+
 /* Configuration Hooks */
 UByte PancakeConfigurationFile(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
 UByte PancakeConfigurationString(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
+UByte PancakeConfigurationServerArchitecture(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
 
 #endif

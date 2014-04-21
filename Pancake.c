@@ -3,6 +3,8 @@
 #include "PancakeLogger.h"
 #include "PancakeConfiguration.h"
 #include "PancakeWorkers.h"
+#include "PancakeNetwork.h"
+#include "PancakeScheduler.h"
 
 PancakeWorker *PancakeCurrentWorker;
 PancakeWorker **PancakeWorkerRegistry;
@@ -10,8 +12,8 @@ PancakeMainConfigurationStructure PancakeMainConfiguration;
 UByte PancakeDoShutdown = 0;
 
 /* Forward declarations */
-UByte PancakeConfigurationServerArchitecture(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
 static void PancakeSignalHandler(Int32 type, siginfo_t *info, void *context);
+void PancakeFetchModules();
 
 /* Here we go. */
 Int32 main(Int32 argc, Byte **argv) {

@@ -157,6 +157,7 @@ PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte igno
 PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code);
 PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock);
 PANCAKE_API inline void PancakeHTTPFullWriteBuffer(PancakeSocket *sock);
+PANCAKE_API void PancakeHTTPOutput(PancakeSocket *sock, String *output);
 PANCAKE_API void PancakeHTTPOutputChunk(PancakeSocket *sock, String *output);
 PANCAKE_API void PancakeHTTPSendChunk(PancakeSocket *sock, String *chunk);
 PANCAKE_API inline void PancakeHTTPSendLastChunk(PancakeSocket *sock);

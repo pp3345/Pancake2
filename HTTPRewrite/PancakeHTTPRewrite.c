@@ -121,7 +121,7 @@ static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, Pa
 		// Lookup variable or function
 		if(setting->op == CONFIG_OP_CALL) {
 			HASH_FIND(hh, callbacks, setting->name, length, callback);
-			PancakeAssert(var != NULL);
+			PancakeAssert(callback != NULL);
 		} else {
 			HASH_FIND(hh, variables, setting->name, length, var);
 			PancakeAssert(var != NULL);

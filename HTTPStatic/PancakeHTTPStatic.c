@@ -1,8 +1,10 @@
 
 #include "PancakeHTTPStatic.h"
-#include "MIME/PancakeMIME.h"
 
 #if defined(PANCAKE_HTTP_STATIC) && defined(PANCAKE_HTTP)
+
+#include "MIME/PancakeMIME.h"
+#include "PancakeDateTime.h"
 
 /* Forward declarations */
 static UByte PancakeHTTPServeStatic(PancakeSocket *sock);

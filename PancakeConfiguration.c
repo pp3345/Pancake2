@@ -374,9 +374,9 @@ PANCAKE_API void PancakeConfigurationAddSettingToGroup(PancakeConfigurationGroup
 	copy->setting = child;
 
 	if(parent == NULL) {
-		HASH_ADD_KEYPTR(hh, PancakeConfiguration->settings, child->name.value, child->name.length, copy);
+		HASH_ADD_KEYPTR(hh, PancakeConfiguration->settings, child->name.value, child->name.length, (PancakeConfigurationSetting*) copy);
 	} else {
-		HASH_ADD_KEYPTR(hh, parent->settings, child->name.value, child->name.length, copy);
+		HASH_ADD_KEYPTR(hh, parent->settings, child->name.value, child->name.length, (PancakeConfigurationSetting*) copy);
 	}
 }
 

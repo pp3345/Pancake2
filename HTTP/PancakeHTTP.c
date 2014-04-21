@@ -1,8 +1,10 @@
 #include "PancakeHTTP.h"
-#include "PancakeConfiguration.h"
-#include "PancakeLogger.h"
 
 #ifdef PANCAKE_HTTP
+
+#include "PancakeConfiguration.h"
+#include "PancakeLogger.h"
+#include "PancakeDateTime.h"
 
 #ifdef PANCAKE_HTTP_REWRITE
 #include "HTTPRewrite/PancakeHTTPRewrite.h"

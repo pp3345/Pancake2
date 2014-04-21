@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <limits.h>
+#include <time.h>
 
 #ifdef HAVE_UCONTEXT_H
 #	include <ucontext.h>

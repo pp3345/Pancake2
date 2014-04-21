@@ -130,6 +130,7 @@ PANCAKE_API void PancakeNetworkRegisterNetworkLayer(PancakeNetworkLayer *layer);
 #define PancakeNetworkSetSocket(socket) (PancakeMainConfiguration.serverArchitecture->setSocket(socket))
 
 UByte PancakeNetworkActivate();
+void PancakeNetworkUnload();
 
 #define PANCAKE_NETWORK_CONNECTION_CACHE_KEEP 1
 #define PANCAKE_NETWORK_CONNECTION_CACHE_REMOVE 2
