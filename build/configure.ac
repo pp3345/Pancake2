@@ -19,7 +19,7 @@ AC_ARG_ENABLE([debug],
 
 AC_MSG_CHECKING([whether to enable debug mode])
 if test "$enable_debug" != ""; then
-	CFLAGS="-O0 -Wdouble-promotion -Wformat -Wimplicit-int -Wunused -Wtype-limits -g"
+	CFLAGS="-O0 -Wall -Wno-pointer-sign -Wno-parentheses -Wno-missing-braces -g"
 	LDFLAGS="-rdynamic"
 	AC_MSG_RESULT([yes])
 else
