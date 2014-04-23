@@ -45,8 +45,14 @@ UByte PancakeOpenSSLInitialize() {
 }
 
 UByte PancakeOpenSSLShutdown() {
-	EVP_cleanup();
+	CONF_modules_free();
+	ERR_remove_state(0);
+	ENGINE_cleanup();
+	CONF_modules_unload(1);
 	ERR_free_strings();
+	EVP_cleanup();
+	CRYPTO_cleanup_all_ex_data();
+	sk_SSL_COMP_free(SSL_COMP_get_compression_methods());
 
 	return 1;
 }

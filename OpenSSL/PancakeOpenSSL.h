@@ -9,6 +9,8 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/conf.h>
+#include <openssl/engine.h>
 
 extern PancakeModule PancakeOpenSSL;
 UByte PancakeOpenSSLInitialize();
