@@ -775,8 +775,8 @@ PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock) {
 }
 
 PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock) {
-	// Remove socket from list
-	PancakeNetworkRemoveSocket(sock);
+	// Tell server architecture we're closing the socket
+	PancakeMainConfiguration.serverArchitecture->onSocketClose(sock);
 
 	if(sock->layer && EXPECTED(sock->layer->close != NULL)) {
 		sock->layer->close(sock);

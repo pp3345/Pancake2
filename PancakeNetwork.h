@@ -54,6 +54,8 @@ typedef struct _PancakeServerArchitecture {
 	PancakeSocketHandler setWriteSocket;
 	PancakeSocketHandler setSocket;
 
+	PancakeSocketHandler onSocketClose;
+
 	PancakeModuleInitializeFunction initialize;
 
 	UT_hash_handle hh;

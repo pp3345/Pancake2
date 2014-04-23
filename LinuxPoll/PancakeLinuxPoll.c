@@ -26,6 +26,10 @@ static inline void PancakeLinuxPollSetReadSocket(PancakeSocket *socket);
 static inline void PancakeLinuxPollSetWriteSocket(PancakeSocket *socket);
 static inline void PancakeLinuxPollSetSocket(PancakeSocket *socket);
 
+static inline void PancakeLinuxPollOnSocketClose(PancakeSocket *socket);
+
+static PancakeSocket *currentSocket;
+
 PancakeModule PancakeLinuxPoll = {
 		"LinuxPoll",
 		PancakeLinuxPollInitialize,
@@ -51,6 +55,8 @@ PancakeServerArchitecture PancakeLinuxPollServer = {
 		PancakeLinuxPollSetReadSocket,
 		PancakeLinuxPollSetWriteSocket,
 		PancakeLinuxPollSetSocket,
+
+		PancakeLinuxPollOnSocketClose,
 
 		PancakeLinuxPollServerInitialize,
 
@@ -251,6 +257,15 @@ static inline void PancakeLinuxPollSetSocket(PancakeSocket *socket) {
 	}
 }
 
+static inline void PancakeLinuxPollOnSocketClose(PancakeSocket *socket) {
+	// Socket will automatically be removed from epoll instance on close(), no need to do EPOLL_CTL_DEL operation
+
+	// Make sure we don't execute further events on this socket
+	if(socket == currentSocket) {
+		currentSocket = NULL;
+	}
+}
+
 static void PancakeLinuxPollWait() {
 	// Initialize with size 32 on old kernels
 	PancakeLinuxPollFD = epoll_create(32);
@@ -292,17 +307,29 @@ static void PancakeLinuxPollWait() {
 				continue;
 			}
 
+			currentSocket = sock;
+
 			if(events[i].events & EPOLLIN) {
 				sock->onRead(sock);
 				PancakeCheckHeap();
 			}
 
 			if(events[i].events & EPOLLOUT) {
+				// Socket has been closed in onRead()
+				if(!currentSocket) {
+					continue;
+				}
+
 				sock->onWrite(sock);
 				PancakeCheckHeap();
 			}
 
 			if(events[i].events & EPOLLRDHUP) {
+				// Socket has been closed in onWrite()
+				if(!currentSocket) {
+					continue;
+				}
+
 				sock->onRemoteHangup(sock);
 				PancakeCheckHeap();
 			}
