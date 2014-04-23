@@ -1239,6 +1239,49 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		// Disable reading on socket
 		PancakeNetworkSetSocket(sock);
 
+		// Decode path
+		for(offset = request->path.value; offset < request->path.value + request->path.length; offset++) {
+			if(*offset == '%') {
+				if(offset + 2 <= request->path.value + request->path.length) {
+					if(isdigit(offset[1])) {
+						*offset = (offset[1] - '0') * 16;
+					} else {
+						UByte lower = tolower(offset[1]);
+
+						if(EXPECTED(lower >= 'a' && lower <= 'f')) {
+							*offset = (lower - 'a' + 10) * 16;
+						} else {
+							// Invalid character (non-hex)
+							continue;
+						}
+					}
+
+					if(isdigit(offset[2])) {
+						*offset += offset[2] - '0';
+					} else {
+						UByte lower = tolower(offset[2]);
+
+						if(EXPECTED(lower >= 'a' && lower <= 'f')) {
+							*offset += lower - 'a' + 10;
+						} else {
+							// Invalid second character, reset character at offset to %
+							*offset = '%';
+							continue;
+						}
+					}
+
+					memmove(offset + 1, offset + 3, request->path.value + request->path.length - offset - 2);
+
+					request->path.length -= 2;
+				}
+			} else if(*offset == '+') {
+				*offset = ' ';
+			} else if(*offset == '?') {
+				// Stop on query string
+				break;
+			}
+		}
+
 		// Call parser hooks
 		for(i = 0; i < request->vHost->numParserHooks; i++) {
 			if(!request->vHost->parserHooks[i](sock)) {
