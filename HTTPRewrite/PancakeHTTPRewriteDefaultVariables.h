@@ -7,6 +7,7 @@
 #ifdef PANCAKE_HTTP_REWRITE
 
 #include "PancakeHTTPRewrite.h"
+#include "MIME/PancakeMIME.h"
 
 void PancakeHTTPRewriteRegisterDefaultVariables();
 
