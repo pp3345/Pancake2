@@ -124,6 +124,17 @@ static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting
 	return 1;
 }
 
+static UByte PancakeOpenSSLServerContextServerCipherPreferenceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	SSL_CTX *ctx = (SSL_CTX*) setting->parent->hook;
+
+	if(step == PANCAKE_CONFIGURATION_INIT && setting->value.ival == 1) {
+		// Enable server cipher preference
+		SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+	}
+
+	return 1;
+}
+
 static UByte PancakeOpenSSLServerContextDomainsConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	SSL_CTX *ctx = (SSL_CTX*) setting->parent->hook;
 	PancakeOpenSSLServerSocket *sock = (PancakeOpenSSLServerSocket*) setting->parent->parent->parent->parent->hook;
@@ -226,6 +237,7 @@ static void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mod
 		PancakeConfigurationAddSetting(ContextGroup, StaticString("CertificateChain"), CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeOpenSSLServerContextCertificateChainConfiguration);
 		PancakeConfigurationAddSetting(ContextGroup, StaticString("PrivateKey"), CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeOpenSSLServerContextPrivateKeyConfiguration);
 		PancakeConfigurationAddSetting(ContextGroup, StaticString("Ciphers"), CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeOpenSSLServerContextCiphersConfiguration);
+		PancakeConfigurationAddSetting(ContextGroup, StaticString("PreferServerCiphers"), CONFIG_TYPE_BOOL, NULL, 0, (config_value_t) 0, PancakeOpenSSLServerContextServerCipherPreferenceConfiguration);
 	}
 }
 
