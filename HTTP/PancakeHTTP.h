@@ -132,6 +132,7 @@ typedef struct _PancakeHTTPHeader {
 #define PANCAKE_HTTP_EXCEPTION 1 << 0
 #define PANCAKE_HTTP_HEADER_DATA_COMPLETE 1 << 1
 #define PANCAKE_HTTP_CLIENT_HANGUP 1 << 2
+#define PANCAKE_HTTPS 1 << 3
 
 #define PANCAKE_HTTP_EXCEPTION_PAGE_HEADER "<!doctype html><html><head><title>"
 #define PANCAKE_HTTP_EXCEPTION_PAGE_BODY_ERROR "</title><style>body{font-family:\"Arial\"}hr{border:1px solid #000}</style></head><body><h1>"
@@ -148,6 +149,7 @@ extern const String PancakeHTTPMethods[];
 extern UInt16 PancakeHTTPNumVirtualHosts;
 
 UByte PancakeHTTPInitialize();
+void PancakeHTTPSRegisterProtocol();
 
 PANCAKE_API void PancakeHTTPRegisterContentServeBackend(PancakeHTTPContentServeBackend *backend);
 PANCAKE_API void PancakeHTTPRegisterOutputFilter(PancakeHTTPOutputFilter *filter);

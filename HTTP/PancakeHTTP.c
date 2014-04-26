@@ -804,6 +804,8 @@ UByte PancakeHTTPInitialize() {
 		return 2;
 	}
 
+	PancakeHTTPSRegisterProtocol();
+
 	group = PancakeConfigurationAddGroup(NULL, (String) {"HTTP", sizeof("HTTP") - 1}, NULL);
 	PancakeConfigurationAddSetting(group, StaticString("RequestTimeout"), CONFIG_TYPE_INT, &PancakeHTTPConfiguration.requestTimeout, sizeof(UInt32), (config_value_t) 10, NULL);
 	PancakeConfigurationAddSetting(group, StaticString("KeepAliveTimeout"), CONFIG_TYPE_INT, &PancakeHTTPConfiguration.keepAliveTimeout, sizeof(UInt32), (config_value_t) 10, NULL);
