@@ -58,6 +58,38 @@ UByte PancakeOpenSSLShutdown() {
 	return 1;
 }
 
+static UByte PancakeOpenSSLApplicationProtocolConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	PancakeNetworkTLSApplicationProtocol *protocol;
+	String name;
+	PancakeOpenSSLServerSocket *sock = (PancakeOpenSSLServerSocket*) setting->parent->parent->hook;
+
+	// Fetch module
+	name.value = setting->value.sval;
+	name.length = strlen(setting->value.sval);
+
+	protocol = PancakeNetworkTLSGetApplicationProtocol(&name);
+
+	if(protocol == NULL) {
+		PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Unknown TLS application protocol");
+		return 0;
+	}
+
+	setting->parent->hook = (void*) protocol;
+
+	if(sock->defaultContext) {
+		PancakeOpenSSLServerContext *context, *tmp;
+
+		SSL_CTX_set_ex_data(sock->defaultContext, 0, (void*) protocol);
+
+		// Contexts are already configured, add application protocol data
+		HASH_ITER(hh, sock->contexts, context, tmp) {
+			SSL_CTX_set_ex_data(context->context, 0, (void*) protocol);
+		}
+	}
+
+	return 1;
+}
+
 static UByte PancakeOpenSSLServerConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeOpenSSLServerSocket *sock = (PancakeOpenSSLServerSocket*) setting->parent->hook;
 
@@ -69,6 +101,7 @@ static UByte PancakeOpenSSLServerConfiguration(UByte step, config_setting_t *set
 		// Address of PancakeSocket might have changed
 		PancakeNetworkReplaceListenSocket((PancakeSocket*) setting->parent->hook, (PancakeSocket*) sock);
 		setting->parent->hook = (void*) sock;
+		setting->hook = NULL; // Will be used for application protocol setting
 	} else {
 		PancakeOpenSSLServerContext *domain, *tmp;
 
@@ -122,7 +155,7 @@ static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting
 				return 0;
 			}
 
-			SSL_CTX_set_ex_data(sock->defaultContext, 0, (void*) sock);
+			SSL_CTX_set_ex_data(sock->defaultContext, 1, (void*) sock);
 #else
 			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Server Name Indication is not supported by your OpenSSL build");
 			return 0;
@@ -156,6 +189,11 @@ static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting
 		EC_KEY_free(curve);
 
 		setting->hook = (void*) ctx;
+
+		// Application protocol setting
+		if(setting->parent->parent->hook) {
+			SSL_CTX_set_ex_data(ctx, 0, (void*) setting->parent->parent->hook);
+		}
 
 		// Enable quiet shutdown
 		//SSL_CTX_set_quiet_shutdown(ctx, 1);
@@ -341,6 +379,7 @@ static void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mod
 		PancakeConfigurationSetting *Contexts;
 
 		OpenSSL = PancakeConfigurationAddGroup(parent, StaticString("OpenSSL"), PancakeOpenSSLServerConfiguration);
+		PancakeConfigurationAddSetting(OpenSSL, StaticString("ApplicationProtocol"), CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeOpenSSLApplicationProtocolConfiguration);
 		Contexts = PancakeConfigurationAddSetting(OpenSSL, StaticString("Contexts"), CONFIG_TYPE_LIST, NULL, 0, (config_value_t) 0, NULL);
 		ContextGroup = PancakeConfigurationListGroup(Contexts, PancakeOpenSSLServerContextConfiguration);
 
@@ -366,7 +405,7 @@ static Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg) {
 		return SSL_TLSEXT_ERR_NOACK;
 	}
 
-	sock = (PancakeOpenSSLServerSocket*) SSL_CTX_get_ex_data(ssl->ctx, 0);
+	sock = (PancakeOpenSSLServerSocket*) SSL_CTX_get_ex_data(ssl->ctx, 1);
 	length = strlen(name);
 
 	HASH_FIND(hh, sock->contexts, name, length, context);
@@ -385,6 +424,7 @@ static Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg) {
 static UByte PancakeOpenSSLAcceptConnection(PancakeSocket **socket, PancakeSocket *parent) {
 	PancakeOpenSSLSocket *sock = (PancakeOpenSSLSocket*) *socket;
 	PancakeOpenSSLServerSocket *server = (PancakeOpenSSLServerSocket*) parent;
+	PancakeNetworkTLSApplicationProtocol *protocol;
 
 	sock = PancakeReallocate(sock, sizeof(PancakeOpenSSLSocket));
 	sock->session = SSL_new(server->defaultContext);
@@ -402,6 +442,15 @@ static UByte PancakeOpenSSLAcceptConnection(PancakeSocket **socket, PancakeSocke
 	SSL_set_accept_state(sock->session);
 
 	*socket = (PancakeSocket*) sock;
+
+	protocol = (PancakeNetworkTLSApplicationProtocol*) SSL_CTX_get_ex_data(server->defaultContext, 0);
+
+	if(protocol != NULL && protocol->initialize) {
+		if(UNEXPECTED(!protocol->initialize((PancakeSocket*) sock))) {
+			SSL_free(sock->session);
+			return 0;
+		}
+	}
 
 	return 1;
 }

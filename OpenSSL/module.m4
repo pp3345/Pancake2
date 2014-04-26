@@ -6,6 +6,7 @@ if test "$enable_openssl" == "yes"; then
 	PANCAKE_MODULE_HEADERS+="OpenSSL/PancakeOpenSSL.h "
 	PANCAKE_MODULES+="PancakeOpenSSL "
 	AC_DEFINE([PANCAKE_OPENSSL], [1], [OpenSSL module])
+	AC_DEFINE([PANCAKE_NETWORK_TLS], [1], [Have TLS module])
 	
 	AC_CHECK_HEADER([errno.h],  [], [AC_ERROR([errno.h not found])])
 	

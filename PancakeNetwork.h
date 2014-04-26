@@ -119,6 +119,29 @@ PANCAKE_API inline void PancakeNetworkUncacheConnection(PancakeNetworkConnection
 
 PANCAKE_API void PancakeNetworkRegisterNetworkLayer(PancakeNetworkLayer *layer);
 
+/* NetworkTLS */
+#ifdef PANCAKE_NETWORK_TLS
+
+typedef String* (*PancakeNetworkTLSApplicationLayerProtocolNegotiationFunction)(PancakeSocket *sock, String *input);
+typedef String* (*PancakeNetworkTLSNextProtocolNegotiationFunction)(PancakeSocket *sock, String *input);
+typedef UByte (*PancakeNetworkTLSInitializationFunction)(PancakeSocket *sock);
+typedef UByte (*PancakeNetworkTLSServerNameIndication)(PancakeSocket *sock, String *input);
+
+typedef struct _PancakeNetworkTLSApplicationProtocol {
+	String name;
+
+	PancakeNetworkTLSApplicationLayerProtocolNegotiationFunction ALPN;
+	PancakeNetworkTLSNextProtocolNegotiationFunction NPN;
+	PancakeNetworkTLSServerNameIndication SNI;
+	PancakeNetworkTLSInitializationFunction initialize;
+
+	struct _PancakeNetworkTLSApplicationProtocol *next;
+} PancakeNetworkTLSApplicationProtocol;
+
+PANCAKE_API void PancakeNetworkTLSRegisterApplicationProtocol(PancakeNetworkTLSApplicationProtocol *module);
+PANCAKE_API PancakeNetworkTLSApplicationProtocol *PancakeNetworkTLSGetApplicationProtocol(String *name);
+#endif
+
 #define PancakeNetworkAddReadSocket(socket) (PancakeMainConfiguration.serverArchitecture->addReadSocket(socket))
 #define PancakeNetworkAddWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->addWriteSocket(socket))
 #define PancakeNetworkAddReadWriteSocket(socket) (PancakeMainConfiguration.serverArchitecture->addReadWriteSocket(socket))

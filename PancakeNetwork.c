@@ -593,6 +593,7 @@ PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *
 
 	if(client->layer && EXPECTED(client->layer->acceptConnection != NULL)) {
 		if(!client->layer->acceptConnection(&client, sock)) {
+			close(fd);
 			PancakeFree(client);
 			return NULL;
 		}
@@ -798,3 +799,24 @@ PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock) {
 	// Free socket
 	PancakeFree(sock);
 }
+
+#ifdef PANCAKE_NETWORK_TLS
+static PancakeNetworkTLSApplicationProtocol *TLSApplicationProtocols = NULL;
+
+PANCAKE_API void PancakeNetworkTLSRegisterApplicationProtocol(PancakeNetworkTLSApplicationProtocol *protocol) {
+	LL_APPEND(TLSApplicationProtocols, protocol);
+}
+
+PANCAKE_API PancakeNetworkTLSApplicationProtocol *PancakeNetworkTLSGetApplicationProtocol(String *name) {
+	PancakeNetworkTLSApplicationProtocol *module;
+
+	LL_FOREACH(TLSApplicationProtocols, module) {
+		if(name->length == module->name.length
+		&& !memcmp(name->value, module->name.value, name->length)) {
+			return module;
+		}
+	}
+
+	return NULL;
+}
+#endif
