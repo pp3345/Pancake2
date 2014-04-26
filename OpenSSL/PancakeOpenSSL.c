@@ -103,6 +103,7 @@ static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting
 		};
 		static unsigned char dh1024_g[] = {0x02};
 		DH *params;
+		EC_KEY *curve;
 
 		// Create OpenSSL context
 		ctx = SSL_CTX_new(SSLv23_server_method());
@@ -142,6 +143,17 @@ static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting
 		SSL_CTX_set_tmp_dh(ctx, params);
 
 		DH_free(params);
+
+		// Set curve for ECDHE
+		curve = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+
+		if(curve == NULL) {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Failed to get prime256v1 elliptic curve: %s", ERR_error_string(ERR_get_error(), NULL));
+			return 0;
+		}
+
+		SSL_CTX_set_tmp_ecdh(ctx, curve);
+		EC_KEY_free(curve);
 
 		setting->hook = (void*) ctx;
 
@@ -291,6 +303,38 @@ static UByte PancakeOpenSSLServerContextDiffieHellmanParameterConfiguration(UByt
 	return 1;
 }
 
+static UByte PancakeOpenSSLServerContextEllipticCurveConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+	SSL_CTX *ctx = (SSL_CTX*) setting->parent->hook;
+
+	if(step == PANCAKE_CONFIGURATION_INIT) {
+		Int32 nid;
+		EC_KEY *curve;
+
+		nid = OBJ_sn2nid(setting->value.sval);
+
+		if(!nid) {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Unknown elliptic curve \"%s\"", setting->value.sval);
+			return 0;
+		}
+
+		curve = EC_KEY_new_by_curve_name(nid);
+
+		if(curve == NULL) {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Failed to get \"%s\" elliptic curve: %s", setting->value.sval, ERR_error_string(ERR_get_error(), NULL));
+			return 0;
+		}
+
+		SSL_CTX_set_tmp_ecdh(ctx, curve);
+		EC_KEY_free(curve);
+
+		// Free some memory
+		free(setting->value.sval);
+		setting->type = CONFIG_TYPE_NONE;
+	}
+
+	return 1;
+}
+
 static void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mode) {
 	if(mode == PANCAKE_NETWORK_LAYER_MODE_SERVER) {
 		PancakeConfigurationGroup *OpenSSL, *ContextGroup;
@@ -306,6 +350,7 @@ static void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mod
 		PancakeConfigurationAddSetting(ContextGroup, StaticString("Ciphers"), CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeOpenSSLServerContextCiphersConfiguration);
 		PancakeConfigurationAddSetting(ContextGroup, StaticString("PreferServerCiphers"), CONFIG_TYPE_BOOL, NULL, 0, (config_value_t) 0, PancakeOpenSSLServerContextServerCipherPreferenceConfiguration);
 		PancakeConfigurationAddSetting(ContextGroup, StaticString("DiffieHellmanParameters"), CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeOpenSSLServerContextDiffieHellmanParameterConfiguration);
+		PancakeConfigurationAddSetting(ContextGroup, StaticString("EllipticCurve"), CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeOpenSSLServerContextEllipticCurveConfiguration);
 	}
 }
 
