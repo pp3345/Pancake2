@@ -109,6 +109,12 @@ static UByte PancakeHTTPRewriteGetMIMEType(PancakeSocket *sock, PancakeHTTPRewri
 	return 1;
 }
 
+static UByte PancakeHTTPRewriteGetHTTPS(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value)  {
+	value->intv = (sock->flags & PANCAKE_HTTPS) == PANCAKE_HTTPS;
+
+	return 1;
+}
+
 static Byte PancakeHTTPRewriteThrowException(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
@@ -126,6 +132,7 @@ void PancakeHTTPRewriteRegisterDefaultVariables() {
 	PancakeHTTPRewriteRegisterVariable(StaticString("$HTTPMethod"), PANCAKE_HTTP_REWRITE_STRING, PANCAKE_HTTP_REWRITE_READ_ONLY, NULL, PancakeHTTPRewriteGetHTTPMethod, NULL);
 	PancakeHTTPRewriteRegisterVariable(StaticString("$DocumentURI"), PANCAKE_HTTP_REWRITE_STRING, 0, NULL, PancakeHTTPRewriteGetDocumentURI, PancakeHTTPRewriteSetDocumentURI);
 	PancakeHTTPRewriteRegisterVariable(StaticString("$MIMEType"), PANCAKE_HTTP_REWRITE_STRING, PANCAKE_HTTP_REWRITE_READ_ONLY, NULL, PancakeHTTPRewriteGetMIMEType, NULL);
+	PancakeHTTPRewriteRegisterVariable(StaticString("$HTTPS"), PANCAKE_HTTP_REWRITE_BOOL, PANCAKE_HTTP_REWRITE_READ_ONLY, NULL, PancakeHTTPRewriteGetHTTPS, NULL);
 
 	PancakeHTTPRewriteRegisterCallback(StaticString("ThrowException"), PancakeHTTPRewriteThrowException);
 }
