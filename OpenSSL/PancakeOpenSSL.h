@@ -11,6 +11,7 @@
 #include <openssl/evp.h>
 #include <openssl/conf.h>
 #include <openssl/engine.h>
+#include <openssl/pem.h>
 
 extern PancakeModule PancakeOpenSSL;
 UByte PancakeOpenSSLInitialize();
