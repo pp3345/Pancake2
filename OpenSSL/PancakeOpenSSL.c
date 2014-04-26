@@ -16,7 +16,12 @@ PancakeModule PancakeOpenSSL = {
 };
 
 static void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mode);
+#ifdef TLSEXT_TYPE_next_proto_neg
+static Int32 PancakeOpenSSLNextProtocolNegotiation(SSL *ssl, const UByte **output, UInt32 *outputLength, void *arg);
+#endif
+#ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
 static Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg);
+#endif
 static UByte PancakeOpenSSLAcceptConnection(PancakeSocket **socket, PancakeSocket *parent);
 static Int32 PancakeOpenSSLRead(PancakeSocket *socket, UInt32 maxLength, UByte *buf);
 static Int32 PancakeOpenSSLWrite(PancakeSocket *socket);
@@ -161,6 +166,11 @@ static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting
 			return 0;
 #endif
 		}
+
+		// NPN
+#ifdef TLSEXT_TYPE_next_proto_neg
+		SSL_CTX_set_next_protos_advertised_cb(ctx, PancakeOpenSSLNextProtocolNegotiation, NULL);
+#endif
 
 		// Set default DH parameters
 		params = DH_new();
@@ -416,6 +426,30 @@ static Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg) {
 	}
 
 	SSL_set_SSL_CTX(ssl, context->context);
+
+	return SSL_TLSEXT_ERR_OK;
+}
+#endif
+
+#ifdef TLSEXT_TYPE_next_proto_neg
+static Int32 PancakeOpenSSLNextProtocolNegotiation(SSL *ssl, const UByte **output, UInt32 *outputLength, void *arg) {
+	PancakeOpenSSLServerSocket *sock;
+	PancakeNetworkTLSApplicationProtocol *protocol;
+	String *result;
+
+	protocol = (PancakeNetworkTLSApplicationProtocol*) SSL_CTX_get_ex_data(ssl->ctx, 0);
+
+	if(!protocol || !protocol->NPN) {
+		// No application protocol configured or application protocol does not support NPN
+		return SSL_TLSEXT_ERR_OK;
+	}
+
+	sock = (PancakeOpenSSLServerSocket*) SSL_CTX_get_ex_data(ssl->ctx, 1);
+
+	result = protocol->NPN((PancakeSocket*) sock);
+
+	*output = result->value;
+	*outputLength = result->length;
 
 	return SSL_TLSEXT_ERR_OK;
 }

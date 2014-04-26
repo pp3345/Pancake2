@@ -123,7 +123,7 @@ PANCAKE_API void PancakeNetworkRegisterNetworkLayer(PancakeNetworkLayer *layer);
 #ifdef PANCAKE_NETWORK_TLS
 
 typedef String* (*PancakeNetworkTLSApplicationLayerProtocolNegotiationFunction)(PancakeSocket *sock, String *input);
-typedef String* (*PancakeNetworkTLSNextProtocolNegotiationFunction)(PancakeSocket *sock, String *input);
+typedef String* (*PancakeNetworkTLSNextProtocolNegotiationFunction)(PancakeSocket *sock);
 typedef UByte (*PancakeNetworkTLSInitializationFunction)(PancakeSocket *sock);
 typedef UByte (*PancakeNetworkTLSServerNameIndication)(PancakeSocket *sock, String *input);
 
