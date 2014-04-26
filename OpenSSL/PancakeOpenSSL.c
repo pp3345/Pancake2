@@ -16,6 +16,7 @@ PancakeModule PancakeOpenSSL = {
 };
 
 static void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mode);
+static Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg);
 static UByte PancakeOpenSSLAcceptConnection(PancakeSocket **socket, PancakeSocket *parent);
 static Int32 PancakeOpenSSLRead(PancakeSocket *socket, UInt32 maxLength, UByte *buf);
 static Int32 PancakeOpenSSLWrite(PancakeSocket *socket);
@@ -96,6 +97,18 @@ static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting
 
 		if(!sock->defaultContext) {
 			sock->defaultContext = ctx;
+		} else {
+#ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
+			if(!SSL_CTX_set_tlsext_servername_callback(sock->defaultContext, PancakeOpenSSLServerNameIndication)) {
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Server Name Indication is not supported by your OpenSSL build");
+				return 0;
+			}
+
+			SSL_CTX_set_ex_data(sock->defaultContext, 0, (void*) sock);
+#else
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Server Name Indication is not supported by your OpenSSL build");
+			return 0;
+#endif
 		}
 
 		setting->hook = (void*) ctx;
@@ -121,14 +134,17 @@ static UByte PancakeOpenSSLServerContextDomainsConfiguration(UByte step, config_
 
 		while(element = config_setting_get_elem(setting, i++)) {
 			PancakeOpenSSLServerContext *old = NULL, *new;
+			UByte length;
 
 			if(element->type != CONFIG_TYPE_STRING) {
 				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Domain must be a string");
 				return 0;
 			}
 
+			length = strlen(element->value.sval);
+
 			// Check if domain already exists
-			HASH_FIND(hh, sock->contexts, element->value.sval, strlen(element->value.sval), old);
+			HASH_FIND(hh, sock->contexts, element->value.sval, length, old);
 
 			if(old != NULL) {
 				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Multiple entries for domain \"%s\"", element->value.sval);
@@ -139,11 +155,7 @@ static UByte PancakeOpenSSLServerContextDomainsConfiguration(UByte step, config_
 			new = PancakeAllocate(sizeof(PancakeOpenSSLServerContext));
 			new->context = ctx;
 
-			HASH_ADD_KEYPTR(hh, sock->contexts, element->value.sval, strlen(element->value.sval), new);
-
-			// Free some memory
-			free(element->value.sval);
-			element->type = CONFIG_TYPE_NONE;
+			HASH_ADD_KEYPTR(hh, sock->contexts, element->value.sval, length, new);
 		}
 	}
 
@@ -216,6 +228,34 @@ static void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mod
 		PancakeConfigurationAddSetting(ContextGroup, StaticString("Ciphers"), CONFIG_TYPE_STRING, NULL, 0, (config_value_t) 0, PancakeOpenSSLServerContextCiphersConfiguration);
 	}
 }
+
+#ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
+static Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg) {
+	const UByte *name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+	PancakeOpenSSLServerSocket *sock;
+	PancakeOpenSSLServerContext *context;
+	UByte length;
+
+	if(name == NULL || !(*name)) {
+		// No name given
+		return SSL_TLSEXT_ERR_NOACK;
+	}
+
+	sock = (PancakeOpenSSLServerSocket*) SSL_CTX_get_ex_data(ssl->ctx, 0);
+	length = strlen(name);
+
+	HASH_FIND(hh, sock->contexts, name, length, context);
+
+	if(context == NULL) {
+		// Unknown domain
+		return SSL_TLSEXT_ERR_NOACK;
+	}
+
+	SSL_set_SSL_CTX(ssl, context->context);
+
+	return SSL_TLSEXT_ERR_OK;
+}
+#endif
 
 static UByte PancakeOpenSSLAcceptConnection(PancakeSocket **socket, PancakeSocket *parent) {
 	PancakeOpenSSLSocket *sock = (PancakeOpenSSLSocket*) *socket;
