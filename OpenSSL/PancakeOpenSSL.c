@@ -433,7 +433,7 @@ static Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg) {
 
 #ifdef TLSEXT_TYPE_next_proto_neg
 static Int32 PancakeOpenSSLNextProtocolNegotiation(SSL *ssl, const UByte **output, UInt32 *outputLength, void *arg) {
-	PancakeOpenSSLServerSocket *sock;
+	PancakeSocket *sock;
 	PancakeNetworkTLSApplicationProtocol *protocol;
 	String *result;
 
@@ -444,9 +444,9 @@ static Int32 PancakeOpenSSLNextProtocolNegotiation(SSL *ssl, const UByte **outpu
 		return SSL_TLSEXT_ERR_OK;
 	}
 
-	sock = (PancakeOpenSSLServerSocket*) SSL_CTX_get_ex_data(ssl->ctx, 1);
+	sock = (PancakeSocket*) SSL_get_ex_data(ssl, 0);
 
-	result = protocol->NPN((PancakeSocket*) sock);
+	result = protocol->NPN(sock);
 
 	*output = result->value;
 	*outputLength = result->length;
@@ -479,11 +479,13 @@ static UByte PancakeOpenSSLAcceptConnection(PancakeSocket **socket, PancakeSocke
 
 	protocol = (PancakeNetworkTLSApplicationProtocol*) SSL_CTX_get_ex_data(server->defaultContext, 0);
 
-	if(protocol != NULL && protocol->initialize) {
-		if(UNEXPECTED(!protocol->initialize((PancakeSocket*) sock))) {
+	if(protocol != NULL) {
+		if(protocol->initialize && UNEXPECTED(!protocol->initialize((PancakeSocket*) sock))) {
 			SSL_free(sock->session);
 			return 0;
 		}
+
+		SSL_set_ex_data(sock->session, 0, (PancakeSocket*) sock);
 	}
 
 	return 1;
