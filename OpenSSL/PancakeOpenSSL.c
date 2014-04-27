@@ -222,6 +222,13 @@ static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting
 #endif
 		}
 
+		// Tell OpenSSL to release buffers for idle connections and to behave more like write()
+		SSL_CTX_set_mode(ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_RELEASE_BUFFERS);
+
+		// Disable compression (prevent CRIME), disable reuse of DH keys
+		SSL_CTX_set_options(ctx, SSL_OP_NO_COMPRESSION | SSL_OP_SINGLE_DH_USE | SSL_OP_SINGLE_ECDH_USE);
+		SSL_CTX_set_read_ahead(ctx, 1);
+
 		// Enable quiet shutdown
 		//SSL_CTX_set_quiet_shutdown(ctx, 1);
 	} else {
