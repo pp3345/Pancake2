@@ -750,11 +750,11 @@ PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock) {
 		length = write(sock->fd, sock->writeBuffer.value, sock->writeBuffer.length);
 
 		if(length == -1) {
-	#if EAGAIN != EWOULDBLOCK // On some systems these values differ
+#if EAGAIN != EWOULDBLOCK // On some systems these values differ
 			if(errno == EAGAIN || errno == EWOULDBLOCK)
-	#else
+#else
 			if(errno == EAGAIN)
-	#endif
+#endif
 			{
 				return 0;
 			}
