@@ -86,9 +86,23 @@ static UByte PancakeOpenSSLApplicationProtocolConfiguration(UByte step, config_s
 
 		SSL_CTX_set_ex_data(sock->defaultContext, 0, (void*) protocol);
 
+		// NPN
+#ifdef TLSEXT_TYPE_next_proto_neg
+		if(protocol->NPN) {
+			SSL_CTX_set_next_protos_advertised_cb(sock->defaultContext, PancakeOpenSSLNextProtocolNegotiation, NULL);
+		}
+#endif
+
 		// Contexts are already configured, add application protocol data
 		HASH_ITER(hh, sock->contexts, context, tmp) {
 			SSL_CTX_set_ex_data(context->context, 0, (void*) protocol);
+
+			// NPN
+#ifdef TLSEXT_TYPE_next_proto_neg
+			if(protocol->NPN) {
+				SSL_CTX_set_next_protos_advertised_cb(context->context, PancakeOpenSSLNextProtocolNegotiation, NULL);
+			}
+#endif
 		}
 	}
 
@@ -167,11 +181,6 @@ static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting
 #endif
 		}
 
-		// NPN
-#ifdef TLSEXT_TYPE_next_proto_neg
-		SSL_CTX_set_next_protos_advertised_cb(ctx, PancakeOpenSSLNextProtocolNegotiation, NULL);
-#endif
-
 		// Set default DH parameters
 		params = DH_new();
 		params->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
@@ -202,7 +211,15 @@ static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting
 
 		// Application protocol setting
 		if(setting->parent->parent->hook) {
+			PancakeNetworkTLSApplicationProtocol *protocol = (PancakeNetworkTLSApplicationProtocol*) setting->parent->parent->hook;
 			SSL_CTX_set_ex_data(ctx, 0, (void*) setting->parent->parent->hook);
+
+			// NPN
+#ifdef TLSEXT_TYPE_next_proto_neg
+			if(protocol->NPN) {
+				SSL_CTX_set_next_protos_advertised_cb(ctx, PancakeOpenSSLNextProtocolNegotiation, NULL);
+			}
+#endif
 		}
 
 		// Enable quiet shutdown
@@ -439,10 +456,7 @@ static Int32 PancakeOpenSSLNextProtocolNegotiation(SSL *ssl, const UByte **outpu
 
 	protocol = (PancakeNetworkTLSApplicationProtocol*) SSL_CTX_get_ex_data(ssl->ctx, 0);
 
-	if(!protocol || !protocol->NPN) {
-		// No application protocol configured or application protocol does not support NPN
-		return SSL_TLSEXT_ERR_OK;
-	}
+	PancakeAssert(protocol && protocol->NPN);
 
 	sock = (PancakeSocket*) SSL_get_ex_data(ssl, 0);
 
