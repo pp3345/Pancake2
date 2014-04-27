@@ -595,7 +595,7 @@ static Int32 PancakeOpenSSLWrite(PancakeSocket *socket) {
 				return 0;
 			case SSL_ERROR_SYSCALL:
 				if(!errno) {
-					// No data was available to read
+					// No data could be written
 					return 0;
 				}
 				return -1;
