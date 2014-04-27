@@ -152,13 +152,23 @@ static void PancakeConfigurationLoadGroupDefaultValues(PancakeConfigurationGroup
 			continue;
 		}
 
-		if(!setting->haveValue && setting->valuePtr != NULL) {
-			PancakeConfigurationScopeValue *value = PancakeAllocate(sizeof(PancakeConfigurationScopeValue));
+		if((!setting->haveValue || setting->haveScopedValue) && setting->valuePtr != NULL) {
+			PancakeConfigurationScopeValue *value;
 
+			// Make sure not to add a value twice to root scope
+			DL_FOREACH(rootScope->values, value) {
+				if(value->setting == setting) {
+					goto skip;
+				}
+			}
+
+			value = PancakeAllocate(sizeof(PancakeConfigurationScopeValue));
 			value->setting = setting;
 			value->value = setting->defaultValue;
 
 			DL_APPEND(rootScope->values, value);
+
+			skip:;
 		}
 	}
 
