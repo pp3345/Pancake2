@@ -804,7 +804,9 @@ UByte PancakeHTTPInitialize() {
 		return 2;
 	}
 
+#ifdef PANCAKE_NETWORK_TLS
 	PancakeHTTPSRegisterProtocol();
+#endif
 
 	group = PancakeConfigurationAddGroup(NULL, (String) {"HTTP", sizeof("HTTP") - 1}, NULL);
 	PancakeConfigurationAddSetting(group, StaticString("RequestTimeout"), CONFIG_TYPE_INT, &PancakeHTTPConfiguration.requestTimeout, sizeof(UInt32), (config_value_t) 10, NULL);
