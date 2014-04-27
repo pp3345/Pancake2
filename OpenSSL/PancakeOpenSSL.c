@@ -422,20 +422,34 @@ static void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mod
 
 #ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
 static Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg) {
-	const UByte *name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 	PancakeOpenSSLServerSocket *sock;
 	PancakeOpenSSLServerContext *context;
-	UByte length;
+	PancakeNetworkTLSApplicationProtocol *protocol;
+	String name;
 
-	if(name == NULL || !(*name)) {
+	name.value = (UByte*) SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+
+	if(name.value == NULL || !(*name.value)) {
 		// No name given
 		return SSL_TLSEXT_ERR_NOACK;
 	}
 
-	sock = (PancakeOpenSSLServerSocket*) SSL_CTX_get_ex_data(ssl->ctx, 1);
-	length = strlen(name);
+	name.length = strlen(name.value);
 
-	HASH_FIND(hh, sock->contexts, name, length, context);
+	// Tell application protocol
+	protocol = (PancakeNetworkTLSApplicationProtocol*) SSL_CTX_get_ex_data(ssl->ctx, 0);
+
+	if(protocol && protocol->SNI) {
+		PancakeSocket *client = (PancakeSocket*) SSL_get_ex_data(ssl, 0);
+
+		if(!protocol->SNI(client, &name)) {
+			return SSL_TLSEXT_ERR_ALERT_FATAL;
+		}
+	}
+
+	sock = (PancakeOpenSSLServerSocket*) SSL_CTX_get_ex_data(ssl->ctx, 1);
+
+	HASH_FIND(hh, sock->contexts, name.value, name.length, context);
 
 	if(context == NULL) {
 		// Unknown domain
@@ -461,6 +475,10 @@ static Int32 PancakeOpenSSLNextProtocolNegotiation(SSL *ssl, const UByte **outpu
 	sock = (PancakeSocket*) SSL_get_ex_data(ssl, 0);
 
 	result = protocol->NPN(sock);
+
+	if(result == NULL) {
+		return SSL_TLSEXT_ERR_NOACK;
+	}
 
 	*output = result->value;
 	*outputLength = result->length;
