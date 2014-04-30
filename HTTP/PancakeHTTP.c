@@ -13,7 +13,7 @@
 PancakeModule PancakeHTTP = {
 		"HTTP",
 		PancakeHTTPInitialize,
-		NULL,
+		PancakeHTTPCheckConfiguration,
 		NULL,
 		0
 };
@@ -531,6 +531,7 @@ PancakeHTTPVirtualHostIndex *PancakeHTTPVirtualHosts = NULL;
 PancakeHTTPVirtualHost *PancakeHTTPDefaultVirtualHost = NULL;
 PancakeHTTPConfigurationStructure PancakeHTTPConfiguration;
 UInt16 PancakeHTTPNumVirtualHosts = 0;
+static UByte PancakeHTTPNetworking = 0;
 
 static PancakeHTTPContentServeBackend *contentBackends = NULL;
 static PancakeHTTPOutputFilter *outputFilters = NULL;
@@ -686,6 +687,7 @@ static UByte PancakeHTTPNetworkInterfaceConfiguration(UByte step, config_setting
 	if(PancakeNetworkInterfaceConfiguration(step, setting, scope) && step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeSocket *sock = (PancakeSocket*) setting->hook;
 
+		PancakeHTTPNetworking = 1;
 		sock->onRead = PancakeHTTPInitializeConnection;
 
 		return 1;
@@ -832,6 +834,33 @@ UByte PancakeHTTPInitialize() {
 
 	child = PancakeConfigurationLookupGroup(NULL, (String) {"Logging", sizeof("Logging") - 1});
 	PancakeConfigurationAddGroupToGroup(group, child);
+
+	return 1;
+}
+
+UByte PancakeHTTPCheckConfiguration() {
+	if(!PancakeHTTPDefaultVirtualHost) {
+		switch(PancakeHTTPNumVirtualHosts) {
+			case 0:
+				if(PancakeHTTPNetworking) {
+					PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "A server network interface is configured, but no virtual hosts are defined");
+					return 0;
+				}
+
+				return 1;
+			case 1:
+				if(PancakeHTTPVirtualHosts == NULL) {
+					PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Please define at least one host name for your configured virtual host");
+					return 0;
+				}
+
+				PancakeHTTPDefaultVirtualHost = PancakeHTTPVirtualHosts->vHost;
+				return 1;
+			default:
+				PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "No virtual host is set as default");
+				return 0;
+		}
+	}
 
 	return 1;
 }

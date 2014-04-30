@@ -149,6 +149,7 @@ extern const String PancakeHTTPMethods[];
 extern UInt16 PancakeHTTPNumVirtualHosts;
 
 UByte PancakeHTTPInitialize();
+UByte PancakeHTTPCheckConfiguration();
 void PancakeHTTPSRegisterProtocol();
 
 PANCAKE_API void PancakeHTTPRegisterContentServeBackend(PancakeHTTPContentServeBackend *backend);
