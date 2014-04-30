@@ -626,6 +626,11 @@ static UByte PancakeHTTPHostsConfiguration(UByte step, config_setting_t *setting
 
 static UByte PancakeHTTPDefaultConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT && setting->value.ival == 1) {
+		if(PancakeHTTPDefaultVirtualHost) {
+			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Another virtual host has already been set as default");
+			return 0;
+		}
+
 		PancakeHTTPDefaultVirtualHost = (PancakeHTTPVirtualHost*) (*scope)->data;
 	}
 
