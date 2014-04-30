@@ -602,7 +602,7 @@ static UByte PancakeHTTPHostsConfiguration(UByte step, config_setting_t *setting
 
 				index->vHost = vHost;
 
-				HASH_ADD_KEYPTR(hh, PancakeHTTPVirtualHosts, &element->value.sval, strlen(element->value.sval), index);
+				HASH_ADD_KEYPTR(hh, PancakeHTTPVirtualHosts, element->value.sval, strlen(element->value.sval), index);
 			}
 		} break;
 		case PANCAKE_CONFIGURATION_DTOR: {
@@ -612,7 +612,7 @@ static UByte PancakeHTTPHostsConfiguration(UByte step, config_setting_t *setting
 			while(element = config_setting_get_elem(setting, i++)) {
 				PancakeHTTPVirtualHostIndex *index;
 
-				HASH_FIND(hh, PancakeHTTPVirtualHosts, &element->value.sval, strlen(element->value.sval), index);
+				HASH_FIND(hh, PancakeHTTPVirtualHosts, element->value.sval, strlen(element->value.sval), index);
 				PancakeAssert(index != NULL);
 
 				HASH_DEL(PancakeHTTPVirtualHosts, index);
