@@ -1340,6 +1340,12 @@ PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code) {
 	// Set answer headers
 	PancakeHTTPBuildAnswerHeaders(sock);
 
+	if(request->method == PANCAKE_HTTP_HEAD) {
+		PancakeNetworkSetWriteSocket(sock);
+		sock->onWrite = PancakeHTTPFullWriteBuffer;
+		return;
+	}
+
 	// Reallocate buffer to correct size
 	sock->writeBuffer.size = sock->writeBuffer.length + request->contentLength;
 	sock->writeBuffer.value = PancakeReallocate(sock->writeBuffer.value, sock->writeBuffer.size);
