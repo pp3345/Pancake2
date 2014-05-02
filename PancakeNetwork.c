@@ -130,7 +130,7 @@ PANCAKE_API UByte PancakeNetworkInterfaceConfiguration(UByte step, config_settin
 	return 1;
 }
 
-static UByte PancakeNetworkInterfaceNetworkConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeNetworkInterfaceNetworkConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeSocket *sock = (PancakeSocket*) setting->parent->hook;
 		Int32 value = 1;
@@ -181,7 +181,7 @@ PANCAKE_API void PancakeNetworkReplaceListenSocket(PancakeSocket *previous, Panc
 	}
 }
 
-static UByte PancakeNetworkInterfaceTryBind(PancakeSocket *socket) {
+STATIC UByte PancakeNetworkInterfaceTryBind(PancakeSocket *socket) {
 	int retval;
 
 	// Try binding to interface
@@ -214,7 +214,7 @@ static UByte PancakeNetworkInterfaceTryBind(PancakeSocket *socket) {
 	return 1;
 }
 
-static UByte PancakeNetworkInterfaceAddressConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeNetworkInterfaceAddressConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeSocket *socket;
 
 	switch(step) {
@@ -284,7 +284,7 @@ static UByte PancakeNetworkInterfaceAddressConfiguration(UByte step, config_sett
 	return 1;
 }
 
-static UByte PancakeNetworkInterfacePortConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeNetworkInterfacePortConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeSocket *socket;
 
 	switch(step) {
@@ -332,7 +332,7 @@ static UByte PancakeNetworkInterfacePortConfiguration(UByte step, config_setting
 	return 1;
 }
 
-static UByte PancakeNetworkInterfaceBacklogConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeNetworkInterfaceBacklogConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeSocket *sock = (PancakeSocket*) setting->parent->hook;
 
@@ -342,7 +342,7 @@ static UByte PancakeNetworkInterfaceBacklogConfiguration(UByte step, config_sett
 	return 1;
 }
 
-static UByte PancakeNetworkInterfaceLayerConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeNetworkInterfaceLayerConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeSocket *sock = (PancakeSocket*) setting->parent->hook;
 		PancakeNetworkLayer *layer;
@@ -371,7 +371,7 @@ PANCAKE_API void PancakeNetworkClientInterfaceConfiguration(PancakeNetworkClient
 	client->address = NULL;
 }
 
-static UByte PancakeNetworkClientInterfaceNetworkConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeNetworkClientInterfaceNetworkConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeNetworkClientInterface *client = (PancakeNetworkClientInterface*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -395,7 +395,7 @@ static UByte PancakeNetworkClientInterfaceNetworkConfiguration(UByte step, confi
 	return 1;
 }
 
-static UByte PancakeNetworkClientInterfaceAddressConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeNetworkClientInterfaceAddressConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeNetworkClientInterface *client = (PancakeNetworkClientInterface*) setting->parent->hook;
 
@@ -447,7 +447,7 @@ static UByte PancakeNetworkClientInterfaceAddressConfiguration(UByte step, confi
 	return 1;
 }
 
-static UByte PancakeNetworkClientInterfacePortConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeNetworkClientInterfacePortConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeNetworkClientInterface *client = (PancakeNetworkClientInterface*) setting->parent->hook;
 

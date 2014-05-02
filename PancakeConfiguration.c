@@ -24,7 +24,7 @@ void PancakeConfigurationInitialize() {
 	PancakeConfiguration->settings = NULL;
 }
 
-static UByte PancakeConfigurationCheckValue(PancakeConfigurationScope *scope, PancakeConfigurationGroup *parent, config_setting_t *configSetting) {
+STATIC UByte PancakeConfigurationCheckValue(PancakeConfigurationScope *scope, PancakeConfigurationGroup *parent, config_setting_t *configSetting) {
 	switch(configSetting->type) {
 		case CONFIG_TYPE_GROUP: {
 			PancakeConfigurationGroup *group = NULL;
@@ -139,7 +139,7 @@ static UByte PancakeConfigurationCheckValue(PancakeConfigurationScope *scope, Pa
 	return 1;
 }
 
-static void PancakeConfigurationLoadGroupDefaultValues(PancakeConfigurationGroup *parent) {
+STATIC void PancakeConfigurationLoadGroupDefaultValues(PancakeConfigurationGroup *parent) {
 	PancakeConfigurationSetting *setting;
 	PancakeConfigurationGroup *group;
 
@@ -225,7 +225,7 @@ UByte PancakeConfigurationLoad() {
 	return 1;
 }
 
-static void PancakeConfigurationDestroyValue(PancakeConfigurationGroup *parent, config_setting_t *configSetting) {
+STATIC void PancakeConfigurationDestroyValue(PancakeConfigurationGroup *parent, config_setting_t *configSetting) {
 	switch(configSetting->type) {
 		case CONFIG_TYPE_GROUP: {
 			PancakeConfigurationGroup *group = NULL;
@@ -297,7 +297,7 @@ void PancakeConfigurationUnload() {
 	PancakeConfigurationDestroyScope(rootScope);
 }
 
-static void PancakeConfigurationDestroyGroup(PancakeConfigurationGroup *group) {
+STATIC void PancakeConfigurationDestroyGroup(PancakeConfigurationGroup *group) {
 	PancakeConfigurationSetting *setting, *tmp;
 	PancakeConfigurationGroup *child, *tmp2;
 
