@@ -9,7 +9,7 @@ static UByte *RFC1123Days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 static UByte *RFC1123Months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 PANCAKE_API String PancakeFormatDate(Native time) {
-	struct tm *timeStruct = gmtime(&time);
+	struct tm *timeStruct = localtime(&time);
 	String formatted;
 
 	PancakeAssert(timeStruct != NULL);
@@ -21,7 +21,7 @@ PANCAKE_API String PancakeFormatDate(Native time) {
 }
 
 PANCAKE_API String PancakeFormatDateTime(Native time) {
-	struct tm *timeStruct = gmtime(&time);
+	struct tm *timeStruct = localtime(&time);
 	String formatted;
 
 	PancakeAssert(timeStruct != NULL);
@@ -33,7 +33,7 @@ PANCAKE_API String PancakeFormatDateTime(Native time) {
 }
 
 PANCAKE_API void PancakeRFC1123Date(Native time, UByte *buf) {
-	struct tm *now = gmtime(&time);
+	struct tm *now = localtime(&time);
 
 	strftime(buf, 30, "___, %d ___ %Y %H:%M:%S GMT", now);
 	memcpy(buf, RFC1123Days[now->tm_wday], 3);
@@ -54,7 +54,7 @@ PANCAKE_API void PancakeRFC1123CurrentDate(UByte *buf) {
 		return;
 	}
 
-	now = gmtime(&currentTime);
+	now = localtime(&currentTime);
 	strftime(buf, 30, "___, %d ___ %Y %H:%M:%S GMT", now);
 	memcpy(buf, RFC1123Days[now->tm_wday], 3);
 	memcpy(buf + 8, RFC1123Months[now->tm_mon], 3);
