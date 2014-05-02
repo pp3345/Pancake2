@@ -10,11 +10,11 @@
 #endif
 
 /* Forward declarations */
-static UByte PancakeHTTPFastCGIInitialize();
-static UByte PancakeHTTPFastCGIServe();
-static void PancakeHTTPFastCGIOnRemoteHangup(PancakeSocket *sock);
-static void PancakeHTTPFastCGIOnRead(PancakeSocket *sock);
-static void PancakeHTTPFastCGIOnWrite(PancakeSocket *sock);
+STATIC UByte PancakeHTTPFastCGIInitialize();
+STATIC UByte PancakeHTTPFastCGIServe();
+STATIC void PancakeHTTPFastCGIOnRemoteHangup(PancakeSocket *sock);
+STATIC void PancakeHTTPFastCGIOnRead(PancakeSocket *sock);
+STATIC void PancakeHTTPFastCGIOnWrite(PancakeSocket *sock);
 
 PancakeModule PancakeHTTPFastCGIModule = {
 		"HTTPFastCGI",
@@ -39,7 +39,7 @@ static PancakeFastCGIConfigurationStructure FastCGIConfiguration = {
 
 static PancakeFastCGIClient *PancakeFastCGIClients = NULL;
 
-static UByte PancakeHTTPFastCGIConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPFastCGIConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeFastCGIClient *client;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -68,7 +68,7 @@ static UByte PancakeHTTPFastCGIConfiguration(UByte step, config_setting_t *setti
 	return 1;
 }
 
-static UByte PancakeHTTPFastCGINameConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPFastCGINameConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeFastCGIClient *client = (PancakeFastCGIClient*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -83,7 +83,7 @@ static UByte PancakeHTTPFastCGINameConfiguration(UByte step, config_setting_t *s
 	return 1;
 }
 
-static UByte PancakeHTTPFastCGIClientConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPFastCGIClientConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		UInt32 length = strlen(setting->value.sval);
 
@@ -118,7 +118,7 @@ static UByte PancakeHTTPFastCGIClientConfiguration(UByte step, config_setting_t 
 	return 1;
 }
 
-static UByte PancakeHTTPFastCGIClientInterfaceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPFastCGIClientInterfaceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		setting->hook = setting->parent->hook;
 	} else {
@@ -129,7 +129,7 @@ static UByte PancakeHTTPFastCGIClientInterfaceConfiguration(UByte step, config_s
 	return 1;
 }
 
-static UByte PancakeHTTPFastCGIKeepAliveConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPFastCGIKeepAliveConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeFastCGIClient *client = (PancakeFastCGIClient*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -141,7 +141,7 @@ static UByte PancakeHTTPFastCGIKeepAliveConfiguration(UByte step, config_setting
 	return 1;
 }
 
-static UByte PancakeHTTPFastCGIInitialize() {
+STATIC UByte PancakeHTTPFastCGIInitialize() {
 	PancakeConfigurationSetting *FastCGIClients, *FastCGIClient, *VirtualHosts;
 	PancakeConfigurationGroup *FastCGIGroup, *HTTP;
 
@@ -178,7 +178,7 @@ static UByte PancakeHTTPFastCGIInitialize() {
 	return 1;
 }
 
-static void PancakeHTTPFastCGIWriteContentBody(PancakeSocket *socket, PancakeSocket *clientSocket, UInt16 requestID) {
+STATIC void PancakeHTTPFastCGIWriteContentBody(PancakeSocket *socket, PancakeSocket *clientSocket, UInt16 requestID) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) clientSocket->data;
 	UInt32 length = clientSocket->readBuffer.length - 4 - request->headerEnd;
 	UByte haveMoreData = 0;
@@ -263,7 +263,7 @@ static void PancakeHTTPFastCGIWriteContentBody(PancakeSocket *socket, PancakeSoc
 	}
 }
 
-static inline void FastCGIEncodeParameter(PancakeSocket *sock, String *name, String *value) {
+STATIC inline void FastCGIEncodeParameter(PancakeSocket *sock, String *name, String *value) {
 	UByte *offset;
 	UInt32 length = name->length + value->length + (name->length < 128 ? 1 : 4) + (value->length < 128 ? 1 : 4);
 
@@ -306,7 +306,7 @@ static inline void FastCGIEncodeParameter(PancakeSocket *sock, String *name, Str
 	sock->writeBuffer.length += length;
 }
 
-static inline UByte FastCGIDecodeParameter(PancakeSocket *sock, UInt32 *noffset, String *name, String *value) {
+STATIC inline UByte FastCGIDecodeParameter(PancakeSocket *sock, UInt32 *noffset, String *name, String *value) {
 	UByte *offset = sock->readBuffer.value + *noffset;
 
 	if(UNEXPECTED(*noffset > sock->readBuffer.length - 2)) {
@@ -364,7 +364,7 @@ static inline UByte FastCGIDecodeParameter(PancakeSocket *sock, UInt32 *noffset,
 	return 1;
 }
 
-static void FastCGIReadRecord(PancakeSocket *sock) {
+STATIC void FastCGIReadRecord(PancakeSocket *sock) {
 	UInt16 contentLength, requestID;
 	UInt8 paddingLength;
 	PancakeHTTPRequest *request;
@@ -621,7 +621,7 @@ static void FastCGIReadRecord(PancakeSocket *sock) {
 	return;
 }
 
-static void PancakeHTTPFastCGIOnRead(PancakeSocket *sock) {
+STATIC void PancakeHTTPFastCGIOnRead(PancakeSocket *sock) {
 	UInt32 length;
 	do {
 		if((length = PancakeNetworkRead(sock, 131596)) == -1) { // 65798 bytes = max record size
@@ -633,7 +633,7 @@ static void PancakeHTTPFastCGIOnRead(PancakeSocket *sock) {
 	// We need to read all data, since we might not get the chance to read again if FCGI server has hung up (EPOLLRDHUP)
 }
 
-static void PancakeHTTPFastCGIOnWrite(PancakeSocket *sock) {
+STATIC void PancakeHTTPFastCGIOnWrite(PancakeSocket *sock) {
 	PancakeNetworkWrite(sock);
 
 	if(!sock->writeBuffer.length) {
@@ -641,7 +641,7 @@ static void PancakeHTTPFastCGIOnWrite(PancakeSocket *sock) {
 	}
 }
 
-static void PancakeHTTPFastCGIOnRemoteHangup(PancakeSocket *sock) {
+STATIC void PancakeHTTPFastCGIOnRemoteHangup(PancakeSocket *sock) {
 	// Lookup running requests on socket
 	UInt16 i;
 	PancakeFastCGIClient *client = (PancakeFastCGIClient*) sock->data;
@@ -677,7 +677,7 @@ static void PancakeHTTPFastCGIOnRemoteHangup(PancakeSocket *sock) {
 	PancakeNetworkClose(sock);
 }
 
-static void PancakeHTTPFastCGIOnClientRead(PancakeSocket *sock) {
+STATIC void PancakeHTTPFastCGIOnClientRead(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 	PancakeFastCGIClient *client;
 	UInt16 requestID = (UInt16) (UNative) request->contentServeData;
@@ -698,7 +698,7 @@ static void PancakeHTTPFastCGIOnClientRead(PancakeSocket *sock) {
 	}
 }
 
-static void PancakeHTTPFastCGIOnClientHangup(PancakeSocket *sock) {
+STATIC void PancakeHTTPFastCGIOnClientHangup(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 	PancakeFastCGIClient *client;
 	PancakeSocket *FCGISocket;
@@ -759,7 +759,7 @@ static void PancakeHTTPFastCGIOnClientHangup(PancakeSocket *sock) {
 	PancakeConfigurationUnscope();
 }
 
-static UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
+STATIC UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 	if(FastCGIConfiguration.client) {
 		PancakeHTTPRequest *request = (PancakeHTTPRequest*) clientSocket->data;
 		String queryString;

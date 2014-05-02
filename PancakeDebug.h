@@ -45,7 +45,7 @@ typedef struct _PancakeAllocatedMemory {
 	UT_hash_handle hh;
 } PancakeAllocatedMemory;
 
-#	define static
+#	define STATIC
 
 #	define PancakeAssert(condition) _PancakeAssert(condition, #condition, __FILE__, __LINE__)
 #	define PancakeAllocate(size) _PancakeAllocate(size, __FILE__, __LINE__)
@@ -66,6 +66,8 @@ typedef struct _PancakeAllocatedMemory {
 #	define PancakeFree free
 #	define PancakeReallocate realloc
 #	define PancakeDebug if(0)
+
+#	define STATIC static
 #endif
 
 #endif

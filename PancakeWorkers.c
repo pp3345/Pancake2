@@ -3,7 +3,7 @@
 #include "PancakeLogger.h"
 
 /* Forward declaration */
-static void PancakeInternalCommunicationEvent(PancakeSocket *sock);
+STATIC void PancakeInternalCommunicationEvent(PancakeSocket *sock);
 
 PANCAKE_API UByte PancakeRunWorker(PancakeWorker *worker) {
 	pid_t pid;
@@ -50,7 +50,7 @@ PANCAKE_API UByte PancakeRunWorker(PancakeWorker *worker) {
 	}
 }
 
-static void PancakeInternalCommunicationEvent(PancakeSocket *sock) {
+STATIC void PancakeInternalCommunicationEvent(PancakeSocket *sock) {
 	UByte instruction;
 
 	read(sock->fd, &instruction, 1);

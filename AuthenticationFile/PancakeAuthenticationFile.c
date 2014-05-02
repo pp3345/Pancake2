@@ -16,7 +16,7 @@ PancakeModule PancakeAuthenticationFileModule = {
 	0
 };
 
-static UByte PancakeAuthenticationFileAuthenticate(PancakeAuthenticationConfiguration *config, void *client);
+STATIC UByte PancakeAuthenticationFileAuthenticate(PancakeAuthenticationConfiguration *config, void *client);
 
 static const UByte hex[17] = "0123456789abcdef";
 
@@ -29,7 +29,7 @@ static PancakeAuthenticationBackend PancakeAuthenticationFile = {
 	NULL
 };
 
-static UByte PancakeAuthenticationFileFileConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeAuthenticationFileFileConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeAuthenticationConfiguration *config = (PancakeAuthenticationConfiguration*) setting->parent->parent->hook;
 	PancakeAuthenticationFileData *data = (PancakeAuthenticationFileData*) config->backendData;
 
@@ -122,7 +122,7 @@ static UByte PancakeAuthenticationFileFileConfiguration(UByte step, config_setti
 	return 1;
 }
 
-static UByte PancakeAuthenticationEncryptionConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeAuthenticationEncryptionConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeAuthenticationConfiguration *config = (PancakeAuthenticationConfiguration*) setting->parent->parent->hook;
 	PancakeAuthenticationFileData *data = (PancakeAuthenticationFileData*) config->backendData;
 
@@ -161,7 +161,7 @@ static UByte PancakeAuthenticationEncryptionConfiguration(UByte step, config_set
 	return 1;
 }
 
-static UByte PancakeAuthenticationFileConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeAuthenticationFileConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeAuthenticationConfiguration *config = (PancakeAuthenticationConfiguration*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -204,7 +204,7 @@ UByte PancakeAuthenticationFileInitialize() {
 	return 1;
 }
 
-static UByte PancakeAuthenticationFileAuthenticate(PancakeAuthenticationConfiguration *config, void *c) {
+STATIC UByte PancakeAuthenticationFileAuthenticate(PancakeAuthenticationConfiguration *config, void *c) {
 	PancakeAuthenticationFileData *data = (PancakeAuthenticationFileData*) config->backendData;
 	PancakeAuthenticationFileUser *user = NULL;
 	PancakeAuthenticationUserPassword *client = (PancakeAuthenticationUserPassword*) c;

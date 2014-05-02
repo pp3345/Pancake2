@@ -20,7 +20,7 @@ static PancakeAuthenticationConfiguration *PancakeAuthenticationConfigurations =
 /* Global variable */
 PancakeAuthenticationConfiguration *PancakeAuthenticationActiveConfiguration = NULL;
 
-static UByte PancakeAuthenticationGroupConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeAuthenticationGroupConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeAuthenticationConfiguration *config;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -37,7 +37,7 @@ static UByte PancakeAuthenticationGroupConfiguration(UByte step, config_setting_
 	return 1;
 }
 
-static UByte PancakeAuthenticationNameConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeAuthenticationNameConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeAuthenticationConfiguration *config = (PancakeAuthenticationConfiguration*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -52,7 +52,7 @@ static UByte PancakeAuthenticationNameConfiguration(UByte step, config_setting_t
 	return 1;
 }
 
-static UByte PancakeAuthenticationBackendConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeAuthenticationBackendConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeAuthenticationConfiguration *config = (PancakeAuthenticationConfiguration*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -78,7 +78,7 @@ static UByte PancakeAuthenticationBackendConfiguration(UByte step, config_settin
 	return 1;
 }
 
-static UByte PancakeAuthenticationConfigurationConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeAuthenticationConfigurationConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeAuthenticationConfiguration *config = NULL;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {

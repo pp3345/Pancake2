@@ -10,23 +10,23 @@
 Int32 PancakeLinuxPollFD = -1;
 
 /* Forward declarations */
-static UByte PancakeLinuxPollInitialize();
-static UByte PancakeLinuxPollShutdown();
-static UByte PancakeLinuxPollServerInitialize();
-static void PancakeLinuxPollWait();
-static inline void PancakeLinuxPollAddReadSocket(PancakeSocket *socket);
-static inline void PancakeLinuxPollAddWriteSocket(PancakeSocket *socket);
-static inline void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket);
+STATIC UByte PancakeLinuxPollInitialize();
+STATIC UByte PancakeLinuxPollShutdown();
+STATIC UByte PancakeLinuxPollServerInitialize();
+STATIC void PancakeLinuxPollWait();
+STATIC inline void PancakeLinuxPollAddReadSocket(PancakeSocket *socket);
+STATIC inline void PancakeLinuxPollAddWriteSocket(PancakeSocket *socket);
+STATIC inline void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket);
 
-static inline void PancakeLinuxPollRemoveSocket(PancakeSocket *socket);
-static inline void PancakeLinuxPollRemoveReadSocket(PancakeSocket *socket);
-static inline void PancakeLinuxPollRemoveWriteSocket(PancakeSocket *socket);
+STATIC inline void PancakeLinuxPollRemoveSocket(PancakeSocket *socket);
+STATIC inline void PancakeLinuxPollRemoveReadSocket(PancakeSocket *socket);
+STATIC inline void PancakeLinuxPollRemoveWriteSocket(PancakeSocket *socket);
 
-static inline void PancakeLinuxPollSetReadSocket(PancakeSocket *socket);
-static inline void PancakeLinuxPollSetWriteSocket(PancakeSocket *socket);
-static inline void PancakeLinuxPollSetSocket(PancakeSocket *socket);
+STATIC inline void PancakeLinuxPollSetReadSocket(PancakeSocket *socket);
+STATIC inline void PancakeLinuxPollSetWriteSocket(PancakeSocket *socket);
+STATIC inline void PancakeLinuxPollSetSocket(PancakeSocket *socket);
 
-static inline void PancakeLinuxPollOnSocketClose(PancakeSocket *socket);
+STATIC inline void PancakeLinuxPollOnSocketClose(PancakeSocket *socket);
 
 static PancakeSocket *currentSocket;
 
@@ -63,13 +63,13 @@ PancakeServerArchitecture PancakeLinuxPollServer = {
 		NULL
 };
 
-static UByte PancakeLinuxPollInitialize() {
+STATIC UByte PancakeLinuxPollInitialize() {
 	PancakeRegisterServerArchitecture(&PancakeLinuxPollServer);
 
 	return 1;
 }
 
-static UByte PancakeLinuxPollShutdown() {
+STATIC UByte PancakeLinuxPollShutdown() {
 	if(PancakeLinuxPollFD != -1) {
 		close(PancakeLinuxPollFD);
 	}
@@ -77,7 +77,7 @@ static UByte PancakeLinuxPollShutdown() {
 	return 1;
 }
 
-static UByte PancakeLinuxPollServerInitialize() {
+STATIC UByte PancakeLinuxPollServerInitialize() {
 	// Just test epoll here, to make sure everything will work
 	// The actual epoll instance must be created in the workers as it can't be shared
 
@@ -95,7 +95,7 @@ static UByte PancakeLinuxPollServerInitialize() {
 	return 1;
 }
 
-static inline void PancakeLinuxPollAddReadSocket(PancakeSocket *socket) {
+STATIC inline void PancakeLinuxPollAddReadSocket(PancakeSocket *socket) {
 	if(socket->flags & PANCAKE_LINUX_POLL_SOCKET) {
 		if(!(socket->flags & PANCAKE_LINUX_POLL_IN)) {
 			struct epoll_event event;
@@ -117,7 +117,7 @@ static inline void PancakeLinuxPollAddReadSocket(PancakeSocket *socket) {
 	}
 }
 
-static inline void PancakeLinuxPollAddWriteSocket(PancakeSocket *socket) {
+STATIC inline void PancakeLinuxPollAddWriteSocket(PancakeSocket *socket) {
 	if(socket->flags & PANCAKE_LINUX_POLL_SOCKET) {
 		if(!(socket->flags & PANCAKE_LINUX_POLL_OUT)) {
 			struct epoll_event event;
@@ -139,7 +139,7 @@ static inline void PancakeLinuxPollAddWriteSocket(PancakeSocket *socket) {
 	}
 }
 
-static inline void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket) {
+STATIC inline void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket) {
 	if(socket->flags & PANCAKE_LINUX_POLL_SOCKET) {
 		if((socket->flags & (PANCAKE_LINUX_POLL_OUT | PANCAKE_LINUX_POLL_IN)) != (PANCAKE_LINUX_POLL_OUT | PANCAKE_LINUX_POLL_IN)) {
 			struct epoll_event event;
@@ -161,14 +161,14 @@ static inline void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket) {
 	}
 }
 
-static inline void PancakeLinuxPollRemoveSocket(PancakeSocket *socket) {
+STATIC inline void PancakeLinuxPollRemoveSocket(PancakeSocket *socket) {
 	if(socket->flags & PANCAKE_LINUX_POLL_SOCKET) {
 		epoll_ctl(PancakeLinuxPollFD, EPOLL_CTL_DEL, socket->fd, NULL);
 		socket->flags ^= PANCAKE_LINUX_POLL_SOCKET;
 	}
 }
 
-static inline void PancakeLinuxPollRemoveReadSocket(PancakeSocket *socket) {
+STATIC inline void PancakeLinuxPollRemoveReadSocket(PancakeSocket *socket) {
 	if(socket->flags & PANCAKE_LINUX_POLL_IN) {
 		struct epoll_event event;
 
@@ -180,7 +180,7 @@ static inline void PancakeLinuxPollRemoveReadSocket(PancakeSocket *socket) {
 	}
 }
 
-static inline void PancakeLinuxPollRemoveWriteSocket(PancakeSocket *socket) {
+STATIC inline void PancakeLinuxPollRemoveWriteSocket(PancakeSocket *socket) {
 	if(socket->flags & PANCAKE_LINUX_POLL_OUT) {
 		struct epoll_event event;
 
@@ -192,7 +192,7 @@ static inline void PancakeLinuxPollRemoveWriteSocket(PancakeSocket *socket) {
 	}
 }
 
-static inline void PancakeLinuxPollSetReadSocket(PancakeSocket *socket) {
+STATIC inline void PancakeLinuxPollSetReadSocket(PancakeSocket *socket) {
 	struct epoll_event event;
 
 	event.events = EPOLLRDHUP | EPOLLIN;
@@ -213,7 +213,7 @@ static inline void PancakeLinuxPollSetReadSocket(PancakeSocket *socket) {
 	}
 }
 
-static inline void PancakeLinuxPollSetWriteSocket(PancakeSocket *socket) {
+STATIC inline void PancakeLinuxPollSetWriteSocket(PancakeSocket *socket) {
 	struct epoll_event event;
 
 	event.events = EPOLLRDHUP | EPOLLOUT;
@@ -234,7 +234,7 @@ static inline void PancakeLinuxPollSetWriteSocket(PancakeSocket *socket) {
 	}
 }
 
-static inline void PancakeLinuxPollSetSocket(PancakeSocket *socket) {
+STATIC inline void PancakeLinuxPollSetSocket(PancakeSocket *socket) {
 	struct epoll_event event;
 
 	event.events = EPOLLRDHUP;
@@ -257,7 +257,7 @@ static inline void PancakeLinuxPollSetSocket(PancakeSocket *socket) {
 	}
 }
 
-static inline void PancakeLinuxPollOnSocketClose(PancakeSocket *socket) {
+STATIC inline void PancakeLinuxPollOnSocketClose(PancakeSocket *socket) {
 	// Socket will automatically be removed from epoll instance on close(), no need to do EPOLL_CTL_DEL operation
 
 	// Make sure we don't execute further events on this socket
@@ -266,7 +266,7 @@ static inline void PancakeLinuxPollOnSocketClose(PancakeSocket *socket) {
 	}
 }
 
-static void PancakeLinuxPollWait() {
+STATIC void PancakeLinuxPollWait() {
 	// Initialize with size 32 on old kernels
 	PancakeLinuxPollFD = epoll_create(32);
 

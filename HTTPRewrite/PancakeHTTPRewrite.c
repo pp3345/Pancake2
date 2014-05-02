@@ -18,7 +18,7 @@ PancakeModule PancakeHTTPRewriteModule = {
 	0
 };
 
-static UByte PancakeHTTPRewrite(PancakeSocket *sock);
+STATIC UByte PancakeHTTPRewrite(PancakeSocket *sock);
 
 static PancakeHTTPParserHook PancakeHTTPRewriteParserHook = {
 	"Rewrite",
@@ -40,7 +40,7 @@ static UByte CompilerState = 0;
 static PancakeConfigurationScope *ConfigurationScope = NULL;
 static PancakeHTTPRewriteRuleset *LastRuleset = NULL;
 
-static void PancakeHTTPRewriteMakeOpcode(PancakeHTTPRewriteRuleset *ruleset, UByte opcode, void *op1, void *op2) {
+STATIC void PancakeHTTPRewriteMakeOpcode(PancakeHTTPRewriteRuleset *ruleset, UByte opcode, void *op1, void *op2) {
 	PancakeHTTPRewriteOpcode *op = PancakeAllocate(sizeof(PancakeHTTPRewriteOpcode));
 
 	op->handler = PancakeHTTPRewriteOpcodeHandlers[opcode];
@@ -57,7 +57,7 @@ static void PancakeHTTPRewriteMakeOpcode(PancakeHTTPRewriteRuleset *ruleset, UBy
 #endif
 }
 
-static UByte PancakeHTTPRewriteRulesetConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPRewriteRulesetConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeHTTPRewriteRuleset *ruleset;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -109,7 +109,7 @@ static UByte PancakeHTTPRewriteRulesetConfiguration(UByte step, config_setting_t
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeHTTPRewriteVariable *var;
 	PancakeHTTPRewriteCallback *callback;
 	PancakeHTTPRewriteRuleset *ruleset;
@@ -215,7 +215,7 @@ static UByte PancakeHTTPRewriteCompile(UByte step, config_setting_t *setting, Pa
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPRewriteConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeHTTPRewriteConfigurationStructure *config;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -346,7 +346,7 @@ PANCAKE_API void PancakeHTTPRewriteRegisterCallback(String name, PancakeHTTPRewr
 	PancakeConfigurationAddSetting(PancakeHTTPRewriteGroup, cb->name, CONFIG_TYPE_NONE, NULL, 0, (config_value_t) 0, PancakeHTTPRewriteCompile);
 }
 
-static UByte PancakeHTTPRewrite(PancakeSocket *sock) {
+STATIC UByte PancakeHTTPRewrite(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	if(EXPECTED(request->vHost->rewriteConfiguration != NULL)) {

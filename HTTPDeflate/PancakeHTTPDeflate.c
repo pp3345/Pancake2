@@ -6,9 +6,9 @@
 #include "PancakeConfiguration.h"
 #include "PancakeLogger.h"
 
-static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk);
-static UByte PancakeHTTPDeflateInitialize();
-static void PancakeHTTPDeflateOnOutputEnd(PancakeHTTPRequest *request);
+STATIC UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk);
+STATIC UByte PancakeHTTPDeflateInitialize();
+STATIC void PancakeHTTPDeflateOnOutputEnd(PancakeHTTPRequest *request);
 
 PancakeModule PancakeHTTPDeflate = {
 		"HTTPDeflate",
@@ -34,7 +34,7 @@ static String PancakeHTTPDeflateContentEncoding = {
 		sizeof("deflate") - 1
 };
 
-static UByte PancakeHTTPDeflateInitialize() {
+STATIC UByte PancakeHTTPDeflateInitialize() {
 	PancakeConfigurationGroup *HTTP, *vHostGroup, *group;
 	PancakeConfigurationSetting *vHost;
 
@@ -60,12 +60,12 @@ static UByte PancakeHTTPDeflateInitialize() {
 	return 1;
 }
 
-static void PancakeHTTPDeflateOnOutputEnd(PancakeHTTPRequest *request) {
+STATIC void PancakeHTTPDeflateOnOutputEnd(PancakeHTTPRequest *request) {
 	deflateEnd(request->outputFilterData);
 	PancakeFree(request->outputFilterData);
 }
 
-static UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
+STATIC UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 	z_streamp stream;
 	String output;

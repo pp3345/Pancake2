@@ -538,8 +538,8 @@ static PancakeHTTPOutputFilter *outputFilters = NULL;
 static PancakeHTTPParserHook *parserHooks = NULL;
 
 /* Forward declarations */
-static void PancakeHTTPInitializeConnection(PancakeSocket *sock);
-static void PancakeHTTPReadHeaderData(PancakeSocket *sock);
+STATIC void PancakeHTTPInitializeConnection(PancakeSocket *sock);
+STATIC void PancakeHTTPReadHeaderData(PancakeSocket *sock);
 
 PANCAKE_API void PancakeHTTPRegisterContentServeBackend(PancakeHTTPContentServeBackend *backend) {
 	LL_APPEND(contentBackends, backend);
@@ -553,7 +553,7 @@ PANCAKE_API void PancakeHTTPRegisterParserHook(PancakeHTTPParserHook *hook) {
 	LL_APPEND(parserHooks, hook);
 }
 
-static UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeHTTPVirtualHost *vhost;
 
 	switch(step) {
@@ -591,7 +591,7 @@ static UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *s
 	return 1;
 }
 
-static UByte PancakeHTTPHostsConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPHostsConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	switch(step) {
 		case PANCAKE_CONFIGURATION_INIT: {
 			PancakeHTTPVirtualHost *vHost = (PancakeHTTPVirtualHost*) (*scope)->data;
@@ -625,7 +625,7 @@ static UByte PancakeHTTPHostsConfiguration(UByte step, config_setting_t *setting
 	return 1;
 }
 
-static UByte PancakeHTTPDefaultConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPDefaultConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT && setting->value.ival == 1) {
 		if(PancakeHTTPDefaultVirtualHost) {
 			PancakeLoggerFormat(PANCAKE_LOGGER_ERROR, 0, "Another virtual host has already been set as default");
@@ -638,7 +638,7 @@ static UByte PancakeHTTPDefaultConfiguration(UByte step, config_setting_t *setti
 	return 1;
 }
 
-static UByte PancakeHTTPDocumentRootConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPDocumentRootConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	String *documentRoot;
 
 	switch(step) {
@@ -683,7 +683,7 @@ static UByte PancakeHTTPDocumentRootConfiguration(UByte step, config_setting_t *
 	return 1;
 }
 
-static UByte PancakeHTTPNetworkInterfaceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPNetworkInterfaceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(PancakeNetworkInterfaceConfiguration(step, setting, scope) && step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeSocket *sock = (PancakeSocket*) setting->hook;
 
@@ -696,7 +696,7 @@ static UByte PancakeHTTPNetworkInterfaceConfiguration(UByte step, config_setting
 	return 0;
 }
 
-static UByte PancakeHTTPContentServeBackendConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPContentServeBackendConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	config_setting_t *element;
 	UInt16 i = 0;
 	PancakeHTTPVirtualHost *vHost = (PancakeHTTPVirtualHost*) setting->parent->hook;
@@ -730,7 +730,7 @@ static UByte PancakeHTTPContentServeBackendConfiguration(UByte step, config_sett
 	return 1;
 }
 
-static UByte PancakeHTTPOutputFilterConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPOutputFilterConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	config_setting_t *element;
 	UInt16 i = 0;
 	PancakeHTTPVirtualHost *vHost = (PancakeHTTPVirtualHost*) setting->parent->hook;
@@ -764,7 +764,7 @@ static UByte PancakeHTTPOutputFilterConfiguration(UByte step, config_setting_t *
 	return 1;
 }
 
-static UByte PancakeHTTPParserHookConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeHTTPParserHookConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	config_setting_t *element;
 	UInt16 i = 0;
 	PancakeHTTPVirtualHost *vHost = (PancakeHTTPVirtualHost*) setting->parent->hook;
@@ -798,11 +798,10 @@ static UByte PancakeHTTPParserHookConfiguration(UByte step, config_setting_t *se
 	return 1;
 }
 
-static UByte initDeferred = 0;
-
 UByte PancakeHTTPInitialize() {
 	PancakeConfigurationGroup *group, *child;
 	PancakeConfigurationSetting *setting, *serverHeader;
+	static UByte initDeferred = 0;
 
 	if(!initDeferred) {
 		// Defer once to make sure all network layers are registered before creating interface group
@@ -865,7 +864,7 @@ UByte PancakeHTTPCheckConfiguration() {
 	return 1;
 }
 
-static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *request) {
+STATIC inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *request) {
 	request->method = 0;
 	request->headers = NULL;
 	request->answerHeaders = NULL;
@@ -886,7 +885,7 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	PancakeConfigurationInitializeScopeGroup(&request->scopeGroup);
 }
 
-static void PancakeHTTPInitializeConnection(PancakeSocket *sock) {
+STATIC void PancakeHTTPInitializeConnection(PancakeSocket *sock) {
 	PancakeSocket *client = PancakeNetworkAcceptConnection(sock);
 	PancakeHTTPRequest *request;
 
@@ -907,7 +906,7 @@ static void PancakeHTTPInitializeConnection(PancakeSocket *sock) {
 	PancakeHTTPReadHeaderData(client);
 }
 
-static void PancakeHTTPInitializeKeepAliveConnection(PancakeSocket *sock) {
+STATIC void PancakeHTTPInitializeKeepAliveConnection(PancakeSocket *sock) {
 	PancakeHTTPRequest *request;
 
 	request = PancakeAllocate(sizeof(PancakeHTTPRequest));
@@ -925,7 +924,7 @@ static void PancakeHTTPInitializeKeepAliveConnection(PancakeSocket *sock) {
 	PancakeHTTPReadHeaderData(sock);
 }
 
-static inline void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request) {
+STATIC inline void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request) {
 	PancakeHTTPHeader *header, *tmp;
 
 	if(request->onRequestEnd) {
@@ -943,7 +942,7 @@ static inline void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request) {
 	PancakeConfigurationDestroyScopeGroup(&request->scopeGroup);
 }
 
-static void PancakeHTTPOnClientTimeout(PancakeSocket *sock) {
+STATIC void PancakeHTTPOnClientTimeout(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	if(request != NULL) {
@@ -955,7 +954,7 @@ static void PancakeHTTPOnClientTimeout(PancakeSocket *sock) {
 	PancakeNetworkClose(sock);
 }
 
-static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
+STATIC void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	// Read data from socket
@@ -1460,7 +1459,7 @@ PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock) {
 	PancakeNetworkClose(sock);
 }
 
-static void PancakeHTTPOnKeepAliveRemoteHangup(PancakeSocket *sock) {
+STATIC void PancakeHTTPOnKeepAliveRemoteHangup(PancakeSocket *sock) {
 	PancakeUnschedule((PancakeSchedulerEvent*) sock->data);
 	PancakeNetworkClose(sock);
 }

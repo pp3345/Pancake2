@@ -9,7 +9,7 @@
 #include "SharedDependencies/Base64Decode.h"
 
 /* Forward declaration */
-static UByte PancakeHTTPBasicAuthenticate(PancakeSocket *sock);
+STATIC UByte PancakeHTTPBasicAuthenticate(PancakeSocket *sock);
 
 PancakeModule PancakeHTTPBasicAuthenticationModule = {
 	"HTTPBasicAuthentication",
@@ -53,7 +53,7 @@ UByte PancakeHTTPBasicAuthenticationInitialize() {
 	return 1;
 }
 
-static UByte PancakeHTTPBasicAuthenticate(PancakeSocket *sock) {
+STATIC UByte PancakeHTTPBasicAuthenticate(PancakeSocket *sock) {
 	// Check whether authentication framework is active
 	if(PancakeAuthenticationActiveConfiguration) {
 		PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;

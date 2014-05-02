@@ -15,17 +15,17 @@ PancakeModule PancakeOpenSSL = {
 	0
 };
 
-static void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mode);
+STATIC void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mode);
 #ifdef TLSEXT_TYPE_next_proto_neg
-static Int32 PancakeOpenSSLNextProtocolNegotiation(SSL *ssl, const UByte **output, UInt32 *outputLength, void *arg);
+STATIC Int32 PancakeOpenSSLNextProtocolNegotiation(SSL *ssl, const UByte **output, UInt32 *outputLength, void *arg);
 #endif
 #ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
-static Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg);
+STATIC Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg);
 #endif
-static UByte PancakeOpenSSLAcceptConnection(PancakeSocket **socket, PancakeSocket *parent);
-static Int32 PancakeOpenSSLRead(PancakeSocket *socket, UInt32 maxLength, UByte *buf);
-static Int32 PancakeOpenSSLWrite(PancakeSocket *socket);
-static void PancakeOpenSSLClose(PancakeSocket *socket);
+STATIC UByte PancakeOpenSSLAcceptConnection(PancakeSocket **socket, PancakeSocket *parent);
+STATIC Int32 PancakeOpenSSLRead(PancakeSocket *socket, UInt32 maxLength, UByte *buf);
+STATIC Int32 PancakeOpenSSLWrite(PancakeSocket *socket);
+STATIC void PancakeOpenSSLClose(PancakeSocket *socket);
 
 static PancakeNetworkLayer PancakeOpenSSLNetworkLayer = {
 	StaticString("OpenSSL"),
@@ -63,7 +63,7 @@ UByte PancakeOpenSSLShutdown() {
 	return 1;
 }
 
-static UByte PancakeOpenSSLApplicationProtocolConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeOpenSSLApplicationProtocolConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeNetworkTLSApplicationProtocol *protocol;
 	String name;
 	PancakeOpenSSLServerSocket *sock = (PancakeOpenSSLServerSocket*) setting->parent->parent->hook;
@@ -109,7 +109,7 @@ static UByte PancakeOpenSSLApplicationProtocolConfiguration(UByte step, config_s
 	return 1;
 }
 
-static UByte PancakeOpenSSLServerConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeOpenSSLServerConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeOpenSSLServerSocket *sock = (PancakeOpenSSLServerSocket*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -134,7 +134,7 @@ static UByte PancakeOpenSSLServerConfiguration(UByte step, config_setting_t *set
 	return 1;
 }
 
-static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	SSL_CTX *ctx;
 	PancakeOpenSSLServerSocket *sock = (PancakeOpenSSLServerSocket*) setting->parent->parent->parent->hook;
 
@@ -240,7 +240,7 @@ static UByte PancakeOpenSSLServerContextConfiguration(UByte step, config_setting
 	return 1;
 }
 
-static UByte PancakeOpenSSLServerContextServerCipherPreferenceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeOpenSSLServerContextServerCipherPreferenceConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	SSL_CTX *ctx = (SSL_CTX*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT && setting->value.ival == 1) {
@@ -251,7 +251,7 @@ static UByte PancakeOpenSSLServerContextServerCipherPreferenceConfiguration(UByt
 	return 1;
 }
 
-static UByte PancakeOpenSSLServerContextDomainsConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeOpenSSLServerContextDomainsConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	SSL_CTX *ctx = (SSL_CTX*) setting->parent->hook;
 	PancakeOpenSSLServerSocket *sock = (PancakeOpenSSLServerSocket*) setting->parent->parent->parent->parent->hook;
 
@@ -289,7 +289,7 @@ static UByte PancakeOpenSSLServerContextDomainsConfiguration(UByte step, config_
 	return 1;
 }
 
-static UByte PancakeOpenSSLServerContextCertificateChainConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeOpenSSLServerContextCertificateChainConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	SSL_CTX *ctx = (SSL_CTX*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -306,7 +306,7 @@ static UByte PancakeOpenSSLServerContextCertificateChainConfiguration(UByte step
 	return 1;
 }
 
-static UByte PancakeOpenSSLServerContextPrivateKeyConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeOpenSSLServerContextPrivateKeyConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	SSL_CTX *ctx = (SSL_CTX*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -323,7 +323,7 @@ static UByte PancakeOpenSSLServerContextPrivateKeyConfiguration(UByte step, conf
 	return 1;
 }
 
-static UByte PancakeOpenSSLServerContextCiphersConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeOpenSSLServerContextCiphersConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	SSL_CTX *ctx = (SSL_CTX*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -340,7 +340,7 @@ static UByte PancakeOpenSSLServerContextCiphersConfiguration(UByte step, config_
 	return 1;
 }
 
-static UByte PancakeOpenSSLServerContextDiffieHellmanParameterConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeOpenSSLServerContextDiffieHellmanParameterConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	SSL_CTX *ctx = (SSL_CTX*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -375,7 +375,7 @@ static UByte PancakeOpenSSLServerContextDiffieHellmanParameterConfiguration(UByt
 	return 1;
 }
 
-static UByte PancakeOpenSSLServerContextEllipticCurveConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeOpenSSLServerContextEllipticCurveConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	SSL_CTX *ctx = (SSL_CTX*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -407,7 +407,7 @@ static UByte PancakeOpenSSLServerContextEllipticCurveConfiguration(UByte step, c
 	return 1;
 }
 
-static void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mode) {
+STATIC void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mode) {
 	if(mode == PANCAKE_NETWORK_LAYER_MODE_SERVER) {
 		PancakeConfigurationGroup *OpenSSL, *ContextGroup;
 		PancakeConfigurationSetting *Contexts;
@@ -428,7 +428,7 @@ static void PancakeOpenSSLConfigure(PancakeConfigurationGroup *parent, UByte mod
 }
 
 #ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
-static Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg) {
+STATIC Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg) {
 	PancakeOpenSSLServerSocket *sock;
 	PancakeOpenSSLServerContext *context;
 	PancakeNetworkTLSApplicationProtocol *protocol;
@@ -470,7 +470,7 @@ static Int32 PancakeOpenSSLServerNameIndication(SSL *ssl, int *ad, void *arg) {
 #endif
 
 #ifdef TLSEXT_TYPE_next_proto_neg
-static Int32 PancakeOpenSSLNextProtocolNegotiation(SSL *ssl, const UByte **output, UInt32 *outputLength, void *arg) {
+STATIC Int32 PancakeOpenSSLNextProtocolNegotiation(SSL *ssl, const UByte **output, UInt32 *outputLength, void *arg) {
 	PancakeSocket *sock;
 	PancakeNetworkTLSApplicationProtocol *protocol;
 	String *result;
@@ -494,7 +494,7 @@ static Int32 PancakeOpenSSLNextProtocolNegotiation(SSL *ssl, const UByte **outpu
 }
 #endif
 
-static UByte PancakeOpenSSLAcceptConnection(PancakeSocket **socket, PancakeSocket *parent) {
+STATIC UByte PancakeOpenSSLAcceptConnection(PancakeSocket **socket, PancakeSocket *parent) {
 	PancakeOpenSSLSocket *sock = (PancakeOpenSSLSocket*) *socket;
 	PancakeOpenSSLServerSocket *server = (PancakeOpenSSLServerSocket*) parent;
 	PancakeNetworkTLSApplicationProtocol *protocol;
@@ -530,7 +530,7 @@ static UByte PancakeOpenSSLAcceptConnection(PancakeSocket **socket, PancakeSocke
 	return 1;
 }
 
-static Int32 PancakeOpenSSLRead(PancakeSocket *socket, UInt32 maxLength, UByte *buf) {
+STATIC Int32 PancakeOpenSSLRead(PancakeSocket *socket, UInt32 maxLength, UByte *buf) {
 	PancakeOpenSSLSocket *sock = (PancakeOpenSSLSocket*) socket;
 	Int32 length;
 
@@ -569,7 +569,7 @@ static Int32 PancakeOpenSSLRead(PancakeSocket *socket, UInt32 maxLength, UByte *
 	}
 }
 
-static Int32 PancakeOpenSSLWrite(PancakeSocket *socket) {
+STATIC Int32 PancakeOpenSSLWrite(PancakeSocket *socket) {
 	PancakeOpenSSLSocket *sock = (PancakeOpenSSLSocket*) socket;
 	Int32 length;
 
@@ -608,7 +608,7 @@ static Int32 PancakeOpenSSLWrite(PancakeSocket *socket) {
 	}
 }
 
-static void PancakeOpenSSLClose(PancakeSocket *socket) {
+STATIC void PancakeOpenSSLClose(PancakeSocket *socket) {
 	PancakeOpenSSLSocket *sock = (PancakeOpenSSLSocket*) socket;
 
 	if(sock->session) {

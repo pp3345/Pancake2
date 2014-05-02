@@ -15,7 +15,7 @@ PancakeModule PancakeMIME = {
 PancakeMIMEType PancakeMIMEDefault;
 PancakeMIMEType *PancakeMIMETypes;
 
-static UByte PancakeMIMEDefaultTypeConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeMIMEDefaultTypeConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		PancakeMIMEDefault.type.value = setting->value.sval;
 		PancakeMIMEDefault.type.length = strlen(setting->value.sval);
@@ -24,7 +24,7 @@ static UByte PancakeMIMEDefaultTypeConfiguration(UByte step, config_setting_t *s
 	return 1;
 }
 
-static UByte PancakeMIMETypesConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeMIMETypesConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeMIMEType *type;
 
 	switch(step) {
@@ -40,7 +40,7 @@ static UByte PancakeMIMETypesConfiguration(UByte step, config_setting_t *setting
 	return 1;
 }
 
-static UByte PancakeMIMETypeExtensionConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeMIMETypeExtensionConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeMIMEType *type = (PancakeMIMEType*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
@@ -64,7 +64,7 @@ static UByte PancakeMIMETypeExtensionConfiguration(UByte step, config_setting_t 
 	return 1;
 }
 
-static UByte PancakeMIMETypeNameConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
+STATIC UByte PancakeMIMETypeNameConfiguration(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope) {
 	PancakeMIMEType *type = (PancakeMIMEType*) setting->parent->hook;
 
 	if(step == PANCAKE_CONFIGURATION_INIT) {

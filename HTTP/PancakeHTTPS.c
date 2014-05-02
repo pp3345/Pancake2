@@ -2,8 +2,8 @@
 
 #if defined(PANCAKE_HTTP) && defined(PANCAKE_NETWORK_TLS)
 
-static UByte PancakeHTTPSInitialize(PancakeSocket *sock);
-static String *PancakeHTTPSNextProtocolNegotiation(PancakeSocket *sock);
+STATIC UByte PancakeHTTPSInitialize(PancakeSocket *sock);
+STATIC String *PancakeHTTPSNextProtocolNegotiation(PancakeSocket *sock);
 
 static PancakeNetworkTLSApplicationProtocol PancakeHTTPS = {
 		StaticString("HTTPS"),
@@ -19,13 +19,13 @@ static String http11 = {
 		sizeof("\x08http/1.1") - 1
 };
 
-static UByte PancakeHTTPSInitialize(PancakeSocket *sock) {
+STATIC UByte PancakeHTTPSInitialize(PancakeSocket *sock) {
 	sock->flags |= PANCAKE_HTTPS;
 
 	return 1;
 }
 
-static String *PancakeHTTPSNextProtocolNegotiation(PancakeSocket *sock) {
+STATIC String *PancakeHTTPSNextProtocolNegotiation(PancakeSocket *sock) {
 	return &http11;
 }
 

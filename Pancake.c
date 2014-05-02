@@ -12,7 +12,7 @@ PancakeMainConfigurationStructure PancakeMainConfiguration;
 UByte PancakeDoShutdown = 0;
 
 /* Forward declarations */
-static void PancakeSignalHandler(Int32 type, siginfo_t *info, void *context);
+STATIC void PancakeSignalHandler(Int32 type, siginfo_t *info, void *context);
 void PancakeFetchModules();
 
 /* Here we go. */
@@ -285,7 +285,7 @@ Int32 main(Int32 argc, Byte **argv) {
 	return 0;
 }
 
-static void PancakeSignalHandler(Int32 type, siginfo_t *info, void *context) {
+STATIC void PancakeSignalHandler(Int32 type, siginfo_t *info, void *context) {
 	switch(type) {
 		case SIGINT:
 		case SIGTERM:

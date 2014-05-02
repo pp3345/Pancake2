@@ -7,8 +7,8 @@
 #include "PancakeDateTime.h"
 
 /* Forward declarations */
-static UByte PancakeHTTPServeStatic(PancakeSocket *sock);
-static UByte PancakeHTTPStaticInitialize();
+STATIC UByte PancakeHTTPServeStatic(PancakeSocket *sock);
+STATIC UByte PancakeHTTPStaticInitialize();
 
 PancakeModule PancakeHTTPStatic = {
 	"HTTPStatic",
@@ -25,7 +25,7 @@ static PancakeHTTPContentServeBackend PancakeHTTPStaticContent = {
 	PancakeHTTPServeStatic
 };
 
-static UByte PancakeHTTPStaticInitialize() {
+STATIC UByte PancakeHTTPStaticInitialize() {
 	if(!PancakeHTTP.initialized) {
 		return 2;
 	}
@@ -35,11 +35,11 @@ static UByte PancakeHTTPStaticInitialize() {
 	return 1;
 }
 
-static inline void PancakeHTTPStaticOnRequestEnd(PancakeHTTPRequest *request) {
+STATIC inline void PancakeHTTPStaticOnRequestEnd(PancakeHTTPRequest *request) {
 	fclose(request->contentServeData);
 }
 
-static void PancakeHTTPStaticWrite(PancakeSocket *sock) {
+STATIC void PancakeHTTPStaticWrite(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	if(sock->writeBuffer.length < PancakeMainConfiguration.networkBufferingMin) {
@@ -66,7 +66,7 @@ static void PancakeHTTPStaticWrite(PancakeSocket *sock) {
 	PancakeNetworkWrite(sock);
 }
 
-static UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
+STATIC UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	if(PancakeHTTPRunAccessChecks(sock) && S_ISREG(request->fileStat.st_mode)) {

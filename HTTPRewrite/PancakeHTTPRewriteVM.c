@@ -5,23 +5,23 @@
 
 #include "PancakeLogger.h"
 
-static Byte PANCAKE_HTTP_REWRITE_VM_NOP(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_NOP(PancakeSocket *sock, void *op1, void *op2);
 
-static Byte PANCAKE_HTTP_REWRITE_VM_SET_BOOL(PancakeSocket *sock, void *op1, void *op2);
-static Byte PANCAKE_HTTP_REWRITE_VM_SET_INT(PancakeSocket *sock, void *op1, void *op2);
-static Byte PANCAKE_HTTP_REWRITE_VM_SET_STRING(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_SET_BOOL(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_SET_INT(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_SET_STRING(PancakeSocket *sock, void *op1, void *op2);
 
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2);
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_INT(PancakeSocket *sock, void *op1, void *op2);
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_STRING(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_INT(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_STRING(PancakeSocket *sock, void *op1, void *op2);
 
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2);
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT(PancakeSocket *sock, void *op1, void *op2);
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_STRING(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_STRING(PancakeSocket *sock, void *op1, void *op2);
 
-static Byte PANCAKE_HTTP_REWRITE_VM_CALL(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_CALL(PancakeSocket *sock, void *op1, void *op2);
 
-static Byte PANCAKE_HTTP_REWRITE_VM_ACTIVATE_SCOPE(PancakeSocket *sock, void *op1, void *op2);
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_ACTIVATE_SCOPE(PancakeSocket *sock, void *op1, void *op2);
 
 #ifdef PANCAKE_DEBUG
 UByte *PancakeHTTPRewriteOpcodeNames[] = {
@@ -90,12 +90,12 @@ Byte PancakeHTTPRewriteVMExecute(PancakeSocket *sock, PancakeHTTPRewriteRuleset 
 	return 1;
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_NOP(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_NOP(PancakeSocket *sock, void *op1, void *op2) {
 	/* Do nothing */
 	return NEXT_OPCODE;
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_SET_BOOL(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_SET_BOOL(PancakeSocket *sock, void *op1, void *op2) {
 	PancakeHTTPRewriteVariable *var = (PancakeHTTPRewriteVariable*) op1;
 
 	if(var->locationType == PANCAKE_HTTP_REWRITE_LOCATION_CALLBACK) {
@@ -113,7 +113,7 @@ static Byte PANCAKE_HTTP_REWRITE_VM_SET_BOOL(PancakeSocket *sock, void *op1, voi
 	return NEXT_OPCODE;
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_SET_INT(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_SET_INT(PancakeSocket *sock, void *op1, void *op2) {
 	PancakeHTTPRewriteVariable *var = (PancakeHTTPRewriteVariable*) op1;
 
 	if(var->locationType == PANCAKE_HTTP_REWRITE_LOCATION_CALLBACK) {
@@ -131,7 +131,7 @@ static Byte PANCAKE_HTTP_REWRITE_VM_SET_INT(PancakeSocket *sock, void *op1, void
 	return NEXT_OPCODE;
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_SET_STRING(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_SET_STRING(PancakeSocket *sock, void *op1, void *op2) {
 	PancakeHTTPRewriteVariable *var = (PancakeHTTPRewriteVariable*) op1;
 	String *string = (String*) op2;
 
@@ -152,7 +152,7 @@ static Byte PANCAKE_HTTP_REWRITE_VM_SET_STRING(PancakeSocket *sock, void *op1, v
 	return NEXT_OPCODE;
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2) {
 	PancakeHTTPRewriteVariable *var = (PancakeHTTPRewriteVariable*) op1;
 
 	if(var->locationType == PANCAKE_HTTP_REWRITE_LOCATION_CALLBACK) {
@@ -172,7 +172,7 @@ static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_BOOL(PancakeSocket *sock, void *op1
 	return NEXT_OPCODE;
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_INT(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_INT(PancakeSocket *sock, void *op1, void *op2) {
 	PancakeHTTPRewriteVariable *var = (PancakeHTTPRewriteVariable*) op1;
 
 	if(var->locationType == PANCAKE_HTTP_REWRITE_LOCATION_CALLBACK) {
@@ -192,7 +192,7 @@ static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_INT(PancakeSocket *sock, void *op1,
 	return NEXT_OPCODE;
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_STRING(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_STRING(PancakeSocket *sock, void *op1, void *op2) {
 	PancakeHTTPRewriteVariable *var = (PancakeHTTPRewriteVariable*) op1;
 	String *string = (String*) op2;
 
@@ -215,7 +215,7 @@ static Byte PANCAKE_HTTP_REWRITE_VM_IS_EQUAL_STRING(PancakeSocket *sock, void *o
 	return NEXT_OPCODE;
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_BOOL(PancakeSocket *sock, void *op1, void *op2) {
 	PancakeHTTPRewriteVariable *var = (PancakeHTTPRewriteVariable*) op1;
 
 	if(var->locationType == PANCAKE_HTTP_REWRITE_LOCATION_CALLBACK) {
@@ -235,7 +235,7 @@ static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_BOOL(PancakeSocket *sock, void 
 	return NEXT_OPCODE;
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT(PancakeSocket *sock, void *op1, void *op2) {
 	PancakeHTTPRewriteVariable *var = (PancakeHTTPRewriteVariable*) op1;
 
 	if(var->locationType == PANCAKE_HTTP_REWRITE_LOCATION_CALLBACK) {
@@ -255,7 +255,7 @@ static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_INT(PancakeSocket *sock, void *
 	return NEXT_OPCODE;
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_STRING(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_STRING(PancakeSocket *sock, void *op1, void *op2) {
 	PancakeHTTPRewriteVariable *var = (PancakeHTTPRewriteVariable*) op1;
 	String *string = (String*) op2;
 
@@ -278,7 +278,7 @@ static Byte PANCAKE_HTTP_REWRITE_VM_IS_NOT_EQUAL_STRING(PancakeSocket *sock, voi
 	return NEXT_OPCODE;
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_CALL(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_CALL(PancakeSocket *sock, void *op1, void *op2) {
 	PancakeHTTPRewriteCallback *cb = (PancakeHTTPRewriteCallback*) op1;
 
 	switch(cb->callback(sock)) {
@@ -293,7 +293,7 @@ static Byte PANCAKE_HTTP_REWRITE_VM_CALL(PancakeSocket *sock, void *op1, void *o
 	}
 }
 
-static Byte PANCAKE_HTTP_REWRITE_VM_ACTIVATE_SCOPE(PancakeSocket *sock, void *op1, void *op2) {
+STATIC Byte PANCAKE_HTTP_REWRITE_VM_ACTIVATE_SCOPE(PancakeSocket *sock, void *op1, void *op2) {
 	PancakeConfigurationScope *scope = (PancakeConfigurationScope*) op1;
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 

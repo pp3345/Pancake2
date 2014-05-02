@@ -5,28 +5,28 @@
 
 #include "PancakeLogger.h"
 
-static UByte PancakeHTTPRewriteGetHTTPKeepAlive(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+STATIC UByte PancakeHTTPRewriteGetHTTPKeepAlive(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	value->boolv = request->keepAlive;
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteSetHTTPKeepAlive(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+STATIC UByte PancakeHTTPRewriteSetHTTPKeepAlive(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	request->keepAlive = value->boolv;
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteGetHTTPAnswerCode(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+STATIC UByte PancakeHTTPRewriteGetHTTPAnswerCode(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	value->intv = (Int32) request->answerCode;
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteSetHTTPAnswerCode(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+STATIC UByte PancakeHTTPRewriteSetHTTPAnswerCode(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	if(UNEXPECTED(value->intv < 100 || value->intv > 599)) {
@@ -38,14 +38,14 @@ static UByte PancakeHTTPRewriteSetHTTPAnswerCode(PancakeSocket *sock, PancakeHTT
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteGetHTTPClientContentLength(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+STATIC UByte PancakeHTTPRewriteGetHTTPClientContentLength(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	value->intv = (Int32) request->clientContentLength;
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteGetHTTPVersion(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+STATIC UByte PancakeHTTPRewriteGetHTTPVersion(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	PancakeAssert(request->HTTPVersion == PANCAKE_HTTP_10 || request->HTTPVersion == PANCAKE_HTTP_11);
@@ -54,7 +54,7 @@ static UByte PancakeHTTPRewriteGetHTTPVersion(PancakeSocket *sock, PancakeHTTPRe
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteSetHTTPVersion(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+STATIC UByte PancakeHTTPRewriteSetHTTPVersion(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	if(UNEXPECTED(value->intv < 10 || value->intv > 11)) {
@@ -72,7 +72,7 @@ static UByte PancakeHTTPRewriteSetHTTPVersion(PancakeSocket *sock, PancakeHTTPRe
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteGetDocumentURI(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+STATIC UByte PancakeHTTPRewriteGetDocumentURI(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	value->stringv.value = request->path.value;
@@ -81,7 +81,7 @@ static UByte PancakeHTTPRewriteGetDocumentURI(PancakeSocket *sock, PancakeHTTPRe
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteSetDocumentURI(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+STATIC UByte PancakeHTTPRewriteSetDocumentURI(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	request->path.value = value->stringv.value;
@@ -90,7 +90,7 @@ static UByte PancakeHTTPRewriteSetDocumentURI(PancakeSocket *sock, PancakeHTTPRe
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteGetHTTPMethod(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+STATIC UByte PancakeHTTPRewriteGetHTTPMethod(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	value->stringv = PancakeHTTPMethods[request->method - 1];
@@ -98,7 +98,7 @@ static UByte PancakeHTTPRewriteGetHTTPMethod(PancakeSocket *sock, PancakeHTTPRew
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteGetMIMEType(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
+STATIC UByte PancakeHTTPRewriteGetMIMEType(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 	PancakeMIMEType *type;
 
@@ -109,13 +109,13 @@ static UByte PancakeHTTPRewriteGetMIMEType(PancakeSocket *sock, PancakeHTTPRewri
 	return 1;
 }
 
-static UByte PancakeHTTPRewriteGetHTTPS(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value)  {
+STATIC UByte PancakeHTTPRewriteGetHTTPS(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value)  {
 	value->intv = (sock->flags & PANCAKE_HTTPS) == PANCAKE_HTTPS;
 
 	return 1;
 }
 
-static Byte PancakeHTTPRewriteThrowException(PancakeSocket *sock) {
+STATIC Byte PancakeHTTPRewriteThrowException(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	PancakeHTTPException(sock, request->answerCode >= 100 && request->answerCode <= 599 ? request->answerCode : 500);
