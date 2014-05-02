@@ -108,6 +108,7 @@ typedef struct _NativeStringOffset {
 } NativeStringOffset;
 
 #define StaticString(str) ((String) {str, sizeof(str) - 1})
+#define StringFromOffset(buffer, stringOffset) ((String) {(buffer) + (stringOffset)->offset, (stringOffset)->length})
 
 typedef UByte (*PancakeModuleInitializeFunction)();
 typedef void (*PancakeWorkerEntryFunction)();

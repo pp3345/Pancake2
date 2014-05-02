@@ -870,7 +870,6 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	request->headers = NULL;
 	request->answerHeaders = NULL;
 	request->requestAddress.value = NULL;
-	request->host.value = NULL;
 	request->host.length = 0;
 	request->path.value = NULL;
 	request->keepAlive = 0;
@@ -882,6 +881,7 @@ static inline void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *req
 	request->authorization.length = 0;
 	request->clientContentLength = 0;
 	request->schedulerEvent = NULL;
+	request->userAgent.length = 0;
 
 	PancakeConfigurationInitializeScopeGroup(&request->scopeGroup);
 }
@@ -1079,7 +1079,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 			if(headerEnd > offset + sizeof("http://") - 1 && memcmp(offset, "http://", sizeof("http://") - 1) == 0) {
 				// http://abc.net[/aaa]
 				offset += sizeof("http://") - 1;
-				request->host.value = offset;
+				request->host.offset = offset - sock->readBuffer.value;
 
 				if(ptr2 = memchr(offset, '/', ptr - offset)) {
 					// http://abc.net/aaa
@@ -1180,7 +1180,7 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 				switch(ptr2 - offset) {
 					case 4:
 						if(!memcmp(offset, "host", 4)) {
-							request->host.value = ptr3;
+							request->host.offset = ptr3 - sock->readBuffer.value;
 							request->host.length = ptr - ptr3;
 							break;
 						}
@@ -1192,6 +1192,10 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 								request->keepAlive = 1;
 							}
 
+							break;
+						} else if(!memcmp(offset, "user-agent", 10)) {
+							request->userAgent.offset = ptr3 - sock->readBuffer.value;
+							request->userAgent.length = ptr - ptr3;
 							break;
 						}
 						goto StoreHeader;
@@ -1245,12 +1249,13 @@ static void PancakeHTTPReadHeaderData(PancakeSocket *sock) {
 		}
 
 		// Fetch virtual host
-		if(PancakeHTTPNumVirtualHosts == 1 || !request->host.value) {
+		if(PancakeHTTPNumVirtualHosts == 1 || !request->host.length) {
 			request->vHost = PancakeHTTPDefaultVirtualHost;
 		} else {
 			PancakeHTTPVirtualHostIndex *index;
+			UByte *host = sock->readBuffer.value + request->host.offset;
 
-			HASH_FIND(hh, PancakeHTTPVirtualHosts, request->host.value, request->host.length, index);
+			HASH_FIND(hh, PancakeHTTPVirtualHosts, host, request->host.length, index);
 
 			if(index == NULL) {
 				request->vHost = PancakeHTTPDefaultVirtualHost;
@@ -1670,6 +1675,7 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 	UByte *offset, alignOutput = 0;
 	UInt16 headerSize = 4096;
+	String log;
 
 	PancakeAssert(request->headerSent == 0);
 
@@ -1855,6 +1861,110 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 		memmove(sock->writeBuffer.value + sock->writeBuffer.length, sock->writeBuffer.value + headerSize, request->contentLength);
 		sock->writeBuffer.length += request->contentLength;
 	}
+
+	// Log request
+	// "<ip address> <answer code> <request method> <request path> <http version> <host> <user agent>"
+	log.length = sizeof(" 200   1.0  ") - 1 + request->requestAddress.length + request->host.length + request->userAgent.length;
+
+	// <ip address>
+	switch(sock->remoteAddress.sa_family) {
+		case AF_INET: { // IPv4
+			UByte length;
+
+			log.value = PancakeAllocate(log.length + sizeof("PROPPATCH") - 1 + INET_ADDRSTRLEN - 1);
+
+			inet_ntop(AF_INET, &((struct sockaddr_in*) &sock->remoteAddress)->sin_addr, log.value, INET_ADDRSTRLEN);
+
+			length = strlen(log.value);
+			log.length += length;
+
+			offset = log.value + length;
+			*offset = ' ';
+			offset++;
+		} break;
+		case AF_INET6: { // IPv6
+			UByte length;
+
+			log.value = PancakeAllocate(log.length + sizeof("PROPPATCH") - 1 + INET6_ADDRSTRLEN - 1);
+
+			inet_ntop(AF_INET6, &((struct sockaddr_in6*) &sock->remoteAddress)->sin6_addr, log.value, INET6_ADDRSTRLEN);
+
+			length = strlen(log.value);
+			log.length += length;
+
+			offset = log.value + length;
+			*offset = ' ';
+			offset++;
+		} break;
+		case AF_UNIX: { // UNIX
+			log.value = PancakeAllocate(log.length + sizeof("PROPPATCHUNIX") - 1);
+
+			memcpy(log.value, "<unix socket> ", sizeof("UNIX ") - 1);
+			offset = log.value + sizeof("UNIX ") - 1;
+			break;
+		}
+	}
+
+	// <answer code>
+	memcpy(offset, &sock->writeBuffer.value[9], 3);
+
+	offset[3] = ' ';
+	offset += 4;
+
+	// <request method>
+	switch(request->method) {
+		case PANCAKE_HTTP_GET:
+			memcpy(offset, "GET ", sizeof("GET ") - 1);
+			offset += sizeof("GET ") - 1;
+			log.length += sizeof("GET") - 1;
+
+			break;
+		case PANCAKE_HTTP_POST:
+			memcpy(offset, "POST ", sizeof("POST ") - 1);
+			offset += sizeof("POST ") - 1;
+			log.length += sizeof("POST") - 1;
+
+			break;
+		case PANCAKE_HTTP_HEAD:
+			memcpy(offset, "HEAD ", sizeof("HEAD ") - 1);
+			offset += sizeof("HEAD ") - 1;
+			log.length += sizeof("HEAD") - 1;
+
+			break;
+	}
+
+	// <request path>
+	memcpy(offset, request->requestAddress.value, request->requestAddress.length);
+
+	offset[request->requestAddress.length] = ' ';
+	offset += request->requestAddress.length + 1;
+
+	// <http version>
+	switch(request->HTTPVersion) {
+		case PANCAKE_HTTP_11:
+			memcpy(offset, "1.1 ", sizeof("1.1 ") - 1);
+			offset += sizeof("1.1 ") - 1;
+			break;
+		case PANCAKE_HTTP_10:
+			memcpy(offset, "1.0 ", sizeof("1.0 ") - 1);
+			offset += sizeof("1.0 ") - 1;
+			break;
+	}
+
+	// <host>
+	if(EXPECTED(request->host.length)) {
+		memcpy(offset, sock->readBuffer.value + request->host.offset, request->host.length);
+		offset[request->host.length] = ' ';
+		offset += request->host.length + 1;
+	}
+
+	// <user agent>
+	if(request->userAgent.length) {
+		memcpy(offset, sock->readBuffer.value + request->userAgent.offset, request->userAgent.length);
+	}
+
+	PancakeLogger(PANCAKE_LOGGER_REQUEST, 0, &log);
+	PancakeFree(log.value);
 }
 
 PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {

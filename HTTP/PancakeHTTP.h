@@ -77,9 +77,10 @@ typedef struct _PancakeHTTPConfigurationStructure {
 
 typedef struct _PancakeHTTPRequest {
 	String requestAddress;
-	String host;
 	String path;
 	String ifModifiedSince;
+	StringOffset host;
+	StringOffset userAgent;
 	StringOffset acceptEncoding;
 	StringOffset authorization;
 
