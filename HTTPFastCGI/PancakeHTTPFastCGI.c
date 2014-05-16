@@ -976,8 +976,10 @@ STATIC UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 			memcpy(parameter + sizeof("HTTP_") - 1, header->name.value, header->name.length);
 
 			// Handle Content-Type header
-			if(header->name.length == sizeof("content-type") - 1 && !memcmp(header->name.value, "content-type", sizeof("content-type") -1)) {
+			if(header->name.length == sizeof("content-type") - 1 && !memcmp(header->name.value, "content-type", sizeof("content-type") - 1)) {
 				FastCGIEncodeParameter(socket, &((String) {"CONTENT_TYPE", sizeof("CONTENT_TYPE") - 1}), &header->value);
+				FastCGIEncodeParameter(socket, &StaticString("HTTP_CONTENT_TYPE"), &header->value);
+				continue;
 			}
 
 			// Make parameter name uppercase
