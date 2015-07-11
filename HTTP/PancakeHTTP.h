@@ -2,14 +2,11 @@
 #ifndef _PANCAKE_HTTP_H
 #define _PANCAKE_HTTP_H
 
-#include "Pancake.h"
-
-#ifdef PANCAKE_HTTP
-
-#include "PancakeConfiguration.h"
-#include "PancakeNetwork.h"
-#include "MIME/PancakeMIME.h"
-#include "PancakeScheduler.h"
+#include "../Pancake.h"
+#include "../PancakeConfiguration.h"
+#include "../PancakeNetwork.h"
+#include "../MIME/PancakeMIME.h"
+#include "../PancakeScheduler.h"
 
 /* Forward declarations */
 typedef struct _PancakeHTTPHeader PancakeHTTPHeader;
@@ -53,7 +50,7 @@ typedef struct _PancakeHTTPVirtualHost {
 	PancakeHTTPOutputFilterFunction *outputFilters;
 	PancakeHTTPParserHookFunction *parserHooks;
 
-#ifdef PANCAKE_HTTP_REWRITE
+#ifdef PANCAKE_HTTPREWRITE
 	void *rewriteConfiguration;
 #endif
 
@@ -172,5 +169,4 @@ PANCAKE_API inline void PancakeHTTPRemoveQueryString(PancakeHTTPRequest *request
 PANCAKE_API inline void PancakeHTTPExtractQueryString(PancakeHTTPRequest *request, String *queryString);
 PANCAKE_API inline void PancakeHTTPFreeContentEncoding(PancakeHTTPRequest *request);
 
-#endif
 #endif

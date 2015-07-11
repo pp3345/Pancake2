@@ -1,10 +1,10 @@
-#ifndef PancakeConfigurationParser_yyHEADER_H
-#define PancakeConfigurationParser_yyHEADER_H 1
-#define PancakeConfigurationParser_yyIN_HEADER 1
+#ifndef yyHEADER_H
+#define yyHEADER_H 1
+#define yyIN_HEADER 1
 
-#line 6 "scanner.h"
+#line 6 "ConfigurationParser/scanner.h"
 
-#line 8 "scanner.h"
+#line 8 "ConfigurationParser/scanner.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -13,7 +13,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 33
+#define YY_FLEX_SUBMINOR_VERSION 39
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -35,7 +35,7 @@
 
 /* C99 systems have <inttypes.h>. Non-C99 systems may or may not. */
 
-#if __STDC_VERSION__ >= 199901L
+#if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 
 /* C99 says to define __STDC_LIMIT_MACROS before including stdint.h,
  * if you want the limit (max/min) macros for int types. 
@@ -58,7 +58,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -89,6 +88,8 @@ typedef unsigned int flex_uint32_t;
 #define UINT32_MAX             (4294967295U)
 #endif
 
+#endif /* ! C99 */
+
 #endif /* ! FLEXINT_H */
 
 #ifdef __cplusplus
@@ -98,11 +99,12 @@ typedef unsigned int flex_uint32_t;
 
 #else	/* ! __cplusplus */
 
-#if __STDC__
+/* C99 requires __STDC__ to be defined as 1. */
+#if defined (__STDC__)
 
 #define YY_USE_CONST
 
-#endif	/* __STDC__ */
+#endif	/* defined (__STDC__) */
 #endif	/* ! __cplusplus */
 
 #ifdef YY_USE_CONST
@@ -128,21 +130,19 @@ typedef void* yyscan_t;
 #define yycolumn (YY_CURRENT_BUFFER_LVALUE->yy_bs_column)
 #define yy_flex_debug yyg->yy_flex_debug_r
 
-int PancakeConfigurationParser_yylex_init (yyscan_t* scanner);
+/* Size of default input buffer. */
+#ifndef YY_BUF_SIZE
+#define YY_BUF_SIZE 16384
+#endif
 
 #ifndef YY_TYPEDEF_YY_BUFFER_STATE
 #define YY_TYPEDEF_YY_BUFFER_STATE
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #endif
 
-/* The following is because we cannot portably get our hands on size_t
- * (without autoconf's help, which isn't available because we want
- * flex-generated scanners to compile on their own).
- */
-
 #ifndef YY_TYPEDEF_YY_SIZE_T
 #define YY_TYPEDEF_YY_SIZE_T
-typedef unsigned int yy_size_t;
+typedef size_t yy_size_t;
 #endif
 
 #ifndef YY_STRUCT_YY_BUFFER_STATE
@@ -162,7 +162,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	int yy_n_chars;
+	yy_size_t yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -196,23 +196,23 @@ struct yy_buffer_state
 	};
 #endif /* !YY_STRUCT_YY_BUFFER_STATE */
 
-void PancakeConfigurationParser_yyrestart (FILE *input_file ,yyscan_t yyscanner );
-void PancakeConfigurationParser_yy_switch_to_buffer (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-YY_BUFFER_STATE PancakeConfigurationParser_yy_create_buffer (FILE *file,int size ,yyscan_t yyscanner );
-void PancakeConfigurationParser_yy_delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void PancakeConfigurationParser_yy_flush_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void PancakeConfigurationParser_yypush_buffer_state (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-void PancakeConfigurationParser_yypop_buffer_state (yyscan_t yyscanner );
+void yyrestart (FILE *input_file ,yyscan_t yyscanner );
+void yy_switch_to_buffer (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
+YY_BUFFER_STATE yy_create_buffer (FILE *file,int size ,yyscan_t yyscanner );
+void yy_delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
+void yy_flush_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
+void yypush_buffer_state (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
+void yypop_buffer_state (yyscan_t yyscanner );
 
-YY_BUFFER_STATE PancakeConfigurationParser_yy_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
-YY_BUFFER_STATE PancakeConfigurationParser_yy_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE PancakeConfigurationParser_yy_scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,yy_size_t len ,yyscan_t yyscanner );
 
-void *PancakeConfigurationParser_yyalloc (yy_size_t ,yyscan_t yyscanner );
-void *PancakeConfigurationParser_yyrealloc (void *,yy_size_t ,yyscan_t yyscanner );
-void PancakeConfigurationParser_yyfree (void * ,yyscan_t yyscanner );
+void *yyalloc (yy_size_t ,yyscan_t yyscanner );
+void *yyrealloc (void *,yy_size_t ,yyscan_t yyscanner );
+void yyfree (void * ,yyscan_t yyscanner );
 
-#define PancakeConfigurationParser_yywrap(n) 1
+#define yywrap(yyscanner) 1
 #define YY_SKIP_YYWRAP
 
 #define yytext_ptr yytext_r
@@ -220,45 +220,61 @@ void PancakeConfigurationParser_yyfree (void * ,yyscan_t yyscanner );
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
 #define COMMENT 1
+#define STRING 2
+#define INCLUDE 3
 
 #endif
 
-#ifndef YY_EXTRA_TYPE
-#define YY_EXTRA_TYPE void *
+#ifndef YY_NO_UNISTD_H
+/* Special case for "unistd.h", since it is non-ANSI. We include it way
+ * down here because we want the user's section 1 to have been scanned first.
+ * The user has a chance to override it with an option.
+ */
+#include <unistd.h>
 #endif
+
+#define YY_EXTRA_TYPE struct scan_context *
+
+int yylex_init (yyscan_t* scanner);
+
+int yylex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t* scanner);
 
 /* Accessor methods to globals.
    These are made visible to non-reentrant scanners for convenience. */
 
-int PancakeConfigurationParser_yylex_destroy (yyscan_t yyscanner );
+int yylex_destroy (yyscan_t yyscanner );
 
-int PancakeConfigurationParser_yyget_debug (yyscan_t yyscanner );
+int yyget_debug (yyscan_t yyscanner );
 
-void PancakeConfigurationParser_yyset_debug (int debug_flag ,yyscan_t yyscanner );
+void yyset_debug (int debug_flag ,yyscan_t yyscanner );
 
-YY_EXTRA_TYPE PancakeConfigurationParser_yyget_extra (yyscan_t yyscanner );
+YY_EXTRA_TYPE yyget_extra (yyscan_t yyscanner );
 
-void PancakeConfigurationParser_yyset_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
+void yyset_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
 
-FILE *PancakeConfigurationParser_yyget_in (yyscan_t yyscanner );
+FILE *yyget_in (yyscan_t yyscanner );
 
-void PancakeConfigurationParser_yyset_in  (FILE * in_str ,yyscan_t yyscanner );
+void yyset_in  (FILE * in_str ,yyscan_t yyscanner );
 
-FILE *PancakeConfigurationParser_yyget_out (yyscan_t yyscanner );
+FILE *yyget_out (yyscan_t yyscanner );
 
-void PancakeConfigurationParser_yyset_out  (FILE * out_str ,yyscan_t yyscanner );
+void yyset_out  (FILE * out_str ,yyscan_t yyscanner );
 
-int PancakeConfigurationParser_yyget_leng (yyscan_t yyscanner );
+yy_size_t yyget_leng (yyscan_t yyscanner );
 
-char *PancakeConfigurationParser_yyget_text (yyscan_t yyscanner );
+char *yyget_text (yyscan_t yyscanner );
 
-int PancakeConfigurationParser_yyget_lineno (yyscan_t yyscanner );
+int yyget_lineno (yyscan_t yyscanner );
 
-void PancakeConfigurationParser_yyset_lineno (int line_number ,yyscan_t yyscanner );
+void yyset_lineno (int line_number ,yyscan_t yyscanner );
 
-YYSTYPE * PancakeConfigurationParser_yyget_lval (yyscan_t yyscanner );
+int yyget_column  (yyscan_t yyscanner );
 
-void PancakeConfigurationParser_yyset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
+void yyset_column (int column_no ,yyscan_t yyscanner );
+
+YYSTYPE * yyget_lval (yyscan_t yyscanner );
+
+void yyset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -266,9 +282,9 @@ void PancakeConfigurationParser_yyset_lval (YYSTYPE * yylval_param ,yyscan_t yys
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int PancakeConfigurationParser_yywrap (yyscan_t yyscanner );
+extern "C" int yywrap (yyscan_t yyscanner );
 #else
-extern int PancakeConfigurationParser_yywrap (yyscan_t yyscanner );
+extern int yywrap (yyscan_t yyscanner );
 #endif
 #endif
 
@@ -300,9 +316,11 @@ static int yy_flex_strlen (yyconst char * ,yyscan_t yyscanner);
 #ifndef YY_DECL
 #define YY_DECL_IS_OURS 1
 
-extern int PancakeConfigurationParser_yylex (YYSTYPE * yylval_param ,yyscan_t yyscanner);
+extern int yylex \
+               (YYSTYPE * yylval_param ,yyscan_t yyscanner);
 
-#define YY_DECL int PancakeConfigurationParser_yylex (YYSTYPE * yylval_param , yyscan_t yyscanner)
+#define YY_DECL int yylex \
+               (YYSTYPE * yylval_param , yyscan_t yyscanner)
 #endif /* !YY_DECL */
 
 /* yy_get_previous_state - get the state just before the EOB char was reached */
@@ -319,8 +337,8 @@ extern int PancakeConfigurationParser_yylex (YYSTYPE * yylval_param ,yyscan_t yy
 #undef YY_DECL
 #endif
 
-#line 130 "scanner.l"
+#line 205 "ConfigurationParser/scanner.l"
 
-#line 325 "scanner.h"
-#undef PancakeConfigurationParser_yyIN_HEADER
-#endif /* PancakeConfigurationParser_yyHEADER_H */
+#line 343 "ConfigurationParser/scanner.h"
+#undef yyIN_HEADER
+#endif /* yyHEADER_H */

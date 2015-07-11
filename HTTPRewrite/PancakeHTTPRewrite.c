@@ -1,10 +1,8 @@
 
 #include "PancakeHTTPRewrite.h"
 
-#ifdef PANCAKE_HTTP_REWRITE
-
-#include "PancakeConfiguration.h"
-#include "PancakeLogger.h"
+#include "../PancakeConfiguration.h"
+#include "../PancakeLogger.h"
 #include "PancakeHTTPRewriteVM.h"
 #include "PancakeHTTPRewriteDefaultVariables.h"
 
@@ -380,5 +378,3 @@ PANCAKE_API void PancakeHTTPRewriteConfigurationHook(UByte step, config_setting_
 		*scope = ConfigurationScope;
 	}
 }
-
-#endif

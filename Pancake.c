@@ -13,7 +13,6 @@ UByte PancakeDoShutdown = 0;
 
 /* Forward declarations */
 STATIC void PancakeSignalHandler(Int32 type, siginfo_t *info, void *context);
-void PancakeFetchModules();
 
 /* Here we go. */
 Int32 main(Int32 argc, Byte **argv) {
@@ -51,10 +50,7 @@ Int32 main(Int32 argc, Byte **argv) {
 	PancakeCurrentWorker = &worker;
 
 	// Tell the user we are loading
-	PancakeLogger(PANCAKE_LOGGER_SYSTEM,
-				0,
-				&((String) {"Loading Pancake " PANCAKE_VERSION "... " PANCAKE_COPYRIGHT
-				, sizeof("Loading Pancake " PANCAKE_VERSION "... " PANCAKE_COPYRIGHT) - 1}));
+	PancakeLogger(PANCAKE_LOGGER_SYSTEM, 0, &StaticString("Pancake " PANCAKE_VERSION));
 
 	// Intialize configuration heap
 	PancakeConfigurationInitialize();
@@ -76,9 +72,6 @@ Int32 main(Int32 argc, Byte **argv) {
 	group = PancakeConfigurationAddGroup(NULL, (String) {"NetworkBuffering", sizeof("NetworkBuffering") - 1}, NULL);
 	PancakeConfigurationAddSetting(group, (String) {"Max", sizeof("Max") - 1}, CONFIG_TYPE_INT, &PancakeMainConfiguration.networkBufferingMax, sizeof(Int32), (config_value_t) 131072, NULL);
 	PancakeConfigurationAddSetting(group, (String) {"Min", sizeof("Min") - 1}, CONFIG_TYPE_INT, &PancakeMainConfiguration.networkBufferingMin, sizeof(Int32), (config_value_t) 10240, NULL);
-
-	// Fetch modules into accessible array
-	PancakeFetchModules(); // Defined by configure.ac
 
 	// Initialize modules
 	do {

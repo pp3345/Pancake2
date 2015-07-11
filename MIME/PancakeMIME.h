@@ -2,9 +2,7 @@
 #ifndef _PANCAKE_MIME_H
 #define _PANCAKE_MIME_H
 
-#include "Pancake.h"
-
-#ifdef PANCAKE_MIME
+#include "../Pancake.h"
 
 typedef struct _PancakeMIMEType {
 	String extension;
@@ -21,7 +19,5 @@ UByte PancakeMIMEInitialize();
 
 PANCAKE_API PancakeMIMEType *PancakeMIMELookupType(String *extension);
 PANCAKE_API PancakeMIMEType *PancakeMIMELookupTypeByPath(String *path);
-
-#endif
 
 #endif

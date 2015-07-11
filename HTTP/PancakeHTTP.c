@@ -1,13 +1,10 @@
 #include "PancakeHTTP.h"
+#include "../PancakeConfiguration.h"
+#include "../PancakeLogger.h"
+#include "../PancakeDateTime.h"
 
-#ifdef PANCAKE_HTTP
-
-#include "PancakeConfiguration.h"
-#include "PancakeLogger.h"
-#include "PancakeDateTime.h"
-
-#ifdef PANCAKE_HTTP_REWRITE
-#include "HTTPRewrite/PancakeHTTPRewrite.h"
+#ifdef PANCAKE_HTTPREWRITE
+#include "../HTTPRewrite/PancakeHTTPRewrite.h"
 #endif
 
 PancakeModule PancakeHTTP = {
@@ -572,7 +569,7 @@ STATIC UByte PancakeHTTPVirtualHostConfiguration(UByte step, config_setting_t *s
 			vhost->parserHooks = NULL;
 			vhost->numParserHooks = 0;
 
-#ifdef PANCAKE_HTTP_REWRITE
+#ifdef PANCAKE_HTTPREWRITE
 			vhost->rewriteConfiguration = NULL;
 #endif
 
@@ -655,7 +652,7 @@ STATIC UByte PancakeHTTPDocumentRootConfiguration(UByte step, config_setting_t *
 				return 0;
 			}
 
-#ifdef PANCAKE_HTTP_REWRITE
+#ifdef PANCAKE_HTTPREWRITE
 			PancakeHTTPRewriteConfigurationHook(step, setting, scope);
 #endif
 
@@ -2019,4 +2016,3 @@ PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
 		PancakeHTTPOnRemoteHangup(sock);
 	}
 }
-#endif

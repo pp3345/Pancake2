@@ -2,9 +2,7 @@
 #ifndef _PANCAKE_HTTP_REWRITE_VM_H
 #define _PANCAKE_HTTP_REWRITE_VM_H
 
-#include "Pancake.h"
-
-#ifdef PANCAKE_HTTP_REWRITE
+#include "../Pancake.h"
 
 #include "PancakeHTTPRewrite.h"
 
@@ -37,7 +35,5 @@ extern UByte *PancakeHTTPRewriteOpcodeNames[];
 #endif
 
 Byte PancakeHTTPRewriteVMExecute(PancakeSocket *sock, PancakeHTTPRewriteRuleset *ruleset);
-
-#endif
 
 #endif

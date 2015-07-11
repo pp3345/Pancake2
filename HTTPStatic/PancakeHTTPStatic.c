@@ -1,10 +1,7 @@
 
 #include "PancakeHTTPStatic.h"
-
-#if defined(PANCAKE_HTTP_STATIC) && defined(PANCAKE_HTTP)
-
-#include "MIME/PancakeMIME.h"
-#include "PancakeDateTime.h"
+#include "../MIME/PancakeMIME.h"
+#include "../PancakeDateTime.h"
 
 /* Forward declarations */
 STATIC UByte PancakeHTTPServeStatic(PancakeSocket *sock);
@@ -133,5 +130,3 @@ STATIC UByte PancakeHTTPServeStatic(PancakeSocket *sock) {
 
 	return 0;
 }
-
-#endif

@@ -29,7 +29,6 @@
 */
 
 %defines
-%output="y.tab.c"
 %pure-parser
 %lex-param{void *scanner}
 %parse-param{void *scanner}
@@ -39,7 +38,7 @@
 %{
 #include <string.h>
 #include <stdlib.h>
-#include "ConfigurationParser/PancakeConfigurationParser.h"
+#include "PancakeConfigurationParser.h"
 #ifdef WIN32
 #include "wincompat.h"
 
@@ -50,12 +49,8 @@
 
 #include <malloc.h>
 #endif
-#include "ConfigurationParser/parsectx.h"
-#include "ConfigurationParser/scanctx.h"
-
-/* these delcarations are provided to suppress compiler warnings */
-extern int PancakeConfigurationParser_yylex();
-extern int PancakeConfigurationParser_yyget_lineno();
+#include "parsectx.h"
+#include "scanctx.h"
 
 static const char *err_array_elem_type = "mismatched element type in array";
 static const char *err_duplicate_setting = "duplicate setting name";
@@ -71,18 +66,18 @@ static const char *err_duplicate_setting = "duplicate setting name";
 static void capture_parse_pos(void *scanner, struct scan_context *scan_ctx,
                               config_setting_t *setting)
 {
-  setting->line = (unsigned int)PancakeConfigurationParser_yyget_lineno(scanner);
+  setting->line = (unsigned int)yyget_lineno(scanner);
   setting->file = scanctx_current_filename(scan_ctx);
 }
 
 #define CAPTURE_PARSE_POS(S) \
   capture_parse_pos(scanner, scan_ctx, (S))
 
-void PancakeConfigurationParser_yyerror(void *scanner, struct parse_context *ctx,
+void yyerror(void *scanner, struct parse_context *ctx,
                        struct scan_context *scan_ctx, char const *s)
 {
   if(ctx->config->error_text) return;
-  ctx->config->error_line = PancakeConfigurationParser_yyget_lineno(scanner);
+  ctx->config->error_line = yyget_lineno(scanner);
   ctx->config->error_text = s;
 }
 
@@ -148,7 +143,7 @@ setting:
 
     if(ctx->setting == NULL)
     {
-      PancakeConfigurationParser_yyerror(scanner, ctx, scan_ctx, err_duplicate_setting);
+      yyerror(scanner, ctx, scan_ctx, err_duplicate_setting);
       YYABORT;
     }
     else
@@ -228,7 +223,7 @@ simple_value:
 
       if(! e)
       {
-        PancakeConfigurationParser_yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
+        yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
         YYABORT;
       }
       else
@@ -246,7 +241,7 @@ simple_value:
       config_setting_t *e = config_setting_set_int_elem(ctx->parent, -1, $1);
       if(! e)
       {
-        PancakeConfigurationParser_yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
+        yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
         YYABORT;
       }
       else
@@ -268,7 +263,7 @@ simple_value:
       config_setting_t *e = config_setting_set_int64_elem(ctx->parent, -1, $1);
       if(! e)
       {
-        PancakeConfigurationParser_yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
+        yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
         YYABORT;
       }
       else
@@ -290,7 +285,7 @@ simple_value:
       config_setting_t *e = config_setting_set_int_elem(ctx->parent, -1, $1);
       if(! e)
       {
-        PancakeConfigurationParser_yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
+        yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
         YYABORT;
       }
       else
@@ -312,7 +307,7 @@ simple_value:
       config_setting_t *e = config_setting_set_int64_elem(ctx->parent, -1, $1);
       if(! e)
       {
-        PancakeConfigurationParser_yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
+        yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
         YYABORT;
       }
       else
@@ -334,7 +329,7 @@ simple_value:
       config_setting_t *e = config_setting_set_float_elem(ctx->parent, -1, $1);
       if(! e)
       {
-        PancakeConfigurationParser_yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
+        yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
         YYABORT;
       }
       else
@@ -355,7 +350,7 @@ simple_value:
 
       if(! e)
       {
-        PancakeConfigurationParser_yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
+        yyerror(scanner, ctx, scan_ctx, err_array_elem_type);
         YYABORT;
       }
       else

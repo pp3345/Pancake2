@@ -1,10 +1,8 @@
 
 #include "PancakeAuthenticationFile.h"
 
-#ifdef PANCAKE_AUTHENTICATION_FILE
-
-#include "PancakeConfiguration.h"
-#include "PancakeLogger.h"
+#include "../PancakeConfiguration.h"
+#include "../PancakeLogger.h"
 #include <openssl/sha.h>
 #include <openssl/md5.h>
 
@@ -298,5 +296,3 @@ STATIC UByte PancakeAuthenticationFileAuthenticate(PancakeAuthenticationConfigur
 	// Password wrong
 	return 0;
 }
-
-#endif

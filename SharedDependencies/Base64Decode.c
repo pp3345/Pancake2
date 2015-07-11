@@ -5,9 +5,7 @@ This is part of the libb64 project, and has been placed in the public domain.
 For details, see http://sourceforge.net/projects/libb64
 */
 
-#include "SharedDependencies/Base64Decode.h"
-
-#ifdef PANCAKE_BASE64_DECODER_DEPENDENCY
+#include "Base64Decode.h"
 
 int base64_decode_value(char value_in)
 {
@@ -87,5 +85,3 @@ int base64_decode_block(const char* code_in, const int length_in, char* plaintex
 	/* control should not reach here */
 	return plainchar - plaintext_out;
 }
-
-#endif

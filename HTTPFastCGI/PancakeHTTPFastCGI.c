@@ -1,12 +1,9 @@
 
 #include "PancakeHTTPFastCGI.h"
+#include "../PancakeLogger.h"
 
-#ifdef PANCAKE_HTTP_FASTCGI
-
-#include "PancakeLogger.h"
-
-#ifdef PANCAKE_HTTP_REWRITE
-#include "HTTPRewrite/PancakeHTTPRewrite.h"
+#ifdef PANCAKE_HTTPREWRITE
+#include "../HTTPRewrite/PancakeHTTPRewrite.h"
 #endif
 
 /* Forward declarations */
@@ -87,7 +84,7 @@ STATIC UByte PancakeHTTPFastCGIClientConfiguration(UByte step, config_setting_t 
 	if(step == PANCAKE_CONFIGURATION_INIT) {
 		UInt32 length = strlen(setting->value.sval);
 
-#ifdef PANCAKE_HTTP_REWRITE
+#ifdef PANCAKE_HTTPREWRITE
 		PancakeHTTPRewriteConfigurationHook(step, setting, scope);
 #endif
 
@@ -150,7 +147,7 @@ STATIC UByte PancakeHTTPFastCGIInitialize() {
 		return 2;
 	}
 
-#ifdef PANCAKE_HTTP_REWRITE
+#ifdef PANCAKE_HTTPREWRITE
 	if(!PancakeHTTPRewriteModule.initialized) {
 		// Defer if HTTPRewrite is not initialized yet
 		return 2;
@@ -171,7 +168,7 @@ STATIC UByte PancakeHTTPFastCGIInitialize() {
 	VirtualHosts = PancakeConfigurationLookupSetting(HTTP, (String) {"VirtualHosts", sizeof("VirtualHosts") - 1});
 	PancakeConfigurationAddSettingToGroup(VirtualHosts->listGroup, FastCGIClient);
 
-#ifdef PANCAKE_HTTP_REWRITE
+#ifdef PANCAKE_HTTPREWRITE
 	PancakeConfigurationAddSettingToGroup(PancakeHTTPRewriteGroup, FastCGIClient);
 #endif
 
@@ -1048,5 +1045,3 @@ STATIC UByte PancakeHTTPFastCGIServe(PancakeSocket *clientSocket) {
 
 	return 0;
 }
-
-#endif

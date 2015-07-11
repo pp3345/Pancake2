@@ -282,6 +282,7 @@ PANCAKE_API void PancakePrintNetworkBuffer(PancakeNetworkBuffer *buf) {
 }
 
 PANCAKE_API void PancakeBacktrace() {
+#ifdef HAVE_EXECINFO_H
 	void *array[50];
 	Native size, i;
 	Byte **strings;
@@ -298,6 +299,9 @@ PANCAKE_API void PancakeBacktrace() {
 	}
 
 	free(strings);
+#else
+	printf("Backtraces not available\n");
+#endif
 }
 
 #endif

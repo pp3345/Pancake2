@@ -1,10 +1,7 @@
 
 #include "PancakeHTTPDeflate.h"
-
-#ifdef PANCAKE_HTTP_DEFLATE
-
-#include "PancakeConfiguration.h"
-#include "PancakeLogger.h"
+#include "../PancakeConfiguration.h"
+#include "../PancakeLogger.h"
 
 STATIC UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk);
 STATIC UByte PancakeHTTPDeflateInitialize();
@@ -131,5 +128,3 @@ STATIC UByte PancakeHTTPDeflateChunk(PancakeSocket *sock, String *chunk) {
 
 	return 1;
 }
-
-#endif

@@ -2,9 +2,7 @@
 #ifndef _PANCAKE_LINUX_POLL_H
 #define _PANCAKE_LINUX_POLL_H
 
-#include "Pancake.h"
-
-#ifdef PANCAKE_LINUX_POLL
+#include "../Pancake.h"
 
 #include <sys/epoll.h>
 
@@ -15,5 +13,4 @@ extern Int32 PancakeLinuxPollFD;
 #define PANCAKE_LINUX_POLL_IN 		1 << 11
 #define PANCAKE_LINUX_POLL_OUT		1 << 12
 
-#endif
 #endif

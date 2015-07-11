@@ -2,11 +2,9 @@
 #ifndef _PANCAKE_HTTP_FASTCGI_H
 #define _PANCAKE_HTTP_FASTCGI_H
 
-#include "Pancake.h"
+#include "../Pancake.h"
 
-#ifdef PANCAKE_HTTP_FASTCGI
-
-#include "HTTP/PancakeHTTP.h"
+#include "../HTTP/PancakeHTTP.h"
 
 #define PANCAKE_FASTCGI_MAX_REQUEST_ID 1024
 #define PANCAKE_FASTCGI_SERVER_SOFTWARE "Pancake/" PANCAKE_VERSION
@@ -62,7 +60,5 @@ extern PancakeModule PancakeHTTPFastCGIModule;
 #define FCGI_FILTER     3
 
 #define FCGI_KEEP_CONN  1
-
-#endif
 
 #endif

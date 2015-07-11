@@ -1,9 +1,6 @@
 
 #include "PancakeOpenSSL.h"
-
-#ifdef PANCAKE_OPENSSL
-
-#include "PancakeLogger.h"
+#include "../PancakeLogger.h"
 
 PancakeModule PancakeOpenSSL = {
 	"OpenSSL",
@@ -616,5 +613,3 @@ STATIC void PancakeOpenSSLClose(PancakeSocket *socket) {
 		SSL_free(sock->session);
 	}
 }
-
-#endif

@@ -2,11 +2,8 @@
 #ifndef _PANCAKE_AUTHENTICATION_FILE_H
 #define _PANCAKE_AUTHENTICATION_FILE_H
 
-#include "Pancake.h"
-
-#ifdef PANCAKE_AUTHENTICATION_FILE
-
-#include "Authentication/PancakeAuthentication.h"
+#include "../Pancake.h"
+#include "../Authentication/PancakeAuthentication.h"
 
 UByte PancakeAuthenticationFileInitialize();
 
@@ -27,7 +24,5 @@ extern PancakeModule PancakeAuthenticationFileModule;
 #define PANCAKE_AUTHENTICATION_FILE_ENCRYPTION_PLAIN 1
 #define PANCAKE_AUTHENTICATION_FILE_ENCRYPTION_SHA1 2
 #define PANCAKE_AUTHENTICATION_FILE_ENCRYPTION_MD5 3
-
-#endif
 
 #endif

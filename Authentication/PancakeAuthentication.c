@@ -1,10 +1,7 @@
 
 #include "PancakeAuthentication.h"
-
-#ifdef PANCAKE_AUTHENTICATION
-
-#include "PancakeConfiguration.h"
-#include "PancakeLogger.h"
+#include "../PancakeConfiguration.h"
+#include "../PancakeLogger.h"
 
 PancakeModule PancakeAuthenticationModule = {
 		"Authentication",
@@ -134,6 +131,4 @@ PANCAKE_API void PancakeAuthenticationRegisterBackend(PancakeAuthenticationBacke
 PANCAKE_API inline UByte PancakeAuthenticate(PancakeAuthenticationConfiguration *config, void *data) {
 	return config->backend->authenticate(config, data);
 }
-
-#endif
 

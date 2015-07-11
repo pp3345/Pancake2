@@ -1,11 +1,8 @@
 #include "PancakeLinuxPoll.h"
-
-#ifdef PANCAKE_LINUX_POLL
-
-#include "PancakeNetwork.h"
-#include "PancakeConfiguration.h"
-#include "PancakeLogger.h"
-#include "PancakeScheduler.h"
+#include "../PancakeNetwork.h"
+#include "../PancakeConfiguration.h"
+#include "../PancakeLogger.h"
+#include "../PancakeScheduler.h"
 
 Int32 PancakeLinuxPollFD = -1;
 
@@ -343,5 +340,3 @@ STATIC void PancakeLinuxPollWait() {
 		}
 	}
 }
-
-#endif

@@ -1,12 +1,10 @@
 
 #include "PancakeHTTPBasicAuthentication.h"
 
-#ifdef PANCAKE_HTTP_BASIC_AUTHENTICATION
-
-#include "PancakeConfiguration.h"
-#include "HTTP/PancakeHTTP.h"
-#include "Authentication/PancakeAuthentication.h"
-#include "SharedDependencies/Base64Decode.h"
+#include "../PancakeConfiguration.h"
+#include "../HTTP/PancakeHTTP.h"
+#include "../Authentication/PancakeAuthentication.h"
+#include "../SharedDependencies/Base64Decode.h"
 
 /* Forward declaration */
 STATIC UByte PancakeHTTPBasicAuthenticate(PancakeSocket *sock);
@@ -121,5 +119,3 @@ STATIC UByte PancakeHTTPBasicAuthenticate(PancakeSocket *sock) {
 
 	return 1;
 }
-
-#endif

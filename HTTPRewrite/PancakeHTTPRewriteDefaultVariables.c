@@ -1,9 +1,6 @@
 
 #include "PancakeHTTPRewriteDefaultVariables.h"
-
-#ifdef PANCAKE_HTTP_REWRITE
-
-#include "PancakeLogger.h"
+#include "../PancakeLogger.h"
 
 STATIC UByte PancakeHTTPRewriteGetHTTPKeepAlive(PancakeSocket *sock, PancakeHTTPRewriteVariable *var, PancakeHTTPRewriteValue *value) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
@@ -136,5 +133,3 @@ void PancakeHTTPRewriteRegisterDefaultVariables() {
 
 	PancakeHTTPRewriteRegisterCallback(StaticString("ThrowException"), PancakeHTTPRewriteThrowException);
 }
-
-#endif

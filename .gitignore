@@ -213,10 +213,12 @@ pip-log.txt
 .mr.developer.cfg
 
 
-# config.h
 config.h
-
-# config
 config/
-
 .autotools
+ConfigurationParser/scanner.c
+ConfigurationParser/scanner.h
+ConfigurationParser/grammar.c
+ConfigurationParser/grammar.h
+
+.idea

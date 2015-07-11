@@ -1,6 +1,6 @@
 #include "PancakeHTTP.h"
 
-#if defined(PANCAKE_HTTP) && defined(PANCAKE_NETWORK_TLS)
+#ifdef PANCAKE_NETWORK_TLS
 
 STATIC UByte PancakeHTTPSInitialize(PancakeSocket *sock);
 STATIC String *PancakeHTTPSNextProtocolNegotiation(PancakeSocket *sock);

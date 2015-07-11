@@ -8,9 +8,7 @@ For details, see http://sourceforge.net/projects/libb64
 #ifndef _BASE64_CDECODE_H
 #define _BASE64_CDECODE_H
 
-#include "Pancake.h"
-
-#ifdef PANCAKE_BASE64_DECODER_DEPENDENCY
+#include "../Pancake.h"
 
 typedef enum
 {
@@ -28,7 +26,5 @@ void base64_init_decodestate(base64_decodestate* state_in);
 int base64_decode_value(char value_in);
 
 int base64_decode_block(const char* code_in, const int length_in, char* plaintext_out, base64_decodestate* state_in);
-
-#endif
 
 #endif /* BASE64_CDECODE_H */

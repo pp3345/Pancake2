@@ -1,8 +1,6 @@
 
 #include "PancakeMIME.h"
-#include "PancakeConfiguration.h"
-
-#ifdef PANCAKE_MIME
+#include "../PancakeConfiguration.h"
 
 PancakeModule PancakeMIME = {
 		"MIME",
@@ -123,5 +121,3 @@ PANCAKE_API PancakeMIMEType *PancakeMIMELookupTypeByPath(String *path) {
 	PancakeFree(extension.value);
 	return type;
 }
-
-#endif

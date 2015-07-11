@@ -187,13 +187,13 @@ STATIC UByte PancakeNetworkInterfaceTryBind(PancakeSocket *socket) {
 	// Try binding to interface
 	switch(socket->localAddress->sa_family) {
 		case AF_INET:
-			retval = bind(socket->fd, (struct sockaddr_in*) socket->localAddress, sizeof(struct sockaddr_in));
+			retval = bind(socket->fd, socket->localAddress, sizeof(struct sockaddr_in));
 			break;
 		case AF_INET6:
-			retval = bind(socket->fd, (struct sockaddr_in6*) socket->localAddress, sizeof(struct sockaddr_in6));
+			retval = bind(socket->fd, socket->localAddress, sizeof(struct sockaddr_in6));
 			break;
 		case AF_UNIX:
-			retval = bind(socket->fd, (struct sockaddr_un*) socket->localAddress, SUN_LEN((struct sockaddr_un*) socket->localAddress));
+			retval = bind(socket->fd, socket->localAddress, SUN_LEN((struct sockaddr_un*) socket->localAddress));
 			break;
 	}
 

@@ -1,9 +1,6 @@
 
 #include "PancakeHTTPRewriteVM.h"
-
-#ifdef PANCAKE_HTTP_REWRITE
-
-#include "PancakeLogger.h"
+#include "../PancakeLogger.h"
 
 STATIC Byte PANCAKE_HTTP_REWRITE_VM_NOP(PancakeSocket *sock, void *op1, void *op2);
 
@@ -302,5 +299,3 @@ STATIC Byte PANCAKE_HTTP_REWRITE_VM_ACTIVATE_SCOPE(PancakeSocket *sock, void *op
 
 	return NEXT_OPCODE;
 }
-
-#endif

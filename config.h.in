@@ -1,0 +1,10 @@
+#cmakedefine HAVE_VALGRIND_H
+#cmakedefine HAVE_UCONTEXT_H
+#cmakedefine HAVE_EXECINFO_H
+#cmakedefine HAVE_XLOCALE_H
+#cmakedefine HAVE_NEWLOCALE
+#cmakedefine HAVE_USELOCALE
+#cmakedefine HAVE_FREELOCALE
+#cmakedefine PANCAKE_DEBUG
+#cmakedefine PANCAKE_NETWORK_TLS
+#define SIZEOF_LONG @SIZEOF_LONG@

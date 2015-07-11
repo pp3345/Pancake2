@@ -32,10 +32,10 @@
 #endif
 
 #include "PancakeConfigurationParser.h"
-#include "grammar.h"
-#include "scanner.h"
 #include "scanctx.h"
 #include "parsectx.h"
+#include "grammar.h"
+#include "scanner.h"
 
 #include <locale.h>
 
@@ -62,11 +62,6 @@ static void __config_list_destroy(config_list_t *list);
 static void __config_write_setting(const config_setting_t *setting,
                                    FILE *stream, int depth,
                                    unsigned short tab_width);
-
-extern int PancakeConfigurationParser_yyparse(void *scanner, struct parse_context *ctx,
-                             struct scan_context *scan_ctx);
-extern int PancakeConfigurationParser_yylex_init_extra(struct scan_context *scan_ctx,
-                                      yyscan_t *scanner);
 
 /* ------------------------------------------------------------------------- */
 
@@ -557,15 +552,15 @@ static int __config_read(config_t *config, FILE *stream, const char *filename,
 
   scanctx_init(&scan_ctx, filename);
   scan_ctx.config = config;
-  PancakeConfigurationParser_yylex_init_extra(&scan_ctx, &scanner);
+  yylex_init_extra(&scan_ctx, &scanner);
 
   if(stream)
-    PancakeConfigurationParser_yyrestart(stream, scanner);
+    yyrestart(stream, scanner);
   else /* read from string */
-    PancakeConfigurationParser_yy_scan_string(str, scanner);
+    yy_scan_string(str, scanner);
 
-  PancakeConfigurationParser_yyset_lineno(1, scanner);
-  r = PancakeConfigurationParser_yyparse(scanner, &parse_ctx, &scan_ctx);
+  yyset_lineno(1, scanner);
+  r = yyparse(scanner, &parse_ctx, &scan_ctx);
 
   if(r != 0)
   {
@@ -576,10 +571,10 @@ static int __config_read(config_t *config, FILE *stream, const char *filename,
 
     /* Unwind the include stack, freeing the buffers and closing the files. */
     while((buf = (YY_BUFFER_STATE)scanctx_pop_include(&scan_ctx)) != NULL)
-      PancakeConfigurationParser_yy_delete_buffer(buf, scanner);
+      yy_delete_buffer(buf, scanner);
   }
 
-  PancakeConfigurationParser_yylex_destroy(scanner);
+  yylex_destroy(scanner);
   config->filenames = scanctx_cleanup(&scan_ctx, &(config->num_filenames));
   parsectx_cleanup(&parse_ctx);
 

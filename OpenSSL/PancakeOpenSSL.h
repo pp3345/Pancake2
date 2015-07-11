@@ -1,11 +1,8 @@
-#ifndef _PANCAKE_OPEN_SSL_H
-#define _PANCAKE_OPEN_SSL_H
+#ifndef _PANCAKE_OPENSSL_H
+#define _PANCAKE_OPENSSL_H
 
-#include "Pancake.h"
-
-#ifdef PANCAKE_OPENSSL
-
-#include "PancakeNetwork.h"
+#include "../Pancake.h"
+#include "../PancakeNetwork.h"
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -36,7 +33,5 @@ typedef struct _PancakeOpenSSLSocket {
 	SSL *session;
 	PancakeNetworkEventHandler previousHandler;
 } PancakeOpenSSLSocket;
-
-#endif
 
 #endif

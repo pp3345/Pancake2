@@ -2,12 +2,9 @@
 #ifndef _PANCAKE_HTTP_REWRITE_H
 #define _PANCAKE_HTTP_REWRITE_H
 
-#include "Pancake.h"
-
-#ifdef PANCAKE_HTTP_REWRITE
-
-#include "PancakeNetwork.h"
-#include "HTTP/PancakeHTTP.h"
+#include "../Pancake.h"
+#include "../PancakeNetwork.h"
+#include "../HTTP/PancakeHTTP.h"
 
 UByte PancakeHTTPRewriteInitialize();
 UByte PancakeHTTPRewriteShutdown();
@@ -87,7 +84,5 @@ PANCAKE_API void PancakeHTTPRewriteRegisterCallback(String name, PancakeHTTPRewr
 PANCAKE_API void PancakeHTTPRewriteConfigurationHook(UByte step, config_setting_t *setting, PancakeConfigurationScope **scope);
 
 extern PancakeConfigurationGroup *PancakeHTTPRewriteGroup;
-
-#endif
 
 #endif

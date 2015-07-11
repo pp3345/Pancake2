@@ -2,9 +2,7 @@
 #ifndef _PANCAKE_AUTHENTICATION_H
 #define _PANCAKE_AUTHENTICATION_H
 
-#include "Pancake.h"
-
-#ifdef PANCAKE_AUTHENTICATION
+#include "../Pancake.h"
 
 UByte PancakeAuthenticationInitialize();
 UByte PancakeAuthenticationShutdown();
@@ -43,7 +41,5 @@ extern PancakeModule PancakeAuthenticationModule;
 
 PANCAKE_API void PancakeAuthenticationRegisterBackend(PancakeAuthenticationBackend *backend);
 PANCAKE_API inline UByte PancakeAuthenticate(PancakeAuthenticationConfiguration *config, void *data);
-
-#endif
 
 #endif

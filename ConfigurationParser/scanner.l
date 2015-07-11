@@ -34,8 +34,7 @@
 %option yylineno
 %option nounput
 %option bison-bridge
-%option header-file="scanner.h"
-%option outfile="lex.yy.c"
+%option header-file="ConfigurationParser/scanner.h"
 %option extra-type="struct scan_context *"
 
 %{
@@ -47,9 +46,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "parsectx.h"
+#include "scanctx.h"
 #include "grammar.h"
-#include "ConfigurationParser/parsectx.h"
-#include "ConfigurationParser/scanctx.h"
 
 #define YY_NO_INPUT // Suppress generation of useless input() function
 
@@ -151,7 +150,7 @@ include_open      ^[ \t]*@include[ \t]+\"
                       yyextra->config->error_text = error;
                       yyextra->config->error_file = scanctx_current_filename(
                         yyextra);
-                      yyextra->config->error_line = PancakeConfigurationParser_yyget_lineno(
+                      yyextra->config->error_line = yyget_lineno(
                         yyscanner);
                       return TOK_ERROR;
                     }

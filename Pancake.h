@@ -3,10 +3,10 @@
 #define _PANCAKE_H
 
 #ifdef HAVE_CONFIG_H
-#	include "config.h"
+#   include <config.h>
 #endif
 
-#define __USE_GNU
+#define _GNU_SOURCE
 
 /* System includes */
 #include <stdlib.h>
