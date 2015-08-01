@@ -127,6 +127,8 @@ foreach(FILE ${FILES})
     endif()
 endforeach()
 
+set(PANCAKE_CONFIG_PATH "config/pancake.cfg" CACHE STRING "Pancake configuration path")
+
 foreach(MODULE ${REQUIRED_MODULES})
     message(STATUS "Checking for required module ${MODULE}")
 
