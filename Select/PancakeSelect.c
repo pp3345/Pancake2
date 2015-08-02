@@ -28,16 +28,16 @@ static PancakeSocket *currentSocket = NULL;
 
 PancakeModule PancakeSelect = {
 		"Select",
-        PancakeSelectInitialize,
-        NULL,
-        NULL,
-        0
+		PancakeSelectInitialize,
+		NULL,
+		NULL,
+		0
 };
 
 PancakeServerArchitecture PancakeSelectServer = {
 		StaticString("Select"),
 
-        PancakeSelectWait,
+		PancakeSelectWait,
 
 		PancakeSelectAddReadSocket,
 		PancakeSelectAddWriteSocket,
@@ -51,11 +51,11 @@ PancakeServerArchitecture PancakeSelectServer = {
 		PancakeSelectSetWriteSocket,
 		PancakeSelectSetSocket,
 
-        PancakeSelectOnSocketClose,
+		PancakeSelectOnSocketClose,
 
-        NULL,
+		NULL,
 
-        NULL
+		NULL
 };
 
 STATIC UByte PancakeSelectInitialize() {
@@ -230,12 +230,12 @@ STATIC void PancakeSelectWait() {
 					continue;
 
 				if(FD_ISSET(fd, &readFDSet)) {
-                    UByte buf[1];
+					UByte buf[1];
 
 					numEvents--;
 
 					if(currentSocket->onRead == NULL || recv(fd, &buf, 1, MSG_PEEK | MSG_DONTWAIT) == 0) {
-                        PancakeAssert(currentSocket->onRemoteHangup != NULL);
+						PancakeAssert(currentSocket->onRemoteHangup != NULL);
 						currentSocket->onRemoteHangup(currentSocket);
 						PancakeCheckHeap();
 
