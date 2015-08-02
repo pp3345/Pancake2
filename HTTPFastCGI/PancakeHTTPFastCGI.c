@@ -680,7 +680,9 @@ STATIC void PancakeHTTPFastCGIOnClientRead(PancakeSocket *sock) {
 	UInt16 requestID = (UInt16) (UNative) request->contentServeData;
 
 	// Read data
-	PancakeNetworkRead(sock, 65535);
+	if(PancakeNetworkRead(sock, 65535) == -1) {
+		return;
+	}
 
 	// Activate request scope group so that we can fetch the FastCGIClient
 	PancakeConfigurationActivateScopeGroup(&request->scopeGroup);
