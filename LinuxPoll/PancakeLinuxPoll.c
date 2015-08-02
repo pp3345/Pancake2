@@ -25,7 +25,7 @@ STATIC inline void PancakeLinuxPollSetSocket(PancakeSocket *socket);
 
 STATIC inline void PancakeLinuxPollOnSocketClose(PancakeSocket *socket);
 
-static PancakeSocket *currentSocket;
+static PancakeSocket *currentSocket = NULL;
 
 PancakeModule PancakeLinuxPoll = {
 		"LinuxPoll",
