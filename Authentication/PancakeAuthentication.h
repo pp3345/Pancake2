@@ -40,6 +40,6 @@ extern PancakeAuthenticationConfiguration *PancakeAuthenticationActiveConfigurat
 extern PancakeModule PancakeAuthenticationModule;
 
 PANCAKE_API void PancakeAuthenticationRegisterBackend(PancakeAuthenticationBackend *backend);
-PANCAKE_API inline UByte PancakeAuthenticate(PancakeAuthenticationConfiguration *config, void *data);
+PANCAKE_API UByte PancakeAuthenticate(PancakeAuthenticationConfiguration *config, void *data);
 
 #endif

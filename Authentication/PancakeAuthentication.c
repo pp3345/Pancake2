@@ -128,7 +128,7 @@ PANCAKE_API void PancakeAuthenticationRegisterBackend(PancakeAuthenticationBacke
 	HASH_ADD_KEYPTR(hh, PancakeAuthenticationBackends, backend->name.value, backend->name.length, backend);
 }
 
-PANCAKE_API inline UByte PancakeAuthenticate(PancakeAuthenticationConfiguration *config, void *data) {
+PANCAKE_API extern inline UByte PancakeAuthenticate(PancakeAuthenticationConfiguration *config, void *data) {
 	return config->backend->authenticate(config, data);
 }
 

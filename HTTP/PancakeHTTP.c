@@ -537,6 +537,8 @@ static PancakeHTTPParserHook *parserHooks = NULL;
 /* Forward declarations */
 STATIC void PancakeHTTPInitializeConnection(PancakeSocket *sock);
 STATIC void PancakeHTTPReadHeaderData(PancakeSocket *sock);
+STATIC void PancakeHTTPInitializeRequestStructure(PancakeHTTPRequest *request);
+STATIC void PancakeHTTPCleanRequestData(PancakeHTTPRequest *request);
 
 PANCAKE_API void PancakeHTTPRegisterContentServeBackend(PancakeHTTPContentServeBackend *backend) {
 	LL_APPEND(contentBackends, backend);
@@ -1423,7 +1425,7 @@ PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code) {
 	sock->onWrite = PancakeHTTPFullWriteBuffer;
 }
 
-PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte ignoreException) {
+PANCAKE_API extern inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte ignoreException) {
 	UInt16 i;
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
@@ -1436,11 +1438,11 @@ PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte igno
 	return 0;
 }
 
-PANCAKE_API inline void PancakeHTTPFreeContentEncoding(PancakeHTTPRequest *request) {
+PANCAKE_API extern inline void PancakeHTTPFreeContentEncoding(PancakeHTTPRequest *request) {
 	PancakeFree(request->contentEncoding);
 }
 
-PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock) {
+PANCAKE_API extern inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	if(request != NULL) {
@@ -1461,7 +1463,7 @@ STATIC void PancakeHTTPOnKeepAliveRemoteHangup(PancakeSocket *sock) {
 	PancakeNetworkClose(sock);
 }
 
-PANCAKE_API inline void PancakeHTTPFullWriteBuffer(PancakeSocket *sock) {
+PANCAKE_API extern inline void PancakeHTTPFullWriteBuffer(PancakeSocket *sock) {
 	PancakeNetworkWrite(sock);
 
 	if(!sock->writeBuffer.length) {
@@ -1469,7 +1471,7 @@ PANCAKE_API inline void PancakeHTTPFullWriteBuffer(PancakeSocket *sock) {
 	}
 }
 
-PANCAKE_API inline void PancakeHTTPOnWrite(PancakeSocket *sock) {
+PANCAKE_API extern inline void PancakeHTTPOnWrite(PancakeSocket *sock) {
 	PancakeNetworkWrite(sock);
 
 	if(!sock->writeBuffer.length) {
@@ -1477,7 +1479,7 @@ PANCAKE_API inline void PancakeHTTPOnWrite(PancakeSocket *sock) {
 	}
 }
 
-PANCAKE_API inline void PancakeHTTPRemoveQueryString(PancakeHTTPRequest *request) {
+PANCAKE_API extern inline void PancakeHTTPRemoveQueryString(PancakeHTTPRequest *request) {
 	UByte *offset = memchr(request->path.value, '?', request->path.length);
 
 	if(offset) {
@@ -1485,7 +1487,7 @@ PANCAKE_API inline void PancakeHTTPRemoveQueryString(PancakeHTTPRequest *request
 	}
 }
 
-PANCAKE_API inline void PancakeHTTPExtractQueryString(PancakeHTTPRequest *request, String *queryString) {
+PANCAKE_API extern inline void PancakeHTTPExtractQueryString(PancakeHTTPRequest *request, String *queryString) {
 	UByte *offset = memchr(request->path.value, '?', request->path.length);
 
 	if(offset) {
@@ -1649,7 +1651,7 @@ PANCAKE_API void PancakeHTTPSendChunk(PancakeSocket *sock, String *chunk) {
 	sock->writeBuffer.length = offset + 2 - sock->writeBuffer.value;
 }
 
-PANCAKE_API inline void PancakeHTTPSendLastChunk(PancakeSocket *sock) {
+PANCAKE_API extern inline void PancakeHTTPSendLastChunk(PancakeSocket *sock) {
 	UByte *offset;
 
 	if(sock->writeBuffer.size < sock->writeBuffer.length + sizeof("0\r\n\r\n") - 1) {
@@ -1963,7 +1965,7 @@ PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock) {
 	PancakeFree(log.value);
 }
 
-PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
+PANCAKE_API extern inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock) {
 	PancakeHTTPRequest *request = (PancakeHTTPRequest*) sock->data;
 
 	if(request->onOutputEnd) {

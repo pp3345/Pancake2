@@ -604,7 +604,7 @@ PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *
 	return client;
 }
 
-PANCAKE_API inline void PancakeNetworkCacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *socket) {
+PANCAKE_API extern inline void PancakeNetworkCacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *socket) {
 	PancakeNetworkConnectionCache *connection = PancakeAllocate(sizeof(PancakeNetworkConnectionCache));
 
 	connection->socket = socket;
@@ -612,7 +612,7 @@ PANCAKE_API inline void PancakeNetworkCacheConnection(PancakeNetworkConnectionCa
 	LL_PREPEND((*cache), connection);
 }
 
-PANCAKE_API inline void PancakeNetworkUncacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *sock) {
+PANCAKE_API extern inline void PancakeNetworkUncacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *sock) {
 	PancakeNetworkConnectionCache *connection = NULL;
 
 	LL_SEARCH_SCALAR(*cache, connection, socket, sock);
@@ -623,7 +623,7 @@ PANCAKE_API inline void PancakeNetworkUncacheConnection(PancakeNetworkConnection
 	}
 }
 
-PANCAKE_API inline PancakeSocket *PancakeNetworkConnect(struct sockaddr *addr, PancakeNetworkConnectionCache **cache, UByte cachePolicy) {
+PANCAKE_API extern inline PancakeSocket *PancakeNetworkConnect(struct sockaddr *addr, PancakeNetworkConnectionCache **cache, UByte cachePolicy) {
 	Int32 fd, flags, structSize;
 	PancakeSocket *remote;
 
@@ -693,7 +693,7 @@ PANCAKE_API inline PancakeSocket *PancakeNetworkConnect(struct sockaddr *addr, P
 	return remote;
 }
 
-PANCAKE_API inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength) {
+PANCAKE_API extern inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength) {
 	UByte buf[maxLength];
 	Int32 length;
 
@@ -738,7 +738,7 @@ PANCAKE_API inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLengt
 	return length;
 }
 
-PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock) {
+PANCAKE_API extern inline Int32 PancakeNetworkWrite(PancakeSocket *sock) {
 	Int32 length;
 
 	if(sock->layer && EXPECTED(sock->layer->write != NULL)) {
@@ -781,7 +781,7 @@ PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock) {
 	return length;
 }
 
-PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock) {
+PANCAKE_API extern inline void PancakeNetworkClose(PancakeSocket *sock) {
 	// Tell server architecture we're closing the socket
 	PancakeMainConfiguration.serverArchitecture->onSocketClose(sock);
 

@@ -11,19 +11,19 @@ STATIC UByte PancakeLinuxPollInitialize();
 STATIC UByte PancakeLinuxPollShutdown();
 STATIC UByte PancakeLinuxPollServerInitialize();
 STATIC void PancakeLinuxPollWait();
-STATIC inline void PancakeLinuxPollAddReadSocket(PancakeSocket *socket);
-STATIC inline void PancakeLinuxPollAddWriteSocket(PancakeSocket *socket);
-STATIC inline void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket);
+STATIC void PancakeLinuxPollAddReadSocket(PancakeSocket *socket);
+STATIC void PancakeLinuxPollAddWriteSocket(PancakeSocket *socket);
+STATIC void PancakeLinuxPollAddReadWriteSocket(PancakeSocket *socket);
 
-STATIC inline void PancakeLinuxPollRemoveSocket(PancakeSocket *socket);
-STATIC inline void PancakeLinuxPollRemoveReadSocket(PancakeSocket *socket);
-STATIC inline void PancakeLinuxPollRemoveWriteSocket(PancakeSocket *socket);
+STATIC void PancakeLinuxPollRemoveSocket(PancakeSocket *socket);
+STATIC void PancakeLinuxPollRemoveReadSocket(PancakeSocket *socket);
+STATIC void PancakeLinuxPollRemoveWriteSocket(PancakeSocket *socket);
 
-STATIC inline void PancakeLinuxPollSetReadSocket(PancakeSocket *socket);
-STATIC inline void PancakeLinuxPollSetWriteSocket(PancakeSocket *socket);
-STATIC inline void PancakeLinuxPollSetSocket(PancakeSocket *socket);
+STATIC void PancakeLinuxPollSetReadSocket(PancakeSocket *socket);
+STATIC void PancakeLinuxPollSetWriteSocket(PancakeSocket *socket);
+STATIC void PancakeLinuxPollSetSocket(PancakeSocket *socket);
 
-STATIC inline void PancakeLinuxPollOnSocketClose(PancakeSocket *socket);
+STATIC void PancakeLinuxPollOnSocketClose(PancakeSocket *socket);
 
 static PancakeSocket *currentSocket = NULL;
 

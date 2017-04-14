@@ -462,7 +462,7 @@ PANCAKE_API PancakeConfigurationScope *PancakeConfigurationAddScope() {
 	return scope;
 }
 
-PANCAKE_API inline void PancakeConfigurationActivateScope(PancakeConfigurationScope *scope) {
+PANCAKE_API extern inline void PancakeConfigurationActivateScope(PancakeConfigurationScope *scope) {
 	PancakeConfigurationScopeValue *value;
 
 	// Copy scope values into configuration structures
@@ -473,7 +473,7 @@ PANCAKE_API inline void PancakeConfigurationActivateScope(PancakeConfigurationSc
 	}
 }
 
-PANCAKE_API inline void PancakeConfigurationUnscope() {
+PANCAKE_API extern inline void PancakeConfigurationUnscope() {
 	PancakeConfigurationScopeValue *value;
 
 	// Reset configuration by setting values from root scope
@@ -496,18 +496,18 @@ PANCAKE_API void PancakeConfigurationDestroyScope(PancakeConfigurationScope *sco
 	PancakeFree(scope);
 }
 
-PANCAKE_API inline void PancakeConfigurationInitializeScopeGroup(PancakeConfigurationScopeGroup *group) {
+PANCAKE_API extern inline void PancakeConfigurationInitializeScopeGroup(PancakeConfigurationScopeGroup *group) {
 	group->scopes = NULL;
 	group->numScopes = 0;
 }
 
-PANCAKE_API inline void PancakeConfigurationScopeGroupAddScope(PancakeConfigurationScopeGroup *group, PancakeConfigurationScope *scope) {
+PANCAKE_API extern inline void PancakeConfigurationScopeGroupAddScope(PancakeConfigurationScopeGroup *group, PancakeConfigurationScope *scope) {
 	group->numScopes++;
 	group->scopes = PancakeReallocate(group->scopes, sizeof(PancakeConfigurationScope*) * group->numScopes);
 	group->scopes[group->numScopes - 1] = scope;
 }
 
-PANCAKE_API inline void PancakeConfigurationActivateScopeGroup(PancakeConfigurationScopeGroup *group) {
+PANCAKE_API extern inline void PancakeConfigurationActivateScopeGroup(PancakeConfigurationScopeGroup *group) {
 	UInt16 i;
 
 	for(i = 0; i < group->numScopes; i++) {
@@ -515,7 +515,7 @@ PANCAKE_API inline void PancakeConfigurationActivateScopeGroup(PancakeConfigurat
 	}
 }
 
-PANCAKE_API inline void PancakeConfigurationDestroyScopeGroup(PancakeConfigurationScopeGroup *group) {
+PANCAKE_API extern inline void PancakeConfigurationDestroyScopeGroup(PancakeConfigurationScopeGroup *group) {
 	if(group->scopes) {
 		PancakeFree(group->scopes);
 	}

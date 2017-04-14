@@ -6,6 +6,7 @@
 /* Forward declarations */
 STATIC UByte PancakeHTTPServeStatic(PancakeSocket *sock);
 STATIC UByte PancakeHTTPStaticInitialize();
+STATIC void PancakeHTTPStaticOnRequestEnd(PancakeHTTPRequest *request);
 
 PancakeModule PancakeHTTPStatic = {
 	"HTTPStatic",

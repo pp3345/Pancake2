@@ -154,19 +154,19 @@ PANCAKE_API void PancakeHTTPRegisterContentServeBackend(PancakeHTTPContentServeB
 PANCAKE_API void PancakeHTTPRegisterOutputFilter(PancakeHTTPOutputFilter *filter);
 PANCAKE_API void PancakeHTTPRegisterParserHook(PancakeHTTPParserHook *hook);
 PANCAKE_API UByte PancakeHTTPRunAccessChecks(PancakeSocket *sock);
-PANCAKE_API inline UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte ignoreException);
+PANCAKE_API UByte PancakeHTTPServeContent(PancakeSocket *sock, UByte ignoreException);
 PANCAKE_API void PancakeHTTPException(PancakeSocket *sock, UInt16 code);
-PANCAKE_API inline void PancakeHTTPOnRemoteHangup(PancakeSocket *sock);
-PANCAKE_API inline void PancakeHTTPFullWriteBuffer(PancakeSocket *sock);
+PANCAKE_API void PancakeHTTPOnRemoteHangup(PancakeSocket *sock);
+PANCAKE_API void PancakeHTTPFullWriteBuffer(PancakeSocket *sock);
 PANCAKE_API void PancakeHTTPOutput(PancakeSocket *sock, String *output);
 PANCAKE_API void PancakeHTTPOutputChunk(PancakeSocket *sock, String *output);
 PANCAKE_API void PancakeHTTPSendChunk(PancakeSocket *sock, String *chunk);
-PANCAKE_API inline void PancakeHTTPSendLastChunk(PancakeSocket *sock);
+PANCAKE_API void PancakeHTTPSendLastChunk(PancakeSocket *sock);
 PANCAKE_API void PancakeHTTPBuildAnswerHeaders(PancakeSocket *sock);
-PANCAKE_API inline void PancakeHTTPOnRequestEnd(PancakeSocket *sock);
-PANCAKE_API inline void PancakeHTTPOnWrite(PancakeSocket *sock);
-PANCAKE_API inline void PancakeHTTPRemoveQueryString(PancakeHTTPRequest *request);
-PANCAKE_API inline void PancakeHTTPExtractQueryString(PancakeHTTPRequest *request, String *queryString);
-PANCAKE_API inline void PancakeHTTPFreeContentEncoding(PancakeHTTPRequest *request);
+PANCAKE_API void PancakeHTTPOnRequestEnd(PancakeSocket *sock);
+PANCAKE_API void PancakeHTTPOnWrite(PancakeSocket *sock);
+PANCAKE_API void PancakeHTTPRemoveQueryString(PancakeHTTPRequest *request);
+PANCAKE_API void PancakeHTTPExtractQueryString(PancakeHTTPRequest *request, String *queryString);
+PANCAKE_API void PancakeHTTPFreeContentEncoding(PancakeHTTPRequest *request);
 
 #endif

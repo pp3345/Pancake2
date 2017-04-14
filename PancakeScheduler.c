@@ -66,12 +66,12 @@ PANCAKE_API PancakeSchedulerEvent *PancakeSchedule(UNative time, PancakeSchedule
 	return event;
 }
 
-PANCAKE_API inline void PancakeUnschedule(PancakeSchedulerEvent *event) {
+PANCAKE_API extern inline void PancakeUnschedule(PancakeSchedulerEvent *event) {
 	CDL_DELETE(events, event);
 	CDL_PREPEND(unusedEvents, event);
 }
 
-PANCAKE_API inline UNative PancakeSchedulerGetNextExecutionTime() {
+PANCAKE_API extern inline UNative PancakeSchedulerGetNextExecutionTime() {
 	if(!events) {
 		return time(NULL) + 86400;
 	}
@@ -79,7 +79,7 @@ PANCAKE_API inline UNative PancakeSchedulerGetNextExecutionTime() {
 	return events->time < time(NULL) ? time(NULL) : events->time;
 }
 
-PANCAKE_API inline UNative PancakeSchedulerGetNextExecutionTimeOffset() {
+PANCAKE_API extern inline UNative PancakeSchedulerGetNextExecutionTimeOffset() {
 	UNative now;
 
 	if(!events) {
@@ -91,7 +91,7 @@ PANCAKE_API inline UNative PancakeSchedulerGetNextExecutionTimeOffset() {
 	return events->time < now ? 0 : events->time - now;
 }
 
-PANCAKE_API inline UNative PancakeSchedulerGetNextScheduledTime() {
+PANCAKE_API extern inline UNative PancakeSchedulerGetNextScheduledTime() {
 	if(!events) {
 		return 0;
 	}

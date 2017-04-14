@@ -12,6 +12,8 @@ STATIC UByte PancakeHTTPFastCGIServe();
 STATIC void PancakeHTTPFastCGIOnRemoteHangup(PancakeSocket *sock);
 STATIC void PancakeHTTPFastCGIOnRead(PancakeSocket *sock);
 STATIC void PancakeHTTPFastCGIOnWrite(PancakeSocket *sock);
+STATIC void FastCGIEncodeParameter(PancakeSocket *sock, String *name, String *value);
+STATIC UByte FastCGIDecodeParameter(PancakeSocket *sock, UInt32 *noffset, String *name, String *value);
 
 PancakeModule PancakeHTTPFastCGIModule = {
 		"HTTPFastCGI",

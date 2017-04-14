@@ -107,15 +107,15 @@ PANCAKE_API void PancakeNetworkClientInterfaceConfiguration(PancakeNetworkClient
 PANCAKE_API Byte *PancakeNetworkGetInterfaceName(struct sockaddr *addr);
 PANCAKE_API void PancakeNetworkReplaceListenSocket(PancakeSocket *previous, PancakeSocket *new);
 
-PANCAKE_API inline PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *sock);
-PANCAKE_API inline PancakeSocket *PancakeNetworkConnect(struct sockaddr *addr, PancakeNetworkConnectionCache **cache, UByte cachePolicy);
-PANCAKE_API inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength);
-PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock);
-PANCAKE_API inline void PancakeNetworkClose(PancakeSocket *sock);
+PANCAKE_API PancakeSocket *PancakeNetworkAcceptConnection(PancakeSocket *sock);
+PANCAKE_API PancakeSocket *PancakeNetworkConnect(struct sockaddr *addr, PancakeNetworkConnectionCache **cache, UByte cachePolicy);
+PANCAKE_API Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLength);
+PANCAKE_API Int32 PancakeNetworkWrite(PancakeSocket *sock);
+PANCAKE_API void PancakeNetworkClose(PancakeSocket *sock);
 
 PANCAKE_API void PancakeNetworkActivateListenSockets();
-PANCAKE_API inline void PancakeNetworkCacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *socket);
-PANCAKE_API inline void PancakeNetworkUncacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *sock);
+PANCAKE_API void PancakeNetworkCacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *socket);
+PANCAKE_API void PancakeNetworkUncacheConnection(PancakeNetworkConnectionCache **cache, PancakeSocket *sock);
 
 PANCAKE_API void PancakeNetworkRegisterNetworkLayer(PancakeNetworkLayer *layer);
 

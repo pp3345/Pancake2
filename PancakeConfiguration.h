@@ -98,14 +98,14 @@ PANCAKE_API PancakeConfigurationSetting *PancakeConfigurationLookupSetting(Panca
 
 /* Configuration scoping API */
 PANCAKE_API PancakeConfigurationScope *PancakeConfigurationAddScope();
-PANCAKE_API inline void PancakeConfigurationActivateScope(PancakeConfigurationScope *scope);
-PANCAKE_API inline void PancakeConfigurationUnscope();
+PANCAKE_API void PancakeConfigurationActivateScope(PancakeConfigurationScope *scope);
+PANCAKE_API void PancakeConfigurationUnscope();
 PANCAKE_API void PancakeConfigurationDestroyScope(PancakeConfigurationScope *scope);
 
-PANCAKE_API inline void PancakeConfigurationInitializeScopeGroup(PancakeConfigurationScopeGroup *group);
-PANCAKE_API inline void PancakeConfigurationScopeGroupAddScope(PancakeConfigurationScopeGroup *group, PancakeConfigurationScope *scope);
-PANCAKE_API inline void PancakeConfigurationActivateScopeGroup(PancakeConfigurationScopeGroup *group);
-PANCAKE_API inline void PancakeConfigurationDestroyScopeGroup(PancakeConfigurationScopeGroup *group);
+PANCAKE_API void PancakeConfigurationInitializeScopeGroup(PancakeConfigurationScopeGroup *group);
+PANCAKE_API void PancakeConfigurationScopeGroupAddScope(PancakeConfigurationScopeGroup *group, PancakeConfigurationScope *scope);
+PANCAKE_API void PancakeConfigurationActivateScopeGroup(PancakeConfigurationScopeGroup *group);
+PANCAKE_API void PancakeConfigurationDestroyScopeGroup(PancakeConfigurationScopeGroup *group);
 
 /* Initialization functions */
 void PancakeConfigurationInitialize();
