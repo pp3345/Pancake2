@@ -49,6 +49,8 @@ PANCAKE_API void PancakeNetworkActivateListenSockets() {
 PANCAKE_API Byte *PancakeNetworkGetInterfaceName(struct sockaddr *addr) {
 	Byte *name;
 
+	PancakeAssert(addr->sa_family == AF_INET || addr->sa_family == AF_INET6 || addr->sa_family == AF_UNIX);
+
 	switch(addr->sa_family) {
 		case AF_INET: {
 			Byte textAddress[INET_ADDRSTRLEN + 1];
@@ -700,6 +702,7 @@ PANCAKE_API inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLengt
 		length = sock->layer->read(sock, maxLength, buf);
 
 		if(length == -1) {
+			PancakeAssert(sock->onRemoteHangup != NULL);
 			sock->onRemoteHangup(sock);
 			return -1;
 		}
@@ -717,6 +720,7 @@ PANCAKE_API inline Int32 PancakeNetworkRead(PancakeSocket *sock, UInt32 maxLengt
 				return 0;
 			}
 
+			PancakeAssert(sock->onRemoteHangup != NULL);
 			sock->onRemoteHangup(sock);
 			return -1;
 		}
@@ -742,6 +746,7 @@ PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock) {
 		length = sock->layer->write(sock);
 
 		if(length == -1) {
+			PancakeAssert(sock->onRemoteHangup != NULL);
 			sock->onRemoteHangup(sock);
 			return -1;
 		}
@@ -759,6 +764,7 @@ PANCAKE_API inline Int32 PancakeNetworkWrite(PancakeSocket *sock) {
 				return 0;
 			}
 
+			PancakeAssert(sock->onRemoteHangup != NULL);
 			sock->onRemoteHangup(sock);
 			return -1;
 		}
