@@ -214,7 +214,6 @@ pip-log.txt
 
 
 config.h
-config/
 .autotools
 ConfigurationParser/scanner.c
 ConfigurationParser/scanner.h
